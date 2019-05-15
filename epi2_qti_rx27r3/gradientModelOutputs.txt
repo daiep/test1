@@ -1,0 +1,728 @@
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:3:59
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 1394.43 W
+Power Generated on Y Axis = 14.5641 W
+Power Generated on Z Axis = 169.055 W
+Total Power Generated (X + Y + Z) Axis = 1578.05 W
+Waveform TR without any hardware limitations  = 193008 us
+Limit on Sequence TR by the gradient coil hardware = 13845 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 42.2397 A
+RMS Current on Y Axis = 4.20622 A
+RMS Current on Z Axis = 35.7942 A
+Max RMS Current = 42.2397 A
+Waveform TR without any hardware limitations  = 193016 us
+Limit on Sequence TR by Maximum RMS current = 4723 us
+Limit on Sequence TR by RMS current On X-Axis= 4723 us
+Limit on Sequence TR by RMS current On Y-Axis= 46 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:4:2
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 2846.88 W
+Power Generated on Y Axis = 20.9948 W
+Power Generated on Z Axis = 461.098 W
+Total Power Generated (X + Y + Z) Axis = 3328.97 W
+Waveform TR without any hardware limitations  = 70608 us
+Limit on Sequence TR by the gradient coil hardware = 10685 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 60.5069 A
+RMS Current on Y Axis = 6.14812 A
+RMS Current on Z Axis = 59.1777 A
+Max RMS Current = 60.5069 A
+Waveform TR without any hardware limitations  = 70616 us
+Limit on Sequence TR by Maximum RMS current = 3546 us
+Limit on Sequence TR by RMS current On X-Axis= 3546 us
+Limit on Sequence TR by RMS current On Y-Axis= 36 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:4:14
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 4916.8 W
+Power Generated on Y Axis = 38.7137 W
+Power Generated on Z Axis = 953.957 W
+Total Power Generated (X + Y + Z) Axis = 5909.48 W
+Waveform TR without any hardware limitations  = 34080 us
+Limit on Sequence TR by the gradient coil hardware = 9155 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 79.4974 A
+RMS Current on Y Axis = 8.37593 A
+RMS Current on Z Axis = 85.1394 A
+Max RMS Current = 85.1394 A
+Waveform TR without any hardware limitations  = 34116 us
+Limit on Sequence TR by Maximum RMS current = 3392 us
+Limit on Sequence TR by RMS current On X-Axis= 2957 us
+Limit on Sequence TR by RMS current On Y-Axis= 32 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:4:20
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 8102.9 W
+Power Generated on Y Axis = 5275.42 W
+Power Generated on Z Axis = 6036.22 W
+Total Power Generated (X + Y + Z) Axis = 19414.5 W
+Waveform TR without any hardware limitations  = 70608 us
+Limit on Sequence TR by the gradient coil hardware = 62311 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 237.578 A
+RMS Current on Y Axis = 229.786 A
+RMS Current on Z Axis = 237.14 A
+Max RMS Current = 237.578 A
+Waveform TR without any hardware limitations  = 70616 us
+Limit on Sequence TR by Maximum RMS current = 54675 us
+Limit on Sequence TR by RMS current On X-Axis= 54675 us
+Limit on Sequence TR by RMS current On Y-Axis= 51147 us
+Limit on Sequence TR by RMS current On Z-Axis= 54473 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:4:20
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 4916.8 W
+Power Generated on Y Axis = 38.7137 W
+Power Generated on Z Axis = 953.957 W
+Total Power Generated (X + Y + Z) Axis = 5909.48 W
+Waveform TR without any hardware limitations  = 34080 us
+Limit on Sequence TR by the gradient coil hardware = 9155 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 79.4974 A
+RMS Current on Y Axis = 8.37593 A
+RMS Current on Z Axis = 85.1394 A
+Max RMS Current = 85.1394 A
+Waveform TR without any hardware limitations  = 34116 us
+Limit on Sequence TR by Maximum RMS current = 3392 us
+Limit on Sequence TR by RMS current On X-Axis= 2957 us
+Limit on Sequence TR by RMS current On Y-Axis= 32 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:4:25
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 2846.88 W
+Power Generated on Y Axis = 20.9948 W
+Power Generated on Z Axis = 461.098 W
+Total Power Generated (X + Y + Z) Axis = 3328.97 W
+Waveform TR without any hardware limitations  = 70608 us
+Limit on Sequence TR by the gradient coil hardware = 10685 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 60.5069 A
+RMS Current on Y Axis = 6.14812 A
+RMS Current on Z Axis = 59.1777 A
+Max RMS Current = 60.5069 A
+Waveform TR without any hardware limitations  = 70616 us
+Limit on Sequence TR by Maximum RMS current = 3546 us
+Limit on Sequence TR by RMS current On X-Axis= 3546 us
+Limit on Sequence TR by RMS current On Y-Axis= 36 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:4:31
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 12041.5 W
+Power Generated on Y Axis = 20.9948 W
+Power Generated on Z Axis = 461.098 W
+Total Power Generated (X + Y + Z) Axis = 12523.6 W
+Waveform TR without any hardware limitations  = 70608 us
+Limit on Sequence TR by the gradient coil hardware = 40195 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 309.832 A
+RMS Current on Y Axis = 6.14812 A
+RMS Current on Z Axis = 59.1777 A
+Max RMS Current = 309.832 A
+Waveform TR without any hardware limitations  = 70616 us
+Limit on Sequence TR by Maximum RMS current = 92987 us
+Limit on Sequence TR by RMS current On X-Axis= 92987 us
+Limit on Sequence TR by RMS current On Y-Axis= 36 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:4:31
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 2846.88 W
+Power Generated on Y Axis = 20.9948 W
+Power Generated on Z Axis = 461.098 W
+Total Power Generated (X + Y + Z) Axis = 3328.97 W
+Waveform TR without any hardware limitations  = 70608 us
+Limit on Sequence TR by the gradient coil hardware = 10685 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 60.5069 A
+RMS Current on Y Axis = 6.14812 A
+RMS Current on Z Axis = 59.1777 A
+Max RMS Current = 60.5069 A
+Waveform TR without any hardware limitations  = 70616 us
+Limit on Sequence TR by Maximum RMS current = 3546 us
+Limit on Sequence TR by RMS current On X-Axis= 3546 us
+Limit on Sequence TR by RMS current On Y-Axis= 36 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:6:7
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 1394.43 W
+Power Generated on Y Axis = 14.5641 W
+Power Generated on Z Axis = 169.055 W
+Total Power Generated (X + Y + Z) Axis = 1578.05 W
+Waveform TR without any hardware limitations  = 193008 us
+Limit on Sequence TR by the gradient coil hardware = 13845 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 42.2397 A
+RMS Current on Y Axis = 4.20622 A
+RMS Current on Z Axis = 35.7942 A
+Max RMS Current = 42.2397 A
+Waveform TR without any hardware limitations  = 193016 us
+Limit on Sequence TR by Maximum RMS current = 4723 us
+Limit on Sequence TR by RMS current On X-Axis= 4723 us
+Limit on Sequence TR by RMS current On Y-Axis= 46 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:6:32
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 2846.88 W
+Power Generated on Y Axis = 20.9948 W
+Power Generated on Z Axis = 461.098 W
+Total Power Generated (X + Y + Z) Axis = 3328.97 W
+Waveform TR without any hardware limitations  = 70608 us
+Limit on Sequence TR by the gradient coil hardware = 10685 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 60.5069 A
+RMS Current on Y Axis = 6.14812 A
+RMS Current on Z Axis = 59.1777 A
+Max RMS Current = 60.5069 A
+Waveform TR without any hardware limitations  = 70616 us
+Limit on Sequence TR by Maximum RMS current = 3546 us
+Limit on Sequence TR by RMS current On X-Axis= 3546 us
+Limit on Sequence TR by RMS current On Y-Axis= 36 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:6:51
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 12041.5 W
+Power Generated on Y Axis = 20.9948 W
+Power Generated on Z Axis = 461.098 W
+Total Power Generated (X + Y + Z) Axis = 12523.6 W
+Waveform TR without any hardware limitations  = 70608 us
+Limit on Sequence TR by the gradient coil hardware = 40195 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 309.832 A
+RMS Current on Y Axis = 6.14812 A
+RMS Current on Z Axis = 59.1777 A
+Max RMS Current = 309.832 A
+Waveform TR without any hardware limitations  = 70616 us
+Limit on Sequence TR by Maximum RMS current = 92987 us
+Limit on Sequence TR by RMS current On X-Axis= 92987 us
+Limit on Sequence TR by RMS current On Y-Axis= 36 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:6:51
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 2846.88 W
+Power Generated on Y Axis = 20.9948 W
+Power Generated on Z Axis = 461.098 W
+Total Power Generated (X + Y + Z) Axis = 3328.97 W
+Waveform TR without any hardware limitations  = 70608 us
+Limit on Sequence TR by the gradient coil hardware = 10685 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 60.5069 A
+RMS Current on Y Axis = 6.14812 A
+RMS Current on Z Axis = 59.1777 A
+Max RMS Current = 60.5069 A
+Waveform TR without any hardware limitations  = 70616 us
+Limit on Sequence TR by Maximum RMS current = 3546 us
+Limit on Sequence TR by RMS current On X-Axis= 3546 us
+Limit on Sequence TR by RMS current On Y-Axis= 36 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:7:0
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 4916.8 W
+Power Generated on Y Axis = 38.7137 W
+Power Generated on Z Axis = 953.957 W
+Total Power Generated (X + Y + Z) Axis = 5909.48 W
+Waveform TR without any hardware limitations  = 34080 us
+Limit on Sequence TR by the gradient coil hardware = 9155 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 79.4974 A
+RMS Current on Y Axis = 8.37593 A
+RMS Current on Z Axis = 85.1394 A
+Max RMS Current = 85.1394 A
+Waveform TR without any hardware limitations  = 34116 us
+Limit on Sequence TR by Maximum RMS current = 3392 us
+Limit on Sequence TR by RMS current On X-Axis= 2957 us
+Limit on Sequence TR by RMS current On Y-Axis= 32 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:7:7
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 5476.16 W
+Power Generated on Y Axis = 5275.42 W
+Power Generated on Z Axis = 8827.96 W
+Total Power Generated (X + Y + Z) Axis = 19579.5 W
+Waveform TR without any hardware limitations  = 70608 us
+Limit on Sequence TR by the gradient coil hardware = 62840 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 173.393 A
+RMS Current on Y Axis = 229.786 A
+RMS Current on Z Axis = 287.439 A
+Max RMS Current = 287.439 A
+Waveform TR without any hardware limitations  = 70616 us
+Limit on Sequence TR by Maximum RMS current = 80032 us
+Limit on Sequence TR by RMS current On X-Axis= 29123 us
+Limit on Sequence TR by RMS current On Y-Axis= 51147 us
+Limit on Sequence TR by RMS current On Z-Axis= 80032 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:7:7
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 4916.8 W
+Power Generated on Y Axis = 38.7137 W
+Power Generated on Z Axis = 953.957 W
+Total Power Generated (X + Y + Z) Axis = 5909.48 W
+Waveform TR without any hardware limitations  = 34080 us
+Limit on Sequence TR by the gradient coil hardware = 9155 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 79.4974 A
+RMS Current on Y Axis = 8.37593 A
+RMS Current on Z Axis = 85.1394 A
+Max RMS Current = 85.1394 A
+Waveform TR without any hardware limitations  = 34116 us
+Limit on Sequence TR by Maximum RMS current = 3392 us
+Limit on Sequence TR by RMS current On X-Axis= 2957 us
+Limit on Sequence TR by RMS current On Y-Axis= 32 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:7:33
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 2846.88 W
+Power Generated on Y Axis = 20.9948 W
+Power Generated on Z Axis = 461.098 W
+Total Power Generated (X + Y + Z) Axis = 3328.97 W
+Waveform TR without any hardware limitations  = 70608 us
+Limit on Sequence TR by the gradient coil hardware = 10685 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 60.5069 A
+RMS Current on Y Axis = 6.14812 A
+RMS Current on Z Axis = 59.1777 A
+Max RMS Current = 60.5069 A
+Waveform TR without any hardware limitations  = 70616 us
+Limit on Sequence TR by Maximum RMS current = 3546 us
+Limit on Sequence TR by RMS current On X-Axis= 3546 us
+Limit on Sequence TR by RMS current On Y-Axis= 36 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:19:19
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 1394.43 W
+Power Generated on Y Axis = 14.5641 W
+Power Generated on Z Axis = 169.055 W
+Total Power Generated (X + Y + Z) Axis = 1578.05 W
+Waveform TR without any hardware limitations  = 193008 us
+Limit on Sequence TR by the gradient coil hardware = 13845 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 42.2397 A
+RMS Current on Y Axis = 4.20622 A
+RMS Current on Z Axis = 35.7942 A
+Max RMS Current = 42.2397 A
+Waveform TR without any hardware limitations  = 193016 us
+Limit on Sequence TR by Maximum RMS current = 4723 us
+Limit on Sequence TR by RMS current On X-Axis= 4723 us
+Limit on Sequence TR by RMS current On Y-Axis= 46 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:19:33
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 8102.9 W
+Power Generated on Y Axis = 5275.42 W
+Power Generated on Z Axis = 6036.22 W
+Total Power Generated (X + Y + Z) Axis = 19414.5 W
+Waveform TR without any hardware limitations  = 70608 us
+Limit on Sequence TR by the gradient coil hardware = 62311 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 237.578 A
+RMS Current on Y Axis = 229.786 A
+RMS Current on Z Axis = 237.14 A
+Max RMS Current = 237.578 A
+Waveform TR without any hardware limitations  = 70616 us
+Limit on Sequence TR by Maximum RMS current = 54675 us
+Limit on Sequence TR by RMS current On X-Axis= 54675 us
+Limit on Sequence TR by RMS current On Y-Axis= 51147 us
+Limit on Sequence TR by RMS current On Z-Axis= 54473 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:19:33
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 4916.8 W
+Power Generated on Y Axis = 38.7137 W
+Power Generated on Z Axis = 953.957 W
+Total Power Generated (X + Y + Z) Axis = 5909.48 W
+Waveform TR without any hardware limitations  = 34080 us
+Limit on Sequence TR by the gradient coil hardware = 9155 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 79.4974 A
+RMS Current on Y Axis = 8.37593 A
+RMS Current on Z Axis = 85.1394 A
+Max RMS Current = 85.1394 A
+Waveform TR without any hardware limitations  = 34116 us
+Limit on Sequence TR by Maximum RMS current = 3392 us
+Limit on Sequence TR by RMS current On X-Axis= 2957 us
+Limit on Sequence TR by RMS current On Y-Axis= 32 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:19:36
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 8102.9 W
+Power Generated on Y Axis = 5275.42 W
+Power Generated on Z Axis = 6036.22 W
+Total Power Generated (X + Y + Z) Axis = 19414.5 W
+Waveform TR without any hardware limitations  = 70608 us
+Limit on Sequence TR by the gradient coil hardware = 62311 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 237.578 A
+RMS Current on Y Axis = 229.786 A
+RMS Current on Z Axis = 237.14 A
+Max RMS Current = 237.578 A
+Waveform TR without any hardware limitations  = 70616 us
+Limit on Sequence TR by Maximum RMS current = 54675 us
+Limit on Sequence TR by RMS current On X-Axis= 54675 us
+Limit on Sequence TR by RMS current On Y-Axis= 51147 us
+Limit on Sequence TR by RMS current On Z-Axis= 54473 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/11/2019
+Time: 15:19:36
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 4916.8 W
+Power Generated on Y Axis = 38.7137 W
+Power Generated on Z Axis = 953.957 W
+Total Power Generated (X + Y + Z) Axis = 5909.48 W
+Waveform TR without any hardware limitations  = 34080 us
+Limit on Sequence TR by the gradient coil hardware = 9155 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 79.4974 A
+RMS Current on Y Axis = 8.37593 A
+RMS Current on Z Axis = 85.1394 A
+Max RMS Current = 85.1394 A
+Waveform TR without any hardware limitations  = 34116 us
+Limit on Sequence TR by Maximum RMS current = 3392 us
+Limit on Sequence TR by RMS current On X-Axis= 2957 us
+Limit on Sequence TR by RMS current On Y-Axis= 32 us
+Limit on Sequence TR by RMS current On Z-Axis= 3392 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/19/2019
+Time: 15:53:31
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 3258.65 W
+Power Generated on Y Axis = 1281.76 W
+Power Generated on Z Axis = 1685 W
+Total Power Generated (X + Y + Z) Axis = 6225.42 W
+Waveform TR without any hardware limitations  = 100896 us
+Limit on Sequence TR by the gradient coil hardware = 28551 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 124.603 A
+RMS Current on Y Axis = 113.961 A
+RMS Current on Z Axis = 124.115 A
+Max RMS Current = 124.603 A
+Waveform TR without any hardware limitations  = 100916 us
+Limit on Sequence TR by Maximum RMS current = 21492 us
+Limit on Sequence TR by RMS current On X-Axis= 21492 us
+Limit on Sequence TR by RMS current On Y-Axis= 17978 us
+Limit on Sequence TR by RMS current On Z-Axis= 21324 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/19/2019
+Time: 15:54:28
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 8102.9 W
+Power Generated on Y Axis = 5275.42 W
+Power Generated on Z Axis = 6036.22 W
+Total Power Generated (X + Y + Z) Axis = 19414.5 W
+Waveform TR without any hardware limitations  = 70608 us
+Limit on Sequence TR by the gradient coil hardware = 62311 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 237.578 A
+RMS Current on Y Axis = 229.786 A
+RMS Current on Z Axis = 237.14 A
+Max RMS Current = 237.578 A
+Waveform TR without any hardware limitations  = 70616 us
+Limit on Sequence TR by Maximum RMS current = 54675 us
+Limit on Sequence TR by RMS current On X-Axis= 54675 us
+Limit on Sequence TR by RMS current On Y-Axis= 51147 us
+Limit on Sequence TR by RMS current On Z-Axis= 54473 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/19/2019
+Time: 16:0:13
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 7786.69 W
+Power Generated on Y Axis = 5466.89 W
+Power Generated on Z Axis = 6384 W
+Total Power Generated (X + Y + Z) Axis = 19637.6 W
+Waveform TR without any hardware limitations  = 86208 us
+Limit on Sequence TR by the gradient coil hardware = 76951 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 235.687 A
+RMS Current on Y Axis = 229.281 A
+RMS Current on Z Axis = 242.528 A
+Max RMS Current = 242.528 A
+Waveform TR without any hardware limitations  = 86216 us
+Limit on Sequence TR by Maximum RMS current = 69563 us
+Limit on Sequence TR by RMS current On X-Axis= 65694 us
+Limit on Sequence TR by RMS current On Y-Axis= 62171 us
+Limit on Sequence TR by RMS current On Z-Axis= 69563 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/19/2019
+Time: 16:12:54
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 3258.65 W
+Power Generated on Y Axis = 1281.76 W
+Power Generated on Z Axis = 1685 W
+Total Power Generated (X + Y + Z) Axis = 6225.42 W
+Waveform TR without any hardware limitations  = 100896 us
+Limit on Sequence TR by the gradient coil hardware = 28551 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 124.603 A
+RMS Current on Y Axis = 113.961 A
+RMS Current on Z Axis = 124.115 A
+Max RMS Current = 124.603 A
+Waveform TR without any hardware limitations  = 100916 us
+Limit on Sequence TR by Maximum RMS current = 21492 us
+Limit on Sequence TR by RMS current On X-Axis= 21492 us
+Limit on Sequence TR by RMS current On Y-Axis= 17978 us
+Limit on Sequence TR by RMS current On Z-Axis= 21324 us
+---------------------------------------------------
+---------------------------------------------------
+Date: 3/19/2019
+Time: 16:12:57
+---------------------------------------------------
+PSD Name: epi2
+Encode Mode = Average Power
+---------------------------------------------------
+Model Name = GRADIENT COIL
+Gradient Coil Thermal Power Limit = 22000 W
+Power Generated on X Axis = 8102.9 W
+Power Generated on Y Axis = 5275.42 W
+Power Generated on Z Axis = 6036.22 W
+Total Power Generated (X + Y + Z) Axis = 19414.5 W
+Waveform TR without any hardware limitations  = 70608 us
+Limit on Sequence TR by the gradient coil hardware = 62311 us
+---------------------------------------------------
+Model Name = CABLE_MODEL
+RMS Current Limit = 270 A
+RMS Current on X Axis = 237.578 A
+RMS Current on Y Axis = 229.786 A
+RMS Current on Z Axis = 237.14 A
+Max RMS Current = 237.578 A
+Waveform TR without any hardware limitations  = 70616 us
+Limit on Sequence TR by Maximum RMS current = 54675 us
+Limit on Sequence TR by RMS current On X-Axis= 54675 us
+Limit on Sequence TR by RMS current On Y-Axis= 51147 us
+Limit on Sequence TR by RMS current On Z-Axis= 54473 us
