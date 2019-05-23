@@ -1,0 +1,5 @@
+2019/05/20 23:34:38.058131|epi2|27393|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R02, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 23:34:38.069000|epi2|27393|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R02, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 23:35:48.062841|epi2|27393|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R02, Compiler v3.4, ERROR: 2217472, Msg: pe_gd2: CV not found
+2019/05/20 23:40:01.820139|epi2|27393|psd_syserr|ERROR|epi2.host.cpp|3216|  Name: EPI2, Release: RX27.0_R02, Compiler v3.4, ERROR: 2227006, Msg: The selected TR needs to be increased to 1000 ms for the current prescription.
+2019/05/21 01:37:23.757166|epi2|27393|epic_processcmds|ERROR|epic_processcmds.cpp|515| fatal error, PSD 27393 terminating

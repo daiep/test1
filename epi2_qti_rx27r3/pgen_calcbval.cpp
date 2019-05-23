@@ -129,6 +129,8 @@ STATUS pgen_calcbvalue( FLOAT *bvalue,
     INT dbdtinf = 0;
     INT dbdtfactor = 0;
     INT max_encode_mode = AVERAGE_POWER;
+	printf("daiep test printf...\n" ); /* daiep test */  
+	fflush(stdout); 
 
     /* Initialize stuff */
     time = NULL;
@@ -154,10 +156,15 @@ STATUS pgen_calcbvalue( FLOAT *bvalue,
     flags.debug = (dbLevel_t)debug_flag;
     setupdBdtFlags( &flags );
 
+	printf("daiep test00...\n" ); /* daiep test */  
+	fflush(stdout); 
+
     status = getCornerPoints( &time, ampl, pul_type, &totpoints, &num_iters,
                               &loggrd, seq_entry_index, samp_rate,
                               pgen_tr, dbdtinf, dbdtfactor,
                               efflength, max_encode_mode, &flags );
+	printf("daiep test01...\n" ); /* daiep test */  
+	fflush(stdout); 
 
     if ( (SKIP == status) || (FAILURE == status) ) { /* Cleanup on error */
         printDebug( DBLEVEL2, (dbLevel_t)debug_flag, funcName,
@@ -175,9 +182,12 @@ STATUS pgen_calcbvalue( FLOAT *bvalue,
            SKIP is not acceptable for calculating the b-value */
         epic_error( e_flag, supfailfmt, EM_PSD_SUPPORT_FAILURE, 
                     1, STRING_ARG, "getCornerPoints" );
+	printf("daiep test02...\n" ); /* daiep test */  
+	fflush(stdout);
         return FAILURE;
     }
-    
+    	
+
     /* Calculate b-value on each axis */
     num_axis = (bmat_flag == TRUE) ? 6 : 3;
 
@@ -189,19 +199,23 @@ STATUS pgen_calcbvalue( FLOAT *bvalue,
         } else {
             grad_axis1 = ((ngrad<num_axis-1) ? 0 : 1);       /* off diagonal elements (i != j) */
             grad_axis2 = ((ngrad<num_axis-1) ? (ngrad+1 - 3) : 2); 
-        }       
-        
+        }   
+    
+        printf("daiep test03...\n" ); /* daiep test */  
+	fflush(stdout);
+
         status = calcbvalue(&bvalue[ngrad],rf_excite_location,rf_180_location,
                             num_180s,te,time,ampl[grad_axis1],ampl[grad_axis2],totpoints,gam);
-        
-        if ( (SKIP == status) || (FAILURE == status) ) { /* Cleanup on error */
+	if ( (SKIP == status) || (FAILURE == status) ) { /* Cleanup on error */
             printDebug( DBLEVEL2, (dbLevel_t)debug_flag, funcName,
                         "Freeing time, ampl and pul_type lists...\n" );
+	
             FreeNode( time );
             for ( i = X ; i <= Z ; i++ ) {
                 FreeNode( ampl[i] );
                 FreeNode( pul_type[i] );
             }
+
             printDebug( DBLEVEL2, (dbLevel_t)debug_flag, funcName,
                         "Freeing external wave table...\n" );
             destroyExtWave();

@@ -14502,12 +14502,6 @@ extern void cv_cnv_endian_NavigatorResult( NavigatorResult *_ecnv_target_ );
 	cv_cnv_endian_int( _ecnv_arg_ ); \
 }
 
-#define cv_cnv_endian_ftde_flag(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
 #define cv_cnv_endian_num_tensor(_arg_) \
 { \
 	int *_ecnv_arg_ = (int *)(_arg_); \
@@ -17508,6 +17502,426 @@ extern void cv_cnv_endian_NavigatorResult( NavigatorResult *_ecnv_target_ );
 	cv_cnv_endian_int( _ecnv_arg_ ); \
 }
 
+#define cv_cnv_endian_res_gd1(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_res_gd2(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gd1(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gd2(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gxdl(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gxdr(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gxdl(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gxdr(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_res_gxdl(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_res_gxdr(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gxdr(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gxdl(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_wg_gxdr(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_wg_gxdl(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gydl(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gydr(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gydl(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gydr(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_res_gydl(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_res_gydr(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gydr(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gydl(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_wg_gydr(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_wg_gydl(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gzdl(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gzdr(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gzdl(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gzdr(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_res_gzdl(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_res_gzdr(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gzdr(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gzdl(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_wg_gzdr(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_wg_gzdl(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gxdla(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gxdld(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gxdra(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gxdrd(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gxdla(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gxdld(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gxdra(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gxdrd(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gxdla(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gxdld(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gxdra(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gxdrd(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gydla(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gydld(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gydra(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gydrd(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gydla(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gydld(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gydra(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gydrd(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gydla(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gydld(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gydra(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gydrd(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gzdla(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gzdld(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gzdra(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_a_gzdrd(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gzdla(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gzdld(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gzdra(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ia_gzdrd(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gzdla(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gzdld(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gzdra(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_pw_gzdrd(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
 #define cv_cnv_endian_num_passdelay(_arg_) \
 { \
 	int *_ecnv_arg_ = (int *)(_arg_); \
@@ -18256,6 +18670,24 @@ extern void cv_cnv_endian_NavigatorResult( NavigatorResult *_ecnv_target_ );
 { \
 	int *_ecnv_arg_ = (int *)(_arg_); \
 	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_waveform_type(_arg_) \
+{ \
+	int *_ecnv_arg_ = (int *)(_arg_); \
+	cv_cnv_endian_int( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_ide_max_bval(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
+}
+
+#define cv_cnv_endian_sde_max_bval(_arg_) \
+{ \
+	float *_ecnv_arg_ = (float *)(_arg_); \
+	cv_cnv_endian_float( _ecnv_arg_ ); \
 }
 
 #define cv_cnv_endian_bincr(_arg_) \
@@ -19270,24 +19702,6 @@ extern void cv_cnv_endian_NavigatorResult( NavigatorResult *_ecnv_target_ );
 { \
 	float *_ecnv_arg_ = (float *)(_arg_); \
 	cv_cnv_endian_float( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_sar_amp(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_sar_cycle(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_sar_width(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
 }
 
 #define cv_cnv_endian_max_seqtime(_arg_) \
@@ -23148,114 +23562,6 @@ extern void cv_cnv_endian_NavigatorResult( NavigatorResult *_ecnv_target_ );
 	cv_cnv_endian_int( _ecnv_arg_ ); \
 }
 
-#define cv_cnv_endian_a_gxde(_arg_) \
-{ \
-	float *_ecnv_arg_ = (float *)(_arg_); \
-	cv_cnv_endian_float( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_ia_gxde(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gxdea(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gxded(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gxde(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_wg_gxde(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_a_gxdl(_arg_) \
-{ \
-	float *_ecnv_arg_ = (float *)(_arg_); \
-	cv_cnv_endian_float( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_ia_gxdl(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gxdla(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gxdld(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gxdl(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_wg_gxdl(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_a_gxdr(_arg_) \
-{ \
-	float *_ecnv_arg_ = (float *)(_arg_); \
-	cv_cnv_endian_float( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_ia_gxdr(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gxdra(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gxdrd(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gxdr(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_wg_gxdr(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
 #define cv_cnv_endian_a_gxdl1(_arg_) \
 { \
 	float *_ecnv_arg_ = (float *)(_arg_); \
@@ -23436,114 +23742,6 @@ extern void cv_cnv_endian_NavigatorResult( NavigatorResult *_ecnv_target_ );
 	cv_cnv_endian_int( _ecnv_arg_ ); \
 }
 
-#define cv_cnv_endian_a_gyde(_arg_) \
-{ \
-	float *_ecnv_arg_ = (float *)(_arg_); \
-	cv_cnv_endian_float( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_ia_gyde(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gydea(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gyded(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gyde(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_wg_gyde(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_a_gydl(_arg_) \
-{ \
-	float *_ecnv_arg_ = (float *)(_arg_); \
-	cv_cnv_endian_float( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_ia_gydl(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gydla(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gydld(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gydl(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_wg_gydl(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_a_gydr(_arg_) \
-{ \
-	float *_ecnv_arg_ = (float *)(_arg_); \
-	cv_cnv_endian_float( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_ia_gydr(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gydra(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gydrd(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gydr(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_wg_gydr(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
 #define cv_cnv_endian_a_gydl1(_arg_) \
 { \
 	float *_ecnv_arg_ = (float *)(_arg_); \
@@ -23719,114 +23917,6 @@ extern void cv_cnv_endian_NavigatorResult( NavigatorResult *_ecnv_target_ );
 }
 
 #define cv_cnv_endian_wg_gyk(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_a_gzde(_arg_) \
-{ \
-	float *_ecnv_arg_ = (float *)(_arg_); \
-	cv_cnv_endian_float( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_ia_gzde(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gzdea(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gzded(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gzde(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_wg_gzde(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_a_gzdl(_arg_) \
-{ \
-	float *_ecnv_arg_ = (float *)(_arg_); \
-	cv_cnv_endian_float( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_ia_gzdl(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gzdla(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gzdld(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gzdl(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_wg_gzdl(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_a_gzdr(_arg_) \
-{ \
-	float *_ecnv_arg_ = (float *)(_arg_); \
-	cv_cnv_endian_float( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_ia_gzdr(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gzdra(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gzdrd(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_pw_gzdr(_arg_) \
-{ \
-	int *_ecnv_arg_ = (int *)(_arg_); \
-	cv_cnv_endian_int( _ecnv_arg_ ); \
-}
-
-#define cv_cnv_endian_wg_gzdr(_arg_) \
 { \
 	int *_ecnv_arg_ = (int *)(_arg_); \
 	cv_cnv_endian_int( _ecnv_arg_ ); \

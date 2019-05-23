@@ -338,6 +338,7 @@ void printEspRange(void);
 void procNoEspRangeFile(FILE * fp);
 void resetVariables(FILE * fp);
 
+static INT read_grad_res(float wave_number, int* res_gd1, int* res_gd2);/* maybe granty */
 static INT get_diffusion_time( void );
 static INT update_sse_diffusion_time( void );
 static FLOAT calc_incdif(float *DELTA, float *delta, int Delta_time, int pw_gdl, int pw_gdld, int pw_gdla, int pw_gdra, float bvaltemp);
@@ -349,6 +350,7 @@ static INT get_sse_waittime( void );
 static STATUS update_opmintedif(void);
 /* Local Cvs */
 float TENSOR_HOST[3][MAX_DIRECTIONS + MAX_T2];        /* Tensor Amplitude Array (directions + t2) */
+float WAVE_HOST[MAX_DIRECTIONS + MAX_T2];/* maybe granty */
 float B_MATRIX[6][MAX_DIRECTIONS + MAX_T2];           /* B-Matrix */
 int sort_index[MAX_DIRECTIONS + MAX_T2];
 float mag[MAX_DIRECTIONS + MAX_T2];
@@ -5130,7 +5132,16 @@ cvinit( void )
     pwmin_gap      = _pwmin_gap.fixedflag ?  ((void)(2*GRAD_UPDATE_TIME), pwmin_gap) : 2*GRAD_UPDATE_TIME;
     td0            = _td0.fixedflag ?  ((void)(GRAD_UPDATE_TIME), td0) : GRAD_UPDATE_TIME;
     hrdwr_period  = _hrdwr_period.fixedflag ?  ((void)(GRAD_UPDATE_TIME), hrdwr_period) : GRAD_UPDATE_TIME;
- 
+
+    /* update to include external gradient waveforms for QTI granty edit 9/28/17 */
+    wg_gxdl  = _wg_gxdl.fixedflag ?  ((void)(XGRAD), wg_gxdl) : XGRAD;
+    wg_gxdr  = _wg_gxdr.fixedflag ?  ((void)(XGRAD), wg_gxdr) : XGRAD;
+    wg_gydl  = _wg_gydl.fixedflag ?  ((void)(YGRAD), wg_gydl) : YGRAD;
+    wg_gydr  = _wg_gydr.fixedflag ?  ((void)(YGRAD), wg_gydr) : YGRAD;
+    wg_gzdl  = _wg_gzdl.fixedflag ?  ((void)(ZGRAD), wg_gzdl) : ZGRAD;
+    wg_gzdr  = _wg_gzdr.fixedflag ?  ((void)(ZGRAD), wg_gzdr) : ZGRAD; 
+	/* granty end */
+
     /* SXZ::MRIge72411: init the optimization arr */
     taratio_arr[0] = 0.7; 
     taratio_arr[1] = 0.65; 
@@ -6267,6 +6278,58 @@ else
             return FAILURE;
         }
 
+
+	/* granty edit added user cv to specify which IDE diffusion filename to play out */
+        piuset |= use12;
+        cvmod(opuser12,60,120,60, "specifies IDE encoding waveform length",0," ");
+        opuser12  = _opuser12.fixedflag ?  ((void)(_opuser12.defval), opuser12) : _opuser12.defval;
+        if (!floatIsInteger(exist(opuser12)))
+        {
+              /* Check user-defined opuser12 is an integer */
+              epic_error( use_ermes, "User CV 12 is out of range (has to be an a rounded float)", EM_PSD_CV_OUT_OF_RANGE, EE_ARGS(1),STRING_ARG, _opuser12.descr);
+              return FAILURE;
+        }
+
+	/* granty edit added user cv to specify which IDE diffusion filename to play out */
+        piuset |= use2;
+        cvmod(opuser2,0,150,0, "specifies ECC time constant x (ms)",0," ");
+        opuser2  = _opuser2.fixedflag ?  ((void)(_opuser2.defval), opuser2) : _opuser2.defval;
+        if (!floatIsInteger(exist(opuser2)))
+        {
+              /* Check user-defined opuser2 is an integer */
+              epic_error( use_ermes, "User CV 30 is out of range (has to be an a rounded float)", EM_PSD_CV_OUT_OF_RANGE, EE_ARGS(1),STRING_ARG, _opuser2.descr);
+              return FAILURE;
+        }
+
+	/* granty edit added user cv to specify which IDE diffusion filename to play out */
+        piuset |= use3;
+        cvmod(opuser3,0,150,0, "specifies ECC time constant y (ms)",150," ");
+        opuser3  = _opuser3.fixedflag ?  ((void)(_opuser3.defval), opuser3) : _opuser3.defval;
+	opuser3  = _opuser3.fixedflag ?  ((void)(150), opuser3) : 150;
+        if (!floatIsInteger(exist(opuser3)))
+        {
+              /* Check user-defined opuser3 is an integer */
+              epic_error( use_ermes, "User CV 3 is out of range (has to be an a rounded float)", EM_PSD_CV_OUT_OF_RANGE, EE_ARGS(1),STRING_ARG, _opuser3.descr);
+              return FAILURE;
+        }
+
+	/* granty edit added user cv to specify which IDE diffusion filename to play out */
+        piuset |= use4;
+        cvmod(opuser4,0,150,0, "specifies ECC time constant z (ms)",0," ");
+        opuser4  = _opuser4.fixedflag ?  ((void)(_opuser4.defval), opuser4) : _opuser4.defval;
+        if (!floatIsInteger(exist(opuser4)))
+        {
+              /* Check user-defined opuser4 is an integer */
+              epic_error( use_ermes, "User CV 32 is out of range (has to be an a rounded float)", EM_PSD_CV_OUT_OF_RANGE, EE_ARGS(1),STRING_ARG, _opuser4.descr);
+              return FAILURE;
+        }
+
+	/* granty edit added user cv to specify which phase encode polarity */
+        piuset |= use13;
+        cvmod(opuser13,0,1,0, "flip phase encode?",0," ");
+        opuser13  = _opuser13.fixedflag ?  ((void)(_opuser13.defval), opuser13) : _opuser13.defval;
+	pepolar  = _pepolar.fixedflag ?  ((void)(opuser13), pepolar) : opuser13;
+
         /* HCSDM00398133 HCSDM00419770 */
         /* Moved setting CV8 to setUserCVs() */
 
@@ -6285,20 +6348,6 @@ else
                     return FAILURE;
                 }
                 rhtensor_file_number  = _rhtensor_file_number.fixedflag ?  ((void)(opuser11), rhtensor_file_number) : opuser11;
-
-		/* granty edit for full time diffusion encoding */
-                piuset |= use20;
-                cvmod(opuser20,0,1,0, "full time diffusion encoding",0," ");
-                opuser20  = _opuser20.fixedflag ?  ((void)(_opuser20.defval), opuser20) : _opuser20.defval;
-                /* if (ceilf(exist(opuser11)) != exist(opuser11)) */
-                if (!floatIsInteger(exist(opuser11))) /* comment by dai */
-                {
-                    /* Check user-defined opuser11 is an integer */
-                    epic_error( use_ermes, "User CV 20 is out of range (has to 0 or 1)", EM_PSD_CV_OUT_OF_RANGE, EE_ARGS(1),STRING_ARG, _opuser20.descr);
-                    return FAILURE;
-                }
-                ftde_flag  = _ftde_flag.fixedflag ?  ((void)(opuser20), ftde_flag) : opuser20;
-
             }
             else
             {
@@ -7443,13 +7492,27 @@ piautotrmode = PSD_AUTO_TR_MODE_IN_RANGE_TR;
     /* Reversed Phase Encoding polarity is applied for the following conditions
      * 1) using type-in PSD: epi2alt no matter it is regular DWI or Multiband DWI
      * 2) for Multiband DWI, reversed PE polarity is always used unless it is a type-in PSD: epi2altoff */
+/*
     if( (!strcmp(get_psd_name(), "epi2alt")) || ((PSD_ON == mux_flag) && strcmp(get_psd_name(), "epi2altoff")) )
     {
-        pepolar  = _pepolar.fixedflag ?  ((void)(PSD_ON), pepolar) : PSD_ON;
+        pepolar = PSD_ON;
     }
     else
     {
-        pepolar  = _pepolar.fixedflag ?  ((void)(PSD_OFF), pepolar) : PSD_OFF;
+        pepolar = PSD_OFF;
+    }
+*/
+
+/* granty edit user controlled phase encode polarity for easier protocol setup */
+    if(PSD_ON == mux_flag)
+    {
+	if( floatsAlmostEqualEpsilons(PSD_ON, opuser13, 2)){
+		pepolar  = _pepolar.fixedflag ?  ((void)(PSD_OFF), pepolar) : PSD_OFF;
+	} else {
+		pepolar  = _pepolar.fixedflag ?  ((void)(PSD_ON), pepolar) : PSD_ON;
+	}
+    } else {
+	pepolar  = _pepolar.fixedflag ?  ((void)(opuser13), pepolar) : opuser13;
     }
     
     /* HCSDM00453434 reset rhdistcorr_ctrl so that cvcheck later is effective. */
@@ -7723,6 +7786,31 @@ STATUS DTI_Init()
 
     return SUCCESS;
 } /* end DTI_Init */
+
+/* granty function for reading in length of custom gradient files */
+STATUS read_grad_res(float wave_number, int* res_gd1, int* res_gd2){
+	char fname[80],junk[80];
+	FILE *fid;
+
+#ifndef PSD_HW
+	    sprintf(fname,"wave%d.dat",(int)wave_number);
+#else
+	    sprintf(fname,"/usr/g/research/daiep/qti/WAVES/wave%d.dat",(int)wave_number);
+#endif 
+
+	fid = fopen(fname,"r");
+	if (fid==NULL) {
+    		fprintf(stderr, "Error opening grad pulse file:  %s!!\n",fname);
+    		fflush (stderr);
+    		return FAILURE;
+	}
+	/* length of first diffusion encoding waveform */
+	fscanf(fid,"%d %s",res_gd1,junk);
+	/* length of second diffusion encoding waveform */
+	fscanf(fid,"%d %s",res_gd2,junk);
+	fclose(fid);
+	return SUCCESS;
+}
 
 
 float sat_info[6][9];
@@ -13313,6 +13401,68 @@ else
     epi_arc_set_dropdown();
 
     /* DTI */
+    /* granty edit for diffusion timings ide_max_bval and sde_max_bval is updated in predownload for specific waveform */
+
+    /*if(exist(opdiffuse) == PSD_ON | exist(optensor) == PSD_ON)
+    {
+	if(floatsAlmostEqualEpsilons(120, opuser12, 2)){
+		res_gd1 = 12914;
+		res_gd2 = 11300;
+		pw_gd1 = res_gd1*4;
+		pw_gd2 = res_gd2*4;
+		ide_max_bval = 1787.4;
+		sde_max_bval = 32513;
+	}else if(floatsAlmostEqualEpsilons(110, opuser12, 2)){
+		res_gd1 = 11714;
+		res_gd2 = 10250;
+		pw_gd1 = res_gd1*4;
+		pw_gd2 = res_gd2*4;
+		ide_max_bval = 1787.4;
+		sde_max_bval = 24729;
+	}else if(floatsAlmostEqualEpsilons(100, opuser12, 2)){
+		res_gd1 = 10514;
+		res_gd2 = 8762;
+		pw_gd1 = res_gd1*4;
+		pw_gd2 = res_gd2*4;
+		ide_max_bval = 2054.3; 
+		sde_max_bval = 16798;
+	}else if(floatsAlmostEqualEpsilons(90, opuser12, 2)){
+		res_gd1 = 9314;
+		res_gd2 = 7568;
+		pw_gd1 = res_gd1*4;
+		pw_gd2 = res_gd2*4;
+		ide_max_bval = 1787.4;
+		sde_max_bval = 11467;
+		opuser12 = 80;
+	}else if(floatsAlmostEqualEpsilons(80, opuser12, 2)){
+		res_gd1 = 8114;
+		res_gd2 = 6424;
+		pw_gd1 = res_gd1*4;
+		pw_gd2 = res_gd2*4;
+		ide_max_bval = 1787.4;
+		sde_max_bval = 7474.9;
+	}else if(floatsAlmostEqualEpsilons(70, opuser12, 2)){
+		res_gd1 = 6770;
+		res_gd2 = 5042;
+		pw_gd1 = res_gd1*4;
+		pw_gd2 = res_gd2*4;
+		ide_max_bval = 1787.4;
+		sde_max_bval = 4064.2;
+	}else{ *//* opuser12 = 60 */
+		/*opuser12 = 60;
+		res_gd1 = 5594;
+		res_gd2 = 3810;
+		pw_gd1 = res_gd1*4;
+		pw_gd2 = res_gd2*4;
+		ide_max_bval = 1787.4;
+		sde_max_bval = 2039.8;
+	}
+    }*/
+    if(floatsAlmostEqualEpsilons(0, exist(opuser12), 2)) opuser12  = _opuser12.fixedflag ?  ((void)(60), opuser12) : 60;
+    read_grad_res(opuser12, _res_gd1.fixedflag ? (_temp451_res_gd1=res_gd1,&_temp451_res_gd1) : &res_gd1, _res_gd2.fixedflag ? (_temp452_res_gd2=res_gd2,&_temp452_res_gd2) : &res_gd2);
+    pw_gd1  = _pw_gd1.fixedflag ?  ((void)(res_gd1*4), pw_gd1) : res_gd1*4;
+    pw_gd2  = _pw_gd2.fixedflag ?  ((void)(res_gd2*4), pw_gd2) : res_gd2*4;
+
     if ( (exist(opdiffuse) == PSD_ON) && (tensor_flag == PSD_OFF) )
     {
         /* Load Diffusion Vector Matrix */
@@ -13440,7 +13590,7 @@ else
 
     /* Silent Mode  05/19/2005 YI */
     /* Get gradient spec for silent mode */
-    getSilentSpec(exist(opsilent), _grad_spec_ctrl.fixedflag ? (_temp451_grad_spec_ctrl=grad_spec_ctrl,&_temp451_grad_spec_ctrl) : &grad_spec_ctrl, _glimit.fixedflag ? (_temp452_glimit=glimit,&_temp452_glimit) : &glimit, _srate.fixedflag ? (_temp453_srate=srate,&_temp453_srate) : &srate);
+    getSilentSpec(exist(opsilent), _grad_spec_ctrl.fixedflag ? (_temp453_grad_spec_ctrl=grad_spec_ctrl,&_temp453_grad_spec_ctrl) : &grad_spec_ctrl, _glimit.fixedflag ? (_temp454_glimit=glimit,&_temp454_glimit) : &glimit, _srate.fixedflag ? (_temp455_srate=srate,&_temp455_srate) : &srate);
 
     /* GEHmr01834, GEHmr02647 */
     if( (isSVSystem()) && (exist(opdiffuse) == PSD_ON) &&
@@ -13548,7 +13698,8 @@ else
         dpc_flag  = _dpc_flag.fixedflag ?  ((void)(PSD_OFF), dpc_flag) : PSD_OFF;
     }
 
-    /* granty turn off dpc_flag by default */
+
+   /* granty turn off dpc_flag by default */
     dpc_flag  = _dpc_flag.fixedflag ?  ((void)(PSD_OFF), dpc_flag) : PSD_OFF;
 
     if(dpc_flag)
@@ -15182,17 +15333,17 @@ else
 
         if (rfov_flag)
         {
-            setuprfpulse(RF1_SLOT, _pw_rf1.fixedflag ? (_temp454_pw_rf1=pw_rf1,&_temp454_pw_rf1) : &pw_rf1, _a_rf1.fixedflag ? (_temp455_a_rf1=a_rf1,&_temp455_a_rf1) : &a_rf1, ex_abswidth, ex_effwidth, ex_area,
+            setuprfpulse(RF1_SLOT, _pw_rf1.fixedflag ? (_temp456_pw_rf1=pw_rf1,&_temp456_pw_rf1) : &pw_rf1, _a_rf1.fixedflag ? (_temp457_a_rf1=a_rf1,&_temp457_a_rf1) : &a_rf1, ex_abswidth, ex_effwidth, ex_area,
                          ex_dtycyc, ex_maxpw, 1, ex_max_b1, ex_max_int_b1_sqr, ex_max_rms_b1,
-                         ex_nom_flip, _flip_rf1.fixedflag ? (_temp456_flip_rf1=flip_rf1,&_temp456_flip_rf1) : &flip_rf1, (float) pw_rf1, bw_rf1,
+                         ex_nom_flip, _flip_rf1.fixedflag ? (_temp458_flip_rf1=flip_rf1,&_temp458_flip_rf1) : &flip_rf1, (float) pw_rf1, bw_rf1,
                          PSD_APS2_ON+PSD_MPS2_ON+PSD_SCAN_ON, (char ) 0, hrf1b, 1.0,
-                         _res_rf1.fixedflag ? (_temp457_res_rf1=res_rf1,&_temp457_res_rf1) : &res_rf1, 1, _wg_rf1.fixedflag ? (_temp458_wg_rf1=wg_rf1,&_temp458_wg_rf1) : &wg_rf1, 1, rfpulse);
+                         _res_rf1.fixedflag ? (_temp459_res_rf1=res_rf1,&_temp459_res_rf1) : &res_rf1, 1, _wg_rf1.fixedflag ? (_temp460_wg_rf1=wg_rf1,&_temp460_wg_rf1) : &wg_rf1, 1, rfpulse);
             /*** SVBranch: HCSDM00259122  - FOCUS walk sat ***/         
             if ( (walk_sat_flag) && (rfov_flag) )
             {          
                 setuprfpulse(RFWK_SLOT,             /* index into rfpulse structure array */
-                             _pw_rfwk.fixedflag ? (_temp459_pw_rfwk=pw_rfwk,&_temp459_pw_rfwk) : &pw_rfwk,              /* pointer to pulse width (us) */
-                             _a_rfwk.fixedflag ? (_temp460_a_rfwk=a_rfwk,&_temp460_a_rfwk) : &a_rfwk,               /* pointer to amplitude (relative) */
+                             _pw_rfwk.fixedflag ? (_temp461_pw_rfwk=pw_rfwk,&_temp461_pw_rfwk) : &pw_rfwk,              /* pointer to pulse width (us) */
+                             _a_rfwk.fixedflag ? (_temp462_a_rfwk=a_rfwk,&_temp462_a_rfwk) : &a_rfwk,               /* pointer to amplitude (relative) */
                              SAR_ABSWIDTH_RFWK,
                              SAR_EFFWIDTH_RFWK,
                              SAR_AREA_RFWK,         
@@ -15203,16 +15354,16 @@ else
                              SAR_MAX_INT_B1_SQ_RFWK, 
                              SAR_MAX_RMS_B1_RFWK,
                              SAR_NOM_FA_RFWK, 
-                             _flip_rfwk.fixedflag ? (_temp461_flip_rfwk=flip_rfwk,&_temp461_flip_rfwk) : &flip_rfwk,             /* pointer to actual flip angle */
+                             _flip_rfwk.fixedflag ? (_temp463_flip_rfwk=flip_rfwk,&_temp463_flip_rfwk) : &flip_rfwk,             /* pointer to actual flip angle */
                              SAR_NOM_PW_RFWK, 
                              SAR_NOM_BW_RFWK,
                              PSD_APS2_ON+PSD_MPS2_ON+PSD_SCAN_ON,
                              (char) 0,                /* flag for pulse used in TG setting */
                              hrfwkb,                  /* iso-delay */
                              1.0,                     /* duty cycle scale factor */
-                             _res_rfwk.fixedflag ? (_temp462_res_rfwk=res_rfwk,&_temp462_res_rfwk) : &res_rfwk,            
+                             _res_rfwk.fixedflag ? (_temp464_res_rfwk=res_rfwk,&_temp464_res_rfwk) : &res_rfwk,            
                              0,                       /* external grad wave or not */
-                             _wg_rfwk.fixedflag ? (_temp463_wg_rfwk=wg_rfwk,&_temp463_wg_rfwk) : &wg_rfwk,                /* pointer to sequencer type */
+                             _wg_rfwk.fixedflag ? (_temp465_wg_rfwk=wg_rfwk,&_temp465_wg_rfwk) : &wg_rfwk,                /* pointer to sequencer type */
                              2,                       /* Hadamard Factor */
                              rfpulse);                               
             }                             
@@ -15232,21 +15383,21 @@ else
         else
         {
             if (mux_flag == PSD_OFF) {
-                setuprfpulse(RF1_SLOT, _pw_rf1.fixedflag ? (_temp464_pw_rf1=pw_rf1,&_temp464_pw_rf1) : &pw_rf1, _a_rf1.fixedflag ? (_temp465_a_rf1=a_rf1,&_temp465_a_rf1) : &a_rf1, SAR_ABS_FL901MC, SAR_PFL901MC,
+                setuprfpulse(RF1_SLOT, _pw_rf1.fixedflag ? (_temp466_pw_rf1=pw_rf1,&_temp466_pw_rf1) : &pw_rf1, _a_rf1.fixedflag ? (_temp467_a_rf1=a_rf1,&_temp467_a_rf1) : &a_rf1, SAR_ABS_FL901MC, SAR_PFL901MC,
                              SAR_AFL901MC, SAR_DTYCYC_FL901MC, SAR_MAXPW_FL901MC, 1,
                              MAX_B1_FL901MC_90, MAX_INT_B1_SQ_FL901MC_90,
-                             MAX_RMS_B1_FL901MC_90, 90.0, _flip_rf1.fixedflag ? (_temp466_flip_rf1=flip_rf1,&_temp466_flip_rf1) : &flip_rf1, (float)PSD_NOM_PW_FL901MC,
+                             MAX_RMS_B1_FL901MC_90, 90.0, _flip_rf1.fixedflag ? (_temp468_flip_rf1=flip_rf1,&_temp468_flip_rf1) : &flip_rf1, (float)PSD_NOM_PW_FL901MC,
                              NOM_BW_FL901MC_RF1, PSD_APS2_ON + PSD_MPS2_ON + PSD_SCAN_ON,
-                             0, hrf1b, 1.0, _res_rf1.fixedflag ? (_temp467_res_rf1=res_rf1,&_temp467_res_rf1) : &res_rf1, 0, _wg_rf1.fixedflag ? (_temp468_wg_rf1=wg_rf1,&_temp468_wg_rf1) : &wg_rf1, 1, rfpulse);
+                             0, hrf1b, 1.0, _res_rf1.fixedflag ? (_temp469_res_rf1=res_rf1,&_temp469_res_rf1) : &res_rf1, 0, _wg_rf1.fixedflag ? (_temp470_wg_rf1=wg_rf1,&_temp470_wg_rf1) : &wg_rf1, 1, rfpulse);
             }
         }
         if (mux_flag == PSD_OFF) {
-            setuprfpulse(RF2_SLOT, _pw_rf2.fixedflag ? (_temp469_pw_rf2=pw_rf2,&_temp469_pw_rf2) : &pw_rf2, _a_rf2.fixedflag ? (_temp470_a_rf2=a_rf2,&_temp470_a_rf2) : &a_rf2, SAR_ABS_SE1B4, SAR_PSE1B4,
+            setuprfpulse(RF2_SLOT, _pw_rf2.fixedflag ? (_temp471_pw_rf2=pw_rf2,&_temp471_pw_rf2) : &pw_rf2, _a_rf2.fixedflag ? (_temp472_a_rf2=a_rf2,&_temp472_a_rf2) : &a_rf2, SAR_ABS_SE1B4, SAR_PSE1B4,
                          SAR_ASE1B4, SAR_DTYCYC_SE1B4, SAR_MAXPW_SE1B4, 1,
                          MAX_B1_SE1B4_180, MAX_INT_B1_SQ_SE1B4_180,
-                         MAX_RMS_B1_SE1B4_180, 180.0, _flip_rf2.fixedflag ? (_temp471_flip_rf2=flip_rf2,&_temp471_flip_rf2) : &flip_rf2, (float)PSD_NOM_PW_SE1B4,
+                         MAX_RMS_B1_SE1B4_180, 180.0, _flip_rf2.fixedflag ? (_temp473_flip_rf2=flip_rf2,&_temp473_flip_rf2) : &flip_rf2, (float)PSD_NOM_PW_SE1B4,
                          NOM_BW_SE1B4, PSD_APS2_ON + PSD_MPS2_ON + PSD_SCAN_ON, 0,
-                         hrf2b, 1.0, _res_rf2.fixedflag ? (_temp472_res_rf2=res_rf2,&_temp472_res_rf2) : &res_rf2, 0, _wg_rf2.fixedflag ? (_temp473_wg_rf2=wg_rf2,&_temp473_wg_rf2) : &wg_rf2, 1, rfpulse);
+                         hrf2b, 1.0, _res_rf2.fixedflag ? (_temp474_res_rf2=res_rf2,&_temp474_res_rf2) : &res_rf2, 0, _wg_rf2.fixedflag ? (_temp475_wg_rf2=wg_rf2,&_temp475_wg_rf2) : &wg_rf2, 1, rfpulse);
             verse_rf2  = _verse_rf2.fixedflag ?  ((void)(0), verse_rf2) : 0;
         } 
 
@@ -15260,21 +15411,21 @@ else
     } 
     else 
     {
-        setuprfpulse(RF1_SLOT, _pw_rf1.fixedflag ? (_temp474_pw_rf1=pw_rf1,&_temp474_pw_rf1) : &pw_rf1, _a_rf1.fixedflag ? (_temp475_a_rf1=a_rf1,&_temp475_a_rf1) : &a_rf1, SAR_ABS_GR30L, SAR_PGR30L,
+        setuprfpulse(RF1_SLOT, _pw_rf1.fixedflag ? (_temp476_pw_rf1=pw_rf1,&_temp476_pw_rf1) : &pw_rf1, _a_rf1.fixedflag ? (_temp477_a_rf1=a_rf1,&_temp477_a_rf1) : &a_rf1, SAR_ABS_GR30L, SAR_PGR30L,
                      SAR_AGR30L, SAR_DTYCYC_GR30L, SAR_MAXPW_GR30L, 1,
                      MAX_B1_GR30L, MAX_INT_B1_SQ_GR30L, MAX_RMS_B1_GR30L,
-                     30.0, _flip_rf1.fixedflag ? (_temp476_flip_rf1=flip_rf1,&_temp476_flip_rf1) : &flip_rf1, (float)PSD_NOM_PW_GR30, NOM_BW_GR30L,
+                     30.0, _flip_rf1.fixedflag ? (_temp478_flip_rf1=flip_rf1,&_temp478_flip_rf1) : &flip_rf1, (float)PSD_NOM_PW_GR30, NOM_BW_GR30L,
                      PSD_APS2_ON + PSD_MPS2_ON + PSD_SCAN_ON, 0,
-                     hrf1b, 1.0, _res_rf1.fixedflag ? (_temp477_res_rf1=res_rf1,&_temp477_res_rf1) : &res_rf1, 0, _wg_rf1.fixedflag ? (_temp478_wg_rf1=wg_rf1,&_temp478_wg_rf1) : &wg_rf1, 1, rfpulse);
+                     hrf1b, 1.0, _res_rf1.fixedflag ? (_temp479_res_rf1=res_rf1,&_temp479_res_rf1) : &res_rf1, 0, _wg_rf1.fixedflag ? (_temp480_wg_rf1=wg_rf1,&_temp480_wg_rf1) : &wg_rf1, 1, rfpulse);
 
         if (PSD_OFF == mux_flag)
         {
-            setuprfpulse(RF2_SLOT, _pw_rf2.fixedflag ? (_temp479_pw_rf2=pw_rf2,&_temp479_pw_rf2) : &pw_rf2, _a_rf2.fixedflag ? (_temp480_a_rf2=a_rf2,&_temp480_a_rf2) : &a_rf2, SAR_ABS_SE1B4, SAR_PSE1B4,
+            setuprfpulse(RF2_SLOT, _pw_rf2.fixedflag ? (_temp481_pw_rf2=pw_rf2,&_temp481_pw_rf2) : &pw_rf2, _a_rf2.fixedflag ? (_temp482_a_rf2=a_rf2,&_temp482_a_rf2) : &a_rf2, SAR_ABS_SE1B4, SAR_PSE1B4,
                          SAR_ASE1B4, SAR_DTYCYC_SE1B4, SAR_MAXPW_SE1B4, 1,
                          MAX_B1_SE1B4_180, MAX_INT_B1_SQ_SE1B4_180,
-                         MAX_RMS_B1_SE1B4_180, 180.0, _flip_rf2.fixedflag ? (_temp481_flip_rf2=flip_rf2,&_temp481_flip_rf2) : &flip_rf2, (float)PSD_NOM_PW_SE1B4,
+                         MAX_RMS_B1_SE1B4_180, 180.0, _flip_rf2.fixedflag ? (_temp483_flip_rf2=flip_rf2,&_temp483_flip_rf2) : &flip_rf2, (float)PSD_NOM_PW_SE1B4,
                          NOM_BW_SE1B4, PSD_APS2_ON + PSD_MPS2_ON + PSD_SCAN_ON, 0,
-                         hrf2b, 1.0, _res_rf2.fixedflag ? (_temp482_res_rf2=res_rf2,&_temp482_res_rf2) : &res_rf2, 0, _wg_rf2.fixedflag ? (_temp483_wg_rf2=wg_rf2,&_temp483_wg_rf2) : &wg_rf2, 1, rfpulse);
+                         hrf2b, 1.0, _res_rf2.fixedflag ? (_temp484_res_rf2=res_rf2,&_temp484_res_rf2) : &res_rf2, 0, _wg_rf2.fixedflag ? (_temp485_wg_rf2=wg_rf2,&_temp485_wg_rf2) : &wg_rf2, 1, rfpulse);
         }
     }
 
@@ -15299,7 +15450,7 @@ else
         rfpulse[RF0_SLOT].max_b1 = 0.02934;
      
         rfpulse[RF0_SLOT].nom_fa = 43.82; /* flip angle to make a_rf0/a_rf2=0.825*/
-        rfpulse[RF0_SLOT].act_fa = _flip_rf0.fixedflag ? (_temp484_flip_rf0=flip_rf0,&_temp484_flip_rf0) : &flip_rf0;
+        rfpulse[RF0_SLOT].act_fa = _flip_rf0.fixedflag ? (_temp486_flip_rf0=flip_rf0,&_temp486_flip_rf0) : &flip_rf0;
         rfpulse[RF0_SLOT].nom_pw = PSD_INV_RF0_PW;
         rfpulse[RF0_SLOT].max_rms_b1=0.0163276;
         rfpulse[RF0_SLOT].max_int_b1_sq=0.00230333;
@@ -15454,7 +15605,7 @@ else
     pw_gzrf2r1d  = _pw_gzrf2r1d.fixedflag ?  ((void)(RUP_GRD(loggrd.zrt)), pw_gzrf2r1d) : RUP_GRD(loggrd.zrt);
 
     /* Seqtype(MPMP, XRR, NCAT,CAT  needed for several routines */
-    if (seqtype(_seq_type.fixedflag ? (_temp485_seq_type=seq_type,&_temp485_seq_type) : &seq_type) == FAILURE) 
+    if (seqtype(_seq_type.fixedflag ? (_temp487_seq_type=seq_type,&_temp487_seq_type) : &seq_type) == FAILURE) 
     {
         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "seqtype" );
         return FAILURE;
@@ -15774,7 +15925,7 @@ else
     picasar = (float)cave_sar; /* Coil SAR report to plasma */
     pipsar = (float)peak_sar; /* Report to plasma */
     pib1rms = (float)b1rms; /* Report predicted b1rms value on the UI */
-    if (FAILURE == Monitor_Eval( rfpulse, (int)RF_FREE, _monave_sar.fixedflag ? (_temp486_monave_sar=monave_sar,&_temp486_monave_sar) : &monave_sar, _moncave_sar.fixedflag ? (_temp487_moncave_sar=moncave_sar,&_temp487_moncave_sar) : &moncave_sar, _monpeak_sar.fixedflag ? (_temp488_monpeak_sar=monpeak_sar,&_temp488_monpeak_sar) : &monpeak_sar ))
+    if (FAILURE == Monitor_Eval( rfpulse, (int)RF_FREE, _monave_sar.fixedflag ? (_temp488_monave_sar=monave_sar,&_temp488_monave_sar) : &monave_sar, _moncave_sar.fixedflag ? (_temp489_moncave_sar=moncave_sar,&_temp489_moncave_sar) : &moncave_sar, _monpeak_sar.fixedflag ? (_temp490_monpeak_sar=monpeak_sar,&_temp490_monpeak_sar) : &monpeak_sar ))
     {
         epic_error(use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
                    STRING_ARG, "Monitor_Eval");
@@ -17182,7 +17333,7 @@ cveval1( void )
         return FAILURE;
     }
 
-    getminesp(echo1_filt, xtr_offset, intleaves, hrdwr_period, vrgfsamp, _minesp.fixedflag ? (_temp489_minesp=minesp,&_temp489_minesp) : &minesp);
+    getminesp(echo1_filt, xtr_offset, intleaves, hrdwr_period, vrgfsamp, _minesp.fixedflag ? (_temp491_minesp=minesp,&_temp491_minesp) : &minesp);
 
     /* There is a bug in epigradopt for non-vrg.  Bump up pw_gxwad */
     pw_gxwad  = _pw_gxwad.fixedflag ?  ((void)(RUP_GRD(pw_gxwad)), pw_gxwad) : RUP_GRD(pw_gxwad);
@@ -17327,14 +17478,14 @@ cveval1( void )
 
     if ((PSD_OFF == rfov_flag) && (PSD_OFF == mux_flag))
     {
-        if (ampslice(_a_gzrf1.fixedflag ? (_temp490_a_gzrf1=a_gzrf1,&_temp490_a_gzrf1) : &a_gzrf1, bw_rf1, exist(opslthick), gscale_rf1, TYPDEF)
+        if (ampslice(_a_gzrf1.fixedflag ? (_temp492_a_gzrf1=a_gzrf1,&_temp492_a_gzrf1) : &a_gzrf1, bw_rf1, exist(opslthick), gscale_rf1, TYPDEF)
             == FAILURE)
         {
             epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "ampslice" );
             return FAILURE;
         }
         /* optimize attack and decay ramps */
-        if (optramp(_pw_gzrf1d.fixedflag ? (_temp491_pw_gzrf1d=pw_gzrf1d,&_temp491_pw_gzrf1d) : &pw_gzrf1d, a_gzrf1, loggrd.tz_xyz, loggrd.zrt*loggrd.scale_3axis_risetime, TYPDEF) == FAILURE)
+        if (optramp(_pw_gzrf1d.fixedflag ? (_temp493_pw_gzrf1d=pw_gzrf1d,&_temp493_pw_gzrf1d) : &pw_gzrf1d, a_gzrf1, loggrd.tz_xyz, loggrd.zrt*loggrd.scale_3axis_risetime, TYPDEF) == FAILURE)
         {
             epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "optramp:pw_gzrf1d" );
             return FAILURE;
@@ -17355,7 +17506,7 @@ cveval1( void )
         temp_slthick  = _temp_slthick.fixedflag ?  ((void)(exist(opslthick)), temp_slthick) : exist(opslthick);
     }
 
-    if (ampslice(_a_gzrf2.fixedflag ? (_temp492_a_gzrf2=a_gzrf2,&_temp492_a_gzrf2) : &a_gzrf2, bw_rf2, temp_slthick, gscale_rf2, TYPDEF)== FAILURE)
+    if (ampslice(_a_gzrf2.fixedflag ? (_temp494_a_gzrf2=a_gzrf2,&_temp494_a_gzrf2) : &a_gzrf2, bw_rf2, temp_slthick, gscale_rf2, TYPDEF)== FAILURE)
     {
         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "ampslice:a_gzrf2" );
         return FAILURE;
@@ -17369,7 +17520,7 @@ cveval1( void )
     }
 
     ivslthick  = _ivslthick.fixedflag ?  ((void)(get_act_phase_fov()), ivslthick) : get_act_phase_fov();
-    if (ampslice(_a_gyrf2iv.fixedflag ? (_temp493_a_gyrf2iv=a_gyrf2iv,&_temp493_a_gyrf2iv) : &a_gyrf2iv, bw_rf2, ivslthick, gscale_rf2, TYPDEF) == FAILURE) 
+    if (ampslice(_a_gyrf2iv.fixedflag ? (_temp495_a_gyrf2iv=a_gyrf2iv,&_temp495_a_gyrf2iv) : &a_gyrf2iv, bw_rf2, ivslthick, gscale_rf2, TYPDEF) == FAILURE) 
     {
         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "ampslice:a_gyrf2iv" );
         return FAILURE;
@@ -17384,7 +17535,7 @@ cveval1( void )
 	{  /* refocus pulse on logical Y */
             gradz[GZRF2_SLOT].num = 0;
             grady[GYRF2IV_SLOT].num = 1;
-            if (optramp(_pw_gyrf2iva.fixedflag ? (_temp494_pw_gyrf2iva=pw_gyrf2iva,&_temp494_pw_gyrf2iva) : &pw_gyrf2iva, loggrd.ty_xyz, loggrd.ty, loggrd.yrt*loggrd.scale_3axis_risetime, TYPDEF)
+            if (optramp(_pw_gyrf2iva.fixedflag ? (_temp496_pw_gyrf2iva=pw_gyrf2iva,&_temp496_pw_gyrf2iva) : &pw_gyrf2iva, loggrd.ty_xyz, loggrd.ty, loggrd.yrt*loggrd.scale_3axis_risetime, TYPDEF)
                 == FAILURE) 
 	    {
                 epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "optramp:pw_gyrf2iva" );
@@ -17423,13 +17574,13 @@ cveval1( void )
     
     rfpulse[RF1_SLOT].num = 1;
 	
-    if (optramp(_pw_gzrf2l1a.fixedflag ? (_temp495_pw_gzrf2l1a=pw_gzrf2l1a,&_temp495_pw_gzrf2l1a) : &pw_gzrf2l1a, loggrd.tz_xyz, loggrd.tz, loggrd.zrt*loggrd.scale_3axis_risetime, TYPDEF) == FAILURE) 
+    if (optramp(_pw_gzrf2l1a.fixedflag ? (_temp497_pw_gzrf2l1a=pw_gzrf2l1a,&_temp497_pw_gzrf2l1a) : &pw_gzrf2l1a, loggrd.tz_xyz, loggrd.tz, loggrd.zrt*loggrd.scale_3axis_risetime, TYPDEF) == FAILURE) 
     {
         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "optramp:pw_gzrf2l1a" );
         return FAILURE;
     }
     
-    if (optramp(_pw_gzrf2l1d.fixedflag ? (_temp496_pw_gzrf2l1d=pw_gzrf2l1d,&_temp496_pw_gzrf2l1d) : &pw_gzrf2l1d, fabs(a_gzrf2l1-a_gzrf2), loggrd.tz_xyz*loggrd.scale_3axis_risetime,
+    if (optramp(_pw_gzrf2l1d.fixedflag ? (_temp498_pw_gzrf2l1d=pw_gzrf2l1d,&_temp498_pw_gzrf2l1d) : &pw_gzrf2l1d, fabs(a_gzrf2l1-a_gzrf2), loggrd.tz_xyz*loggrd.scale_3axis_risetime,
                 loggrd.zrt*loggrd.scale_3axis_risetime, TYPDEF) == FAILURE)
         return FAILURE;
     
@@ -17536,12 +17687,12 @@ cveval1( void )
         }
         else 
         {
-            rampmoments(0.0, a_gzrf1, pw_gzrf1d, invertphase, _pulsepos.fixedflag ? (_temp497_pulsepos=pulsepos,&_temp497_pulsepos) : &pulsepos,
-                        _zeromoment.fixedflag ? (_temp498_zeromoment=zeromoment,&_temp498_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp499_firstmoment=firstmoment,&_temp499_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp500_zeromomentsum=zeromomentsum,&_temp500_zeromomentsum) : &zeromomentsum,
-                        _firstmomentsum.fixedflag ? (_temp501_firstmomentsum=firstmomentsum,&_temp501_firstmomentsum) : &firstmomentsum);
-            rampmoments(a_gzrf1, a_gzrf1, rfExIso, invertphase, _pulsepos.fixedflag ? (_temp502_pulsepos=pulsepos,&_temp502_pulsepos) : &pulsepos,
-                        _zeromoment.fixedflag ? (_temp503_zeromoment=zeromoment,&_temp503_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp504_firstmoment=firstmoment,&_temp504_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp505_zeromomentsum=zeromomentsum,&_temp505_zeromomentsum) : &zeromomentsum,
-                        _firstmomentsum.fixedflag ? (_temp506_firstmomentsum=firstmomentsum,&_temp506_firstmomentsum) : &firstmomentsum);
+            rampmoments(0.0, a_gzrf1, pw_gzrf1d, invertphase, _pulsepos.fixedflag ? (_temp499_pulsepos=pulsepos,&_temp499_pulsepos) : &pulsepos,
+                        _zeromoment.fixedflag ? (_temp500_zeromoment=zeromoment,&_temp500_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp501_firstmoment=firstmoment,&_temp501_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp502_zeromomentsum=zeromomentsum,&_temp502_zeromomentsum) : &zeromomentsum,
+                        _firstmomentsum.fixedflag ? (_temp503_firstmomentsum=firstmomentsum,&_temp503_firstmomentsum) : &firstmomentsum);
+            rampmoments(a_gzrf1, a_gzrf1, rfExIso, invertphase, _pulsepos.fixedflag ? (_temp504_pulsepos=pulsepos,&_temp504_pulsepos) : &pulsepos,
+                        _zeromoment.fixedflag ? (_temp505_zeromoment=zeromoment,&_temp505_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp506_firstmoment=firstmoment,&_temp506_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp507_zeromomentsum=zeromomentsum,&_temp507_zeromomentsum) : &zeromomentsum,
+                        _firstmomentsum.fixedflag ? (_temp508_firstmomentsum=firstmomentsum,&_temp508_firstmomentsum) : &firstmomentsum);
         }
 
         if (exist(oppseq) == PSD_SE) 
@@ -17553,31 +17704,31 @@ cveval1( void )
             pw_gzrf2l1a  = _pw_gzrf2l1a.fixedflag ?  ((void)(pw_gzrf2r1d), pw_gzrf2l1a) : pw_gzrf2r1d;
             pulsepos  = _pulsepos.fixedflag ?       
                       ((void)(-(rfExIso+pw_gzrf1d)+exist(opte)-(pw_gzrf2l1a+pw_gzrf2l1+pw_gzrf2l1d+pw_gzrf2/2)), pulsepos) : -(rfExIso+pw_gzrf1d)+exist(opte)-(pw_gzrf2l1a+pw_gzrf2l1+pw_gzrf2l1d+pw_gzrf2/2);
-            rampmoments(0.0, a_gzrf2l1, pw_gzrf2l1a, invertphase, _pulsepos.fixedflag ? (_temp507_pulsepos=pulsepos,&_temp507_pulsepos) : &pulsepos,
-                        _zeromoment.fixedflag ? (_temp508_zeromoment=zeromoment,&_temp508_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp509_firstmoment=firstmoment,&_temp509_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp510_zeromomentsum=zeromomentsum,&_temp510_zeromomentsum) : &zeromomentsum,
-                        _firstmomentsum.fixedflag ? (_temp511_firstmomentsum=firstmomentsum,&_temp511_firstmomentsum) : &firstmomentsum);
-            rampmoments(a_gzrf2l1, a_gzrf2l1, pw_gzrf2l1, invertphase, _pulsepos.fixedflag ? (_temp512_pulsepos=pulsepos,&_temp512_pulsepos) : &pulsepos,
-                        _zeromoment.fixedflag ? (_temp513_zeromoment=zeromoment,&_temp513_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp514_firstmoment=firstmoment,&_temp514_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp515_zeromomentsum=zeromomentsum,&_temp515_zeromomentsum) : &zeromomentsum,
-                        _firstmomentsum.fixedflag ? (_temp516_firstmomentsum=firstmomentsum,&_temp516_firstmomentsum) : &firstmomentsum);
-            rampmoments(a_gzrf2l1, a_gzrf2, pw_gzrf2l1d, invertphase, _pulsepos.fixedflag ? (_temp517_pulsepos=pulsepos,&_temp517_pulsepos) : &pulsepos,
-                        _zeromoment.fixedflag ? (_temp518_zeromoment=zeromoment,&_temp518_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp519_firstmoment=firstmoment,&_temp519_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp520_zeromomentsum=zeromomentsum,&_temp520_zeromomentsum) : &zeromomentsum,
-                        _firstmomentsum.fixedflag ? (_temp521_firstmomentsum=firstmomentsum,&_temp521_firstmomentsum) : &firstmomentsum);
-            rampmoments(a_gzrf2, a_gzrf2, pw_gzrf2/2, invertphase, _pulsepos.fixedflag ? (_temp522_pulsepos=pulsepos,&_temp522_pulsepos) : &pulsepos,
-                        _zeromoment.fixedflag ? (_temp523_zeromoment=zeromoment,&_temp523_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp524_firstmoment=firstmoment,&_temp524_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp525_zeromomentsum=zeromomentsum,&_temp525_zeromomentsum) : &zeromomentsum,
-                        _firstmomentsum.fixedflag ? (_temp526_firstmomentsum=firstmomentsum,&_temp526_firstmomentsum) : &firstmomentsum);
+            rampmoments(0.0, a_gzrf2l1, pw_gzrf2l1a, invertphase, _pulsepos.fixedflag ? (_temp509_pulsepos=pulsepos,&_temp509_pulsepos) : &pulsepos,
+                        _zeromoment.fixedflag ? (_temp510_zeromoment=zeromoment,&_temp510_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp511_firstmoment=firstmoment,&_temp511_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp512_zeromomentsum=zeromomentsum,&_temp512_zeromomentsum) : &zeromomentsum,
+                        _firstmomentsum.fixedflag ? (_temp513_firstmomentsum=firstmomentsum,&_temp513_firstmomentsum) : &firstmomentsum);
+            rampmoments(a_gzrf2l1, a_gzrf2l1, pw_gzrf2l1, invertphase, _pulsepos.fixedflag ? (_temp514_pulsepos=pulsepos,&_temp514_pulsepos) : &pulsepos,
+                        _zeromoment.fixedflag ? (_temp515_zeromoment=zeromoment,&_temp515_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp516_firstmoment=firstmoment,&_temp516_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp517_zeromomentsum=zeromomentsum,&_temp517_zeromomentsum) : &zeromomentsum,
+                        _firstmomentsum.fixedflag ? (_temp518_firstmomentsum=firstmomentsum,&_temp518_firstmomentsum) : &firstmomentsum);
+            rampmoments(a_gzrf2l1, a_gzrf2, pw_gzrf2l1d, invertphase, _pulsepos.fixedflag ? (_temp519_pulsepos=pulsepos,&_temp519_pulsepos) : &pulsepos,
+                        _zeromoment.fixedflag ? (_temp520_zeromoment=zeromoment,&_temp520_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp521_firstmoment=firstmoment,&_temp521_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp522_zeromomentsum=zeromomentsum,&_temp522_zeromomentsum) : &zeromomentsum,
+                        _firstmomentsum.fixedflag ? (_temp523_firstmomentsum=firstmomentsum,&_temp523_firstmomentsum) : &firstmomentsum);
+            rampmoments(a_gzrf2, a_gzrf2, pw_gzrf2/2, invertphase, _pulsepos.fixedflag ? (_temp524_pulsepos=pulsepos,&_temp524_pulsepos) : &pulsepos,
+                        _zeromoment.fixedflag ? (_temp525_zeromoment=zeromoment,&_temp525_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp526_firstmoment=firstmoment,&_temp526_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp527_zeromomentsum=zeromomentsum,&_temp527_zeromomentsum) : &zeromomentsum,
+                        _firstmomentsum.fixedflag ? (_temp528_firstmomentsum=firstmomentsum,&_temp528_firstmomentsum) : &firstmomentsum);
             invertphase  = _invertphase.fixedflag ?  ((void)(1), invertphase) : 1;
-            rampmoments(a_gzrf2, a_gzrf2, pw_gzrf2/2, invertphase, _pulsepos.fixedflag ? (_temp527_pulsepos=pulsepos,&_temp527_pulsepos) : &pulsepos,
-                        _zeromoment.fixedflag ? (_temp528_zeromoment=zeromoment,&_temp528_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp529_firstmoment=firstmoment,&_temp529_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp530_zeromomentsum=zeromomentsum,&_temp530_zeromomentsum) : &zeromomentsum,
-                        _firstmomentsum.fixedflag ? (_temp531_firstmomentsum=firstmomentsum,&_temp531_firstmomentsum) : &firstmomentsum);
-            rampmoments(a_gzrf2, a_gzrf2r1, pw_gzrf2r1a, invertphase, _pulsepos.fixedflag ? (_temp532_pulsepos=pulsepos,&_temp532_pulsepos) : &pulsepos,
-                        _zeromoment.fixedflag ? (_temp533_zeromoment=zeromoment,&_temp533_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp534_firstmoment=firstmoment,&_temp534_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp535_zeromomentsum=zeromomentsum,&_temp535_zeromomentsum) : &zeromomentsum,
-                        _firstmomentsum.fixedflag ? (_temp536_firstmomentsum=firstmomentsum,&_temp536_firstmomentsum) : &firstmomentsum);
-            rampmoments(a_gzrf2r1, a_gzrf2r1, pw_gzrf2r1, invertphase, _pulsepos.fixedflag ? (_temp537_pulsepos=pulsepos,&_temp537_pulsepos) : &pulsepos,
-                        _zeromoment.fixedflag ? (_temp538_zeromoment=zeromoment,&_temp538_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp539_firstmoment=firstmoment,&_temp539_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp540_zeromomentsum=zeromomentsum,&_temp540_zeromomentsum) : &zeromomentsum,
-                        _firstmomentsum.fixedflag ? (_temp541_firstmomentsum=firstmomentsum,&_temp541_firstmomentsum) : &firstmomentsum);
-            rampmoments(a_gzrf2r1, 0.0, pw_gzrf2r1d, invertphase, _pulsepos.fixedflag ? (_temp542_pulsepos=pulsepos,&_temp542_pulsepos) : &pulsepos,
-                        _zeromoment.fixedflag ? (_temp543_zeromoment=zeromoment,&_temp543_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp544_firstmoment=firstmoment,&_temp544_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp545_zeromomentsum=zeromomentsum,&_temp545_zeromomentsum) : &zeromomentsum,
-                        _firstmomentsum.fixedflag ? (_temp546_firstmomentsum=firstmomentsum,&_temp546_firstmomentsum) : &firstmomentsum);
+            rampmoments(a_gzrf2, a_gzrf2, pw_gzrf2/2, invertphase, _pulsepos.fixedflag ? (_temp529_pulsepos=pulsepos,&_temp529_pulsepos) : &pulsepos,
+                        _zeromoment.fixedflag ? (_temp530_zeromoment=zeromoment,&_temp530_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp531_firstmoment=firstmoment,&_temp531_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp532_zeromomentsum=zeromomentsum,&_temp532_zeromomentsum) : &zeromomentsum,
+                        _firstmomentsum.fixedflag ? (_temp533_firstmomentsum=firstmomentsum,&_temp533_firstmomentsum) : &firstmomentsum);
+            rampmoments(a_gzrf2, a_gzrf2r1, pw_gzrf2r1a, invertphase, _pulsepos.fixedflag ? (_temp534_pulsepos=pulsepos,&_temp534_pulsepos) : &pulsepos,
+                        _zeromoment.fixedflag ? (_temp535_zeromoment=zeromoment,&_temp535_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp536_firstmoment=firstmoment,&_temp536_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp537_zeromomentsum=zeromomentsum,&_temp537_zeromomentsum) : &zeromomentsum,
+                        _firstmomentsum.fixedflag ? (_temp538_firstmomentsum=firstmomentsum,&_temp538_firstmomentsum) : &firstmomentsum);
+            rampmoments(a_gzrf2r1, a_gzrf2r1, pw_gzrf2r1, invertphase, _pulsepos.fixedflag ? (_temp539_pulsepos=pulsepos,&_temp539_pulsepos) : &pulsepos,
+                        _zeromoment.fixedflag ? (_temp540_zeromoment=zeromoment,&_temp540_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp541_firstmoment=firstmoment,&_temp541_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp542_zeromomentsum=zeromomentsum,&_temp542_zeromomentsum) : &zeromomentsum,
+                        _firstmomentsum.fixedflag ? (_temp543_firstmomentsum=firstmomentsum,&_temp543_firstmomentsum) : &firstmomentsum);
+            rampmoments(a_gzrf2r1, 0.0, pw_gzrf2r1d, invertphase, _pulsepos.fixedflag ? (_temp544_pulsepos=pulsepos,&_temp544_pulsepos) : &pulsepos,
+                        _zeromoment.fixedflag ? (_temp545_zeromoment=zeromoment,&_temp545_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp546_firstmoment=firstmoment,&_temp546_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp547_zeromomentsum=zeromomentsum,&_temp547_zeromomentsum) : &zeromomentsum,
+                        _firstmomentsum.fixedflag ? (_temp548_firstmomentsum=firstmomentsum,&_temp548_firstmomentsum) : &firstmomentsum);
             avail_zflow_time  = _avail_zflow_time.fixedflag ?         
                    
                 ((void)(exist(opte)-(rfExIso+pw_gzrf1d+pw_gzrf2l1a+pw_gzrf2l1+pw_gzrf2l1d+pw_gzrf2/2)), avail_zflow_time) : exist(opte)-(rfExIso+pw_gzrf1d+pw_gzrf2l1a+pw_gzrf2l1+pw_gzrf2l1d+pw_gzrf2/2);
@@ -17591,8 +17742,8 @@ cveval1( void )
         /* Calculate the z moment nulling pulses: gz1, gzmn */
         if (amppwgmn(zeromomentsum, firstmomentsum, 0.0, 0.0, avail_zflow_time,
                      loggrd.zbeta, loggrd.tz_xyz, loggrd.zrt*loggrd.scale_3axis_risetime, MIN_PLATEAU_TIME,
-                     _a_gz1.fixedflag ? (_temp547_a_gz1=a_gz1,&_temp547_a_gz1) : &a_gz1, _pw_gz1a.fixedflag ? (_temp548_pw_gz1a=pw_gz1a,&_temp548_pw_gz1a) : &pw_gz1a, _pw_gz1.fixedflag ? (_temp549_pw_gz1=pw_gz1,&_temp549_pw_gz1) : &pw_gz1, _pw_gz1d.fixedflag ? (_temp550_pw_gz1d=pw_gz1d,&_temp550_pw_gz1d) : &pw_gz1d, _a_gzmn.fixedflag ? (_temp551_a_gzmn=a_gzmn,&_temp551_a_gzmn) : &a_gzmn, _pw_gzmna.fixedflag ? (_temp552_pw_gzmna=pw_gzmna,&_temp552_pw_gzmna) : &pw_gzmna,
-                     _pw_gzmn.fixedflag ? (_temp553_pw_gzmn=pw_gzmn,&_temp553_pw_gzmn) : &pw_gzmn, _pw_gzmnd.fixedflag ? (_temp554_pw_gzmnd=pw_gzmnd,&_temp554_pw_gzmnd) : &pw_gzmnd) == FAILURE) {
+                     _a_gz1.fixedflag ? (_temp549_a_gz1=a_gz1,&_temp549_a_gz1) : &a_gz1, _pw_gz1a.fixedflag ? (_temp550_pw_gz1a=pw_gz1a,&_temp550_pw_gz1a) : &pw_gz1a, _pw_gz1.fixedflag ? (_temp551_pw_gz1=pw_gz1,&_temp551_pw_gz1) : &pw_gz1, _pw_gz1d.fixedflag ? (_temp552_pw_gz1d=pw_gz1d,&_temp552_pw_gz1d) : &pw_gz1d, _a_gzmn.fixedflag ? (_temp553_a_gzmn=a_gzmn,&_temp553_a_gzmn) : &a_gzmn, _pw_gzmna.fixedflag ? (_temp554_pw_gzmna=pw_gzmna,&_temp554_pw_gzmna) : &pw_gzmna,
+                     _pw_gzmn.fixedflag ? (_temp555_pw_gzmn=pw_gzmn,&_temp555_pw_gzmn) : &pw_gzmn, _pw_gzmnd.fixedflag ? (_temp556_pw_gzmnd=pw_gzmnd,&_temp556_pw_gzmnd) : &pw_gzmnd) == FAILURE) {
             /* don't trap the failure here; this will drive minimum te */
         }
         a_gz1  = _a_gz1.fixedflag ?  ((void)(-1.0), a_gz1) : a_gz1*-1.0;  /* Invert gz1 pulse */
@@ -17605,7 +17756,7 @@ cveval1( void )
 
         if (exist(oppseq) != PSD_SE) 
         {
-            if (amppwgz1(_a_gz1.fixedflag ? (_temp555_a_gz1=a_gz1,&_temp555_a_gz1) : &a_gz1, _pw_gz1.fixedflag ? (_temp556_pw_gz1=pw_gz1,&_temp556_pw_gz1) : &pw_gz1, _pw_gz1a.fixedflag ? (_temp557_pw_gz1a=pw_gz1a,&_temp557_pw_gz1a) : &pw_gz1a, _pw_gz1d.fixedflag ? (_temp558_pw_gz1d=pw_gz1d,&_temp558_pw_gz1d) : &pw_gz1d, area_gz1,
+            if (amppwgz1(_a_gz1.fixedflag ? (_temp557_a_gz1=a_gz1,&_temp557_a_gz1) : &a_gz1, _pw_gz1.fixedflag ? (_temp558_pw_gz1=pw_gz1,&_temp558_pw_gz1) : &pw_gz1, _pw_gz1a.fixedflag ? (_temp559_pw_gz1a=pw_gz1a,&_temp559_pw_gz1a) : &pw_gz1a, _pw_gz1d.fixedflag ? (_temp560_pw_gz1d=pw_gz1d,&_temp560_pw_gz1d) : &pw_gz1d, area_gz1,
                          avail_pwgz1, MIN_PLATEAU_TIME, loggrd.zrt*loggrd.scale_3axis_risetime,
                          loggrd.tz_xyz) == FAILURE) {
                 epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "amppwgz1" );
@@ -17617,7 +17768,7 @@ cveval1( void )
             if ((use_slice_fov_shift_blips) && (mux_flag == PSD_ON) && (mux_slices_rf1 > 1) && (slice_fov_shift_area > 0.0)) {
                 if(dpc_flag)
                 {
-                    if (amppwgz1(_a_gz1.fixedflag ? (_temp559_a_gz1=a_gz1,&_temp559_a_gz1) : &a_gz1, _pw_gz1.fixedflag ? (_temp560_pw_gz1=pw_gz1,&_temp560_pw_gz1) : &pw_gz1, _pw_gz1a.fixedflag ? (_temp561_pw_gz1a=pw_gz1a,&_temp561_pw_gz1a) : &pw_gz1a, _pw_gz1d.fixedflag ? (_temp562_pw_gz1d=pw_gz1d,&_temp562_pw_gz1d) : &pw_gz1d, fabs(slice_fov_shift_area/2) + fabs(area_gz1),
+                    if (amppwgz1(_a_gz1.fixedflag ? (_temp561_a_gz1=a_gz1,&_temp561_a_gz1) : &a_gz1, _pw_gz1.fixedflag ? (_temp562_pw_gz1=pw_gz1,&_temp562_pw_gz1) : &pw_gz1, _pw_gz1a.fixedflag ? (_temp563_pw_gz1a=pw_gz1a,&_temp563_pw_gz1a) : &pw_gz1a, _pw_gz1d.fixedflag ? (_temp564_pw_gz1d=pw_gz1d,&_temp564_pw_gz1d) : &pw_gz1d, fabs(slice_fov_shift_area/2) + fabs(area_gz1),
                                 avail_pwgz1, MIN_PLATEAU_TIME, loggrd.zrt*loggrd.scale_3axis_risetime,
                                 loggrd.tz_xyz) == FAILURE)
                     {
@@ -17627,7 +17778,7 @@ cveval1( void )
                 }
                 else
                 {
-                    if (amppwgz1(_a_gz1.fixedflag ? (_temp563_a_gz1=a_gz1,&_temp563_a_gz1) : &a_gz1, _pw_gz1.fixedflag ? (_temp564_pw_gz1=pw_gz1,&_temp564_pw_gz1) : &pw_gz1, _pw_gz1a.fixedflag ? (_temp565_pw_gz1a=pw_gz1a,&_temp565_pw_gz1a) : &pw_gz1a, _pw_gz1d.fixedflag ? (_temp566_pw_gz1d=pw_gz1d,&_temp566_pw_gz1d) : &pw_gz1d, slice_fov_shift_area/2,
+                    if (amppwgz1(_a_gz1.fixedflag ? (_temp565_a_gz1=a_gz1,&_temp565_a_gz1) : &a_gz1, _pw_gz1.fixedflag ? (_temp566_pw_gz1=pw_gz1,&_temp566_pw_gz1) : &pw_gz1, _pw_gz1a.fixedflag ? (_temp567_pw_gz1a=pw_gz1a,&_temp567_pw_gz1a) : &pw_gz1a, _pw_gz1d.fixedflag ? (_temp568_pw_gz1d=pw_gz1d,&_temp568_pw_gz1d) : &pw_gz1d, slice_fov_shift_area/2,
                                 avail_pwgz1, MIN_PLATEAU_TIME, loggrd.zrt*loggrd.scale_3axis_risetime,
                                 loggrd.tz_xyz) == FAILURE) {
                         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "amppwgz1" );
@@ -17637,7 +17788,7 @@ cveval1( void )
             }
             else if(rtb0_flag || dpc_flag)
             {
-                if (amppwgz1(_a_gz1.fixedflag ? (_temp567_a_gz1=a_gz1,&_temp567_a_gz1) : &a_gz1, _pw_gz1.fixedflag ? (_temp568_pw_gz1=pw_gz1,&_temp568_pw_gz1) : &pw_gz1, _pw_gz1a.fixedflag ? (_temp569_pw_gz1a=pw_gz1a,&_temp569_pw_gz1a) : &pw_gz1a, _pw_gz1d.fixedflag ? (_temp570_pw_gz1d=pw_gz1d,&_temp570_pw_gz1d) : &pw_gz1d, area_gz1,
+                if (amppwgz1(_a_gz1.fixedflag ? (_temp569_a_gz1=a_gz1,&_temp569_a_gz1) : &a_gz1, _pw_gz1.fixedflag ? (_temp570_pw_gz1=pw_gz1,&_temp570_pw_gz1) : &pw_gz1, _pw_gz1a.fixedflag ? (_temp571_pw_gz1a=pw_gz1a,&_temp571_pw_gz1a) : &pw_gz1a, _pw_gz1d.fixedflag ? (_temp572_pw_gz1d=pw_gz1d,&_temp572_pw_gz1d) : &pw_gz1d, area_gz1,
                              avail_pwgz1, MIN_PLATEAU_TIME, loggrd.zrt*loggrd.scale_3axis_risetime,
                              loggrd.tz_xyz) == FAILURE) {
                     epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "amppwgz1" );
@@ -17660,7 +17811,7 @@ cveval1( void )
                     if (amppwlcrsh(&gradz[GZRF2L1_SLOT], &gradz[GZRF2R1_SLOT],
                                 area_gz1*((ssgr_flag && (!dualspinecho_flag)) ? -1 : 1), 
                                 a_gzrf2, FMin(3, loggrd.tx_xyz, loggrd.ty_xyz, loggrd.tz_xyz),
-                                MIN_PLATEAU_TIME, loggrd.zrt*loggrd.scale_3axis_risetime, _pw_gzrf2a.fixedflag ? (_temp571_pw_gzrf2a=pw_gzrf2a,&_temp571_pw_gzrf2a) : &pw_gzrf2a) == FAILURE)
+                                MIN_PLATEAU_TIME, loggrd.zrt*loggrd.scale_3axis_risetime, _pw_gzrf2a.fixedflag ? (_temp573_pw_gzrf2a=pw_gzrf2a,&_temp573_pw_gzrf2a) : &pw_gzrf2a) == FAILURE)
                     {
                         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "amppwlcrush" );
                         return FAILURE;
@@ -17671,7 +17822,7 @@ cveval1( void )
                     if (amppwlcrsh(&gradz[GZRF2L1_SLOT], &gradz[GZRF2R1_SLOT],
                                 area_gz1*((ssgr_flag && (!dualspinecho_flag)) ? -1 : 1), 
                                 a_gzrf2, loggrd.tz_xyz, MIN_PLATEAU_TIME,
-                                loggrd.zrt*loggrd.scale_3axis_risetime, _pw_gzrf2a.fixedflag ? (_temp572_pw_gzrf2a=pw_gzrf2a,&_temp572_pw_gzrf2a) : &pw_gzrf2a) == FAILURE) 
+                                loggrd.zrt*loggrd.scale_3axis_risetime, _pw_gzrf2a.fixedflag ? (_temp574_pw_gzrf2a=pw_gzrf2a,&_temp574_pw_gzrf2a) : &pw_gzrf2a) == FAILURE) 
                     {
                         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "amppwlcrush" );
                         return FAILURE;
@@ -18163,7 +18314,7 @@ cveval1( void )
         }
     }
 
-    if (ChemSatEval(_cs_sattime.fixedflag ? (_temp573_cs_sattime=cs_sattime,&_temp573_cs_sattime) : &cs_sattime) == FAILURE) 
+    if (ChemSatEval(_cs_sattime.fixedflag ? (_temp575_cs_sattime=cs_sattime,&_temp575_cs_sattime) : &cs_sattime) == FAILURE) 
     {
         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "ChemSatEval" );
         return FAILURE;
@@ -18208,7 +18359,7 @@ cveval1( void )
             break;
     }
     
-    if (SpSatEval(_sp_sattime.fixedflag ? (_temp574_sp_sattime=sp_sattime,&_temp574_sp_sattime) : &sp_sattime) == FAILURE) 
+    if (SpSatEval(_sp_sattime.fixedflag ? (_temp576_sp_sattime=sp_sattime,&_temp576_sp_sattime) : &sp_sattime) == FAILURE) 
     {
         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "SpSatEval" );
         return FAILURE;
@@ -18963,7 +19114,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
     /* Find the amplitudes and pulse widths of the trapezoidal
        phase encoding pulse. */
 
-    if (amppwtpe(_a_gy1a.fixedflag ? (_temp575_a_gy1a=a_gy1a,&_temp575_a_gy1a) : &a_gy1a,_a_gy1b.fixedflag ? (_temp576_a_gy1b=a_gy1b,&_temp576_a_gy1b) : &a_gy1b,_pw_gy1.fixedflag ? (_temp577_pw_gy1=pw_gy1,&_temp577_pw_gy1) : &pw_gy1,_pw_gy1a.fixedflag ? (_temp578_pw_gy1a=pw_gy1a,&_temp578_pw_gy1a) : &pw_gy1a,_pw_gy1d.fixedflag ? (_temp579_pw_gy1d=pw_gy1d,&_temp579_pw_gy1d) : &pw_gy1d,
+    if (amppwtpe(_a_gy1a.fixedflag ? (_temp577_a_gy1a=a_gy1a,&_temp577_a_gy1a) : &a_gy1a,_a_gy1b.fixedflag ? (_temp578_a_gy1b=a_gy1b,&_temp578_a_gy1b) : &a_gy1b,_pw_gy1.fixedflag ? (_temp579_pw_gy1=pw_gy1,&_temp579_pw_gy1) : &pw_gy1,_pw_gy1a.fixedflag ? (_temp580_pw_gy1a=pw_gy1a,&_temp580_pw_gy1a) : &pw_gy1a,_pw_gy1d.fixedflag ? (_temp581_pw_gy1d=pw_gy1d,&_temp581_pw_gy1d) : &pw_gy1d,
                  loggrd.ty_xyz/endview_scale,loggrd.yrt*loggrd.scale_3axis_risetime,
                  area_gy1) == FAILURE)
     {
@@ -19086,7 +19237,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
         if(ir_on==PSD_ON)
         {
             /* determine the amplitude of IR pulse */
-            if (ampslice(_a_gzrf0.fixedflag ? (_temp580_a_gzrf0=a_gzrf0,&_temp580_a_gzrf0) : &a_gzrf0, bw_rf0, 
+            if (ampslice(_a_gzrf0.fixedflag ? (_temp582_a_gzrf0=a_gzrf0,&_temp582_a_gzrf0) : &a_gzrf0, bw_rf0, 
                          ((exist(opimode) == PSD_3D) ? exist(opvthick) : invthick),
                          gscale_rf0,TYPDEF)
                 == FAILURE)
@@ -19097,8 +19248,8 @@ if(fixed_acqs_debug == DEBUG_DEV) {
 
             /* Y Killer CVs */
             if (amppwgrad(yk0_killer_area, loggrd.ty_yz, 0.0, 0.0, loggrd.yrt,
-                          MIN_PLATEAU_TIME, _a_gyk0.fixedflag ? (_temp581_a_gyk0=a_gyk0,&_temp581_a_gyk0) : &a_gyk0, _pw_gyk0a.fixedflag ? (_temp582_pw_gyk0a=pw_gyk0a,&_temp582_pw_gyk0a) : &pw_gyk0a,
-                          _pw_gyk0.fixedflag ? (_temp583_pw_gyk0=pw_gyk0,&_temp583_pw_gyk0) : &pw_gyk0, _pw_gyk0d.fixedflag ? (_temp584_pw_gyk0d=pw_gyk0d,&_temp584_pw_gyk0d) : &pw_gyk0d) == FAILURE) {
+                          MIN_PLATEAU_TIME, _a_gyk0.fixedflag ? (_temp583_a_gyk0=a_gyk0,&_temp583_a_gyk0) : &a_gyk0, _pw_gyk0a.fixedflag ? (_temp584_pw_gyk0a=pw_gyk0a,&_temp584_pw_gyk0a) : &pw_gyk0a,
+                          _pw_gyk0.fixedflag ? (_temp585_pw_gyk0=pw_gyk0,&_temp585_pw_gyk0) : &pw_gyk0, _pw_gyk0d.fixedflag ? (_temp586_pw_gyk0d=pw_gyk0d,&_temp586_pw_gyk0d) : &pw_gyk0d) == FAILURE) {
                 epic_error(use_ermes, "%s failed in InversionEval.",
                            EM_PSD_SUPPORT_FAILURE,1,STRING_ARG,"amppwgrad:gyk0"); 
                 return FAILURE;
@@ -19172,7 +19323,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
 
     premid_rf90  = _premid_rf90.fixedflag ?       ((void)(optdel1-psd_card_hdwr_delay-td0), premid_rf90) : optdel1-psd_card_hdwr_delay-td0;
     if (imgtimutil(premid_rf90, seq_type, gating, 
-                   _avail_image_time.fixedflag ? (_temp585_avail_image_time=avail_image_time,&_temp585_avail_image_time) : &avail_image_time)==FAILURE)
+                   _avail_image_time.fixedflag ? (_temp587_avail_image_time=avail_image_time,&_temp587_avail_image_time) : &avail_image_time)==FAILURE)
         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "imgtimutil" );
     else
         act_tr  = _act_tr.fixedflag ?  ((void)(avail_image_time), act_tr) : avail_image_time;
@@ -19256,7 +19407,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
             opslquant  = _opslquant.fixedflag ?  ((void)(dwi_fphases), opslquant) : dwi_fphases;
     }
 
-    if (maxslquanttps(_max_bamslice.fixedflag ? (_temp586_max_bamslice=max_bamslice,&_temp586_max_bamslice) : &max_bamslice, (int)rhimsize, slice_size, 1, NULL) == FAILURE) {
+    if (maxslquanttps(_max_bamslice.fixedflag ? (_temp588_max_bamslice=max_bamslice,&_temp588_max_bamslice) : &max_bamslice, (int)rhimsize, slice_size, 1, NULL) == FAILURE) {
         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "maxslquanttps" );
         return FAILURE;
     }
@@ -19267,7 +19418,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
     ta_gxwn  = _ta_gxwn.fixedflag ?  ((void)((-1.0)*a_gxw), ta_gxwn) : (-1.0)*a_gxw;
     gradx[GXWP_SLOT].num = etl/2+(iref_etl/2+iref_etl%2);
     gradx[GXWN_SLOT].num = (etl+1)/2+iref_etl/2;
-    gradx[GXWN_SLOT].amp = _ta_gxwn.fixedflag ? (_temp587_ta_gxwn=ta_gxwn,&_temp587_ta_gxwn) : &ta_gxwn;
+    gradx[GXWN_SLOT].amp = _ta_gxwn.fixedflag ? (_temp589_ta_gxwn=ta_gxwn,&_temp589_ta_gxwn) : &ta_gxwn;
     grady[GY1_SLOT].num = 1;
     grady[GY_BLIP_SLOT].num = etl - 1;
 
@@ -19282,9 +19433,9 @@ if(fixed_acqs_debug == DEBUG_DEV) {
     }
 
     grady[GY1_SLOT].ptype = G_TRAP;
-    grady[GY1_SLOT].attack = _pw_gy1a.fixedflag ? (_temp588_pw_gy1a=pw_gy1a,&_temp588_pw_gy1a) : &pw_gy1a;
-    grady[GY1_SLOT].decay = _pw_gy1d.fixedflag ? (_temp589_pw_gy1d=pw_gy1d,&_temp589_pw_gy1d) : &pw_gy1d;
-    grady[GY1_SLOT].pw = _pw_gy1.fixedflag ? (_temp590_pw_gy1=pw_gy1,&_temp590_pw_gy1) : &pw_gy1;
+    grady[GY1_SLOT].attack = _pw_gy1a.fixedflag ? (_temp590_pw_gy1a=pw_gy1a,&_temp590_pw_gy1a) : &pw_gy1a;
+    grady[GY1_SLOT].decay = _pw_gy1d.fixedflag ? (_temp591_pw_gy1d=pw_gy1d,&_temp591_pw_gy1d) : &pw_gy1d;
+    grady[GY1_SLOT].pw = _pw_gy1.fixedflag ? (_temp592_pw_gy1=pw_gy1,&_temp592_pw_gy1) : &pw_gy1;
 
     /* MRIge51455 - initalize invthick before Inversion_new. */
     if ( floatsAlmostEqualEpsilons(invthick, 0.0, 2) )
@@ -19647,7 +19798,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
     {
         time_profiler_start_timer("EPI2:minseq()");
 
-        if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp591_min_seqgrad=min_seqgrad,&_temp591_min_seqgrad) : &min_seqgrad,
+        if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp593_min_seqgrad=min_seqgrad,&_temp593_min_seqgrad) : &min_seqgrad,
                                 gradx, GX_FREE,
                                 grady, GY_FREE,
                                 gradz, GZ_FREE,
@@ -19732,13 +19883,6 @@ if(fixed_acqs_debug == DEBUG_DEV) {
 
             ia_gzdl  = _ia_gzdl.fixedflag ?     ((void)((int)(a_gzdl*(float)max_pg_iamp/loggrd.tz)), ia_gzdl) : (int)(a_gzdl*(float)max_pg_iamp/loggrd.tz);
             ia_gzdr  = _ia_gzdr.fixedflag ?     ((void)((int)(a_gzdr*(float)max_pg_iamp/loggrd.tz)), ia_gzdr) : (int)(a_gzdr*(float)max_pg_iamp/loggrd.tz);
-	    if(ftde_flag == PSD_ON){/* granty maybe */
-            	ia_gxde  = _ia_gxde.fixedflag ?     ((void)((int)(a_gxde*(float)max_pg_iamp/loggrd.tx)), ia_gxde) : (int)(a_gxde*(float)max_pg_iamp/loggrd.tx);
-
-            	ia_gyde  = _ia_gyde.fixedflag ?     ((void)((int)(a_gyde*(float)max_pg_iamp/loggrd.ty)), ia_gyde) : (int)(a_gyde*(float)max_pg_iamp/loggrd.ty);
-
-            	ia_gzde  = _ia_gzde.fixedflag ?     ((void)((int)(a_gzde*(float)max_pg_iamp/loggrd.tz)), ia_gzde) : (int)(a_gzde*(float)max_pg_iamp/loggrd.tz);
-	    }/* granty maybe end */
         } 
         else 
         {
@@ -19768,20 +19912,20 @@ if(fixed_acqs_debug == DEBUG_DEV) {
     }
 
     /* RF amp, SAR, and system limitations on seq time */
-    if (minseqrfamp(_min_seqrfamp.fixedflag ? (_temp592_min_seqrfamp=min_seqrfamp,&_temp592_min_seqrfamp) : &min_seqrfamp,(int)RF_FREE,rfpulse, 
+    if (minseqrfamp(_min_seqrfamp.fixedflag ? (_temp594_min_seqrfamp=min_seqrfamp,&_temp594_min_seqrfamp) : &min_seqrfamp,(int)RF_FREE,rfpulse, 
                     L_SCAN) == FAILURE) {
         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "minseqrfamp" );
         return FAILURE;
     }
 
-    if (maxseqsar(_max_seqsar.fixedflag ? (_temp593_max_seqsar=max_seqsar,&_temp593_max_seqsar) : &max_seqsar, (int)RF_FREE, rfpulse, L_SCAN) == FAILURE)
+    if (maxseqsar(_max_seqsar.fixedflag ? (_temp595_max_seqsar=max_seqsar,&_temp595_max_seqsar) : &max_seqsar, (int)RF_FREE, rfpulse, L_SCAN) == FAILURE)
     {
         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "maxseqsar" );
         return FAILURE;
     }
 
     /* Note: this routine still uses the old coefficients */
-    if (maxslicesar(_max_slicesar.fixedflag ? (_temp594_max_slicesar=max_slicesar,&_temp594_max_slicesar) : &max_slicesar, (int)RF_FREE,rfpulse, 
+    if (maxslicesar(_max_slicesar.fixedflag ? (_temp596_max_slicesar=max_slicesar,&_temp596_max_slicesar) : &max_slicesar, (int)RF_FREE,rfpulse, 
                     L_SCAN) == FAILURE) {
         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "maxslicesar" );
         return FAILURE;
@@ -20028,7 +20172,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
         set_ASPIR_TI(null_ti_temp);
 
         /* Calculate cs_sattime, non_tetime and tmin with new opti */
-        if (ChemSatEval(_cs_sattime.fixedflag ? (_temp595_cs_sattime=cs_sattime,&_temp595_cs_sattime) : &cs_sattime) == FAILURE)
+        if (ChemSatEval(_cs_sattime.fixedflag ? (_temp597_cs_sattime=cs_sattime,&_temp597_cs_sattime) : &cs_sattime) == FAILURE)
         {
             epic_error(use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "ChemSatEval");
             return FAILURE;
@@ -20109,7 +20253,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
     avmintseq = tmin_total;
     advroundup(&avmintseq);
     if ((exist(opcgate) == PSD_ON) && existcv(opcgate)) {
-        advroundup(_tmin_total.fixedflag ? (_temp596_tmin_total=tmin_total,&_temp596_tmin_total) : &tmin_total); /* this is the min seq time cardiac
+        advroundup(_tmin_total.fixedflag ? (_temp598_tmin_total=tmin_total,&_temp598_tmin_total) : &tmin_total); /* this is the min seq time cardiac
                                     can run at.
                                     Needed for adv. panel validity until all 
                                     cardiac buttons exist. */
@@ -20126,7 +20270,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
                 break;
             case PSD_CARD_INTER_EVEN:
                 /* Roundup tmin_total for the routines ahead. */
-                advroundup(_tmin_total.fixedflag ? (_temp597_tmin_total=tmin_total,&_temp597_tmin_total) : &tmin_total);
+                advroundup(_tmin_total.fixedflag ? (_temp599_tmin_total=tmin_total,&_temp599_tmin_total) : &tmin_total);
                 break;
             }
         }	else {
@@ -20141,7 +20285,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
     if (((exist(oprtcgate) == PSD_ON) && existcv(oprtcgate)) ||
         (navtrig_flag == PSD_ON))
     {
-        advroundup(_tmin_total.fixedflag ? (_temp598_tmin_total=tmin_total,&_temp598_tmin_total) : &tmin_total);
+        advroundup(_tmin_total.fixedflag ? (_temp600_tmin_total=tmin_total,&_temp600_tmin_total) : &tmin_total);
 
         if (existcv(oprtcardseq)) {
             switch (exist(oprtcardseq)) {
@@ -20157,7 +20301,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
                 break;
             case PSD_CARD_INTER_EVEN:
                 /* Roundup tmin_total for the routines ahead. */
-                advroundup(_tmin_total.fixedflag ? (_temp599_tmin_total=tmin_total,&_temp599_tmin_total) : &tmin_total);
+                advroundup(_tmin_total.fixedflag ? (_temp601_tmin_total=tmin_total,&_temp601_tmin_total) : &tmin_total);
                 break;
             }
         }
@@ -20216,7 +20360,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
     /* find maximum number of passes allowed */  
     if ((PSD_OFF==epi_flair) && (PSD_OFF==t1flair_flag)) 
     {
-        if (maxpass(_acqs.fixedflag ? (_temp600_acqs=acqs,&_temp600_acqs) : &acqs,seq_type,(int)exist(opslquant), avmaxslquant) == FAILURE) {
+        if (maxpass(_acqs.fixedflag ? (_temp602_acqs=acqs,&_temp602_acqs) : &acqs,seq_type,(int)exist(opslquant), avmaxslquant) == FAILURE) {
             epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "maxpass" );
             return FAILURE;
         }
@@ -20255,7 +20399,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
             tmin_flair = _tmin_flair.fixedflag ? ((void)(tmin_total), tmin_flair) : tmin_total;
         }
 
-        maxslquant(_max_slice_ti.fixedflag ? (_temp601_max_slice_ti=max_slice_ti,&_temp601_max_slice_ti) : &max_slice_ti, avail_se_time, other_slice_limit,
+        maxslquant(_max_slice_ti.fixedflag ? (_temp603_max_slice_ti=max_slice_ti,&_temp603_max_slice_ti) : &max_slice_ti, avail_se_time, other_slice_limit,
                    seq_type, tmin_flair);
 
         /* ***************************************************************************
@@ -20264,7 +20408,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
         false_acqs  = _false_acqs.fixedflag ? ((void)(2), false_acqs) : 2;
 
         /* acqs = number false_acqs for opslquant    */
-        maxpass(_acqs.fixedflag ? (_temp602_acqs=acqs,&_temp602_acqs) : &acqs,seq_type,(int)exist(opslquant), max_slice_ti);
+        maxpass(_acqs.fixedflag ? (_temp604_acqs=acqs,&_temp604_acqs) : &acqs,seq_type,(int)exist(opslquant), max_slice_ti);
 
         if((acqs % false_acqs) == 0)
             act_acqs  = _act_acqs.fixedflag ?  ((void)((int)((float)acqs/(float)false_acqs)), act_acqs) : (int)((float)acqs/(float)false_acqs);
@@ -20275,7 +20419,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
         acqs = _acqs.fixedflag ? ((void)(act_acqs), acqs) : act_acqs;
 
         /* number of slices in each false_acqs      */
-        slicein1(_false_slquant1.fixedflag ? (_temp603_false_slquant1=false_slquant1,&_temp603_false_slquant1) : &false_slquant1, act_acqs*false_acqs, seq_type);
+        slicein1(_false_slquant1.fixedflag ? (_temp605_false_slquant1=false_slquant1,&_temp605_false_slquant1) : &false_slquant1, act_acqs*false_acqs, seq_type);
 
         avmaxacqs = act_acqs;
         avmaxslquant=max_slice_ti*false_acqs;
@@ -20401,7 +20545,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
     else
     {
         /* Now calculate slquant_per_trig */
-        slicein1(_slquant_per_trig.fixedflag ? (_temp604_slquant_per_trig=slquant_per_trig,&_temp604_slquant_per_trig) : &slquant_per_trig, act_acqs, seq_type);
+        slicein1(_slquant_per_trig.fixedflag ? (_temp606_slquant_per_trig=slquant_per_trig,&_temp606_slquant_per_trig) : &slquant_per_trig, act_acqs, seq_type);
         slquant1  = _slquant1.fixedflag ?           ((void)(opslquant/act_acqs+((opslquant%act_acqs)?1:0)), slquant1) : opslquant/act_acqs+((opslquant%act_acqs)?1:0);
 
         if (PSD_ON == ir_prep_manual_tr_mode)
@@ -20489,7 +20633,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
        even spacing. */
     if ((exist(opcardseq) == PSD_CARD_INTER_EVEN) && existcv(opcardseq)) {
         psd_tseq  = _psd_tseq.fixedflag ?  ((void)(piait/slquant_per_trig), psd_tseq) : piait/slquant_per_trig;
-        advrounddown(_psd_tseq.fixedflag ? (_temp605_psd_tseq=psd_tseq,&_temp605_psd_tseq) : &psd_tseq);
+        advrounddown(_psd_tseq.fixedflag ? (_temp607_psd_tseq=psd_tseq,&_temp607_psd_tseq) : &psd_tseq);
     }
     pitseq = avmintseq; /* Value scan displays in min inter-sequence
                            display button */
@@ -20497,7 +20641,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
     /* RTG */
     if ((exist(oprtcardseq) == PSD_CARD_INTER_EVEN) && existcv(oprtcardseq)) {
         psd_tseq  = _psd_tseq.fixedflag ?  ((void)(pirtait/slquant_per_trig), psd_tseq) : pirtait/slquant_per_trig;
-        advrounddown(_psd_tseq.fixedflag ? (_temp606_psd_tseq=psd_tseq,&_temp606_psd_tseq) : &psd_tseq);
+        advrounddown(_psd_tseq.fixedflag ? (_temp608_psd_tseq=psd_tseq,&_temp608_psd_tseq) : &psd_tseq);
     }
 
     /* Set optseq to inter-seq delay value for adv. panel routines. */
@@ -20506,7 +20650,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
     /* Have existence of optseq follow opcardseq. */
     _optseq.existflag = _opcardseq.existflag;
 
-    if (seqtime(_max_seqtime.fixedflag ? (_temp607_max_seqtime=max_seqtime,&_temp607_max_seqtime) : &max_seqtime, avail_image_time, mux_flag?mux_slquant:slquant_per_trig, seq_type) == FAILURE) {
+    if (seqtime(_max_seqtime.fixedflag ? (_temp609_max_seqtime=max_seqtime,&_temp609_max_seqtime) : &max_seqtime, avail_image_time, mux_flag?mux_slquant:slquant_per_trig, seq_type) == FAILURE) {
         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "seqtime" );
         return FAILURE;
     }
@@ -20607,7 +20751,7 @@ if(fixed_acqs_debug == DEBUG_DEV) {
             /* HCSDM00363791 */
             if(PSD_OFF == epi_flair)
             {
-                slicein1(_slquant_per_trig.fixedflag ? (_temp608_slquant_per_trig=slquant_per_trig,&_temp608_slquant_per_trig) : &slquant_per_trig, act_acqs, seq_type);
+                slicein1(_slquant_per_trig.fixedflag ? (_temp610_slquant_per_trig=slquant_per_trig,&_temp610_slquant_per_trig) : &slquant_per_trig, act_acqs, seq_type);
                 slquant1  = _slquant1.fixedflag ?  ((void)(slquant_per_trig), slquant1) : slquant_per_trig;
                 false_slquant1  = _false_slquant1.fixedflag ?  ((void)(slquant_per_trig), false_slquant1) : slquant_per_trig;
                 avail_se_time  = _avail_se_time.fixedflag ?  ((void)(avail_image_time), avail_se_time) : avail_image_time;
@@ -21014,7 +21158,7 @@ STATUS ssEval1(void)
         if (ss_fa_scaling_flag)
         {
             float fa_scaling_factor;
-            fa_scaling_factor = get_fa_scaling_factor_ss(_max_ss_fa.fixedflag ? (_temp609_max_ss_fa=max_ss_fa,&_temp609_max_ss_fa) : &max_ss_fa, flip_rf1, rfpulse[RF1_SLOT].nom_fa, rfpulse[RF1_SLOT].max_b1);
+            fa_scaling_factor = get_fa_scaling_factor_ss(_max_ss_fa.fixedflag ? (_temp611_max_ss_fa=max_ss_fa,&_temp611_max_ss_fa) : &max_ss_fa, flip_rf1, rfpulse[RF1_SLOT].nom_fa, rfpulse[RF1_SLOT].max_b1);
             flip_rf1  = _flip_rf1.fixedflag ?  ((void)(floor(flip_rf1*fa_scaling_factor)), flip_rf1) : floor(flip_rf1*fa_scaling_factor);
 
             if (ss_fa_scale_debug == PSD_ON)
@@ -21034,7 +21178,7 @@ STATUS ssEval1(void)
 
         if (PSD_ON == oprealtime)
         {
-            if (ampslice(_a_gzrf1.fixedflag ? (_temp610_a_gzrf1=a_gzrf1,&_temp610_a_gzrf1) : &a_gzrf1, bw_rf1, (PSD_3D == (exist(opimode))?exist(opvthick):ss_psd_slthick),
+            if (ampslice(_a_gzrf1.fixedflag ? (_temp612_a_gzrf1=a_gzrf1,&_temp612_a_gzrf1) : &a_gzrf1, bw_rf1, (PSD_3D == (exist(opimode))?exist(opvthick):ss_psd_slthick),
                          gscale_rf1, TYPDEF) == FAILURE)
             {
                 epic_error(use_ermes, "%s failure for gzrf1",
@@ -21045,7 +21189,7 @@ STATUS ssEval1(void)
         }
         else
         {
-            if (ampslice(_a_gzrf1.fixedflag ? (_temp611_a_gzrf1=a_gzrf1,&_temp611_a_gzrf1) : &a_gzrf1, bw_rf1, (PSD_3D == (exist(opimode))?exist(opvthick):exist(opslthick)),
+            if (ampslice(_a_gzrf1.fixedflag ? (_temp613_a_gzrf1=a_gzrf1,&_temp613_a_gzrf1) : &a_gzrf1, bw_rf1, (PSD_3D == (exist(opimode))?exist(opvthick):exist(opslthick)),
                          gscale_rf1, TYPDEF) == FAILURE)
             {
                 epic_error(use_ermes, "%s failure for gzrf1",
@@ -21072,10 +21216,10 @@ STATUS ssEval1(void)
             gz1_first_moment  = _gz1_first_moment.fixedflag ?  ((void)(0.0), gz1_first_moment) : 0.0;
             pulsepos  = _pulsepos.fixedflag ?  ((void)(0), pulsepos) : 0;
             invertphase  = _invertphase.fixedflag ?  ((void)(0), invertphase) : 0;
-            rampmoments(0.0, a_gzrf1, pw_ss_rampz, invertphase, _pulsepos.fixedflag ? (_temp612_pulsepos=pulsepos,&_temp612_pulsepos) : &pulsepos,
-                        &zerommt, &firstmmt, _gz1_zero_moment.fixedflag ? (_temp613_gz1_zero_moment=gz1_zero_moment,&_temp613_gz1_zero_moment) : &gz1_zero_moment, _gz1_first_moment.fixedflag ? (_temp614_gz1_first_moment=gz1_first_moment,&_temp614_gz1_first_moment) : &gz1_first_moment);
-            rampmoments(a_gzrf1, a_gzrf1, pw_constant/2, invertphase, _pulsepos.fixedflag ? (_temp615_pulsepos=pulsepos,&_temp615_pulsepos) : &pulsepos,
-                        &zerommt, &firstmmt, _gz1_zero_moment.fixedflag ? (_temp616_gz1_zero_moment=gz1_zero_moment,&_temp616_gz1_zero_moment) : &gz1_zero_moment, _gz1_first_moment.fixedflag ? (_temp617_gz1_first_moment=gz1_first_moment,&_temp617_gz1_first_moment) : &gz1_first_moment);
+            rampmoments(0.0, a_gzrf1, pw_ss_rampz, invertphase, _pulsepos.fixedflag ? (_temp614_pulsepos=pulsepos,&_temp614_pulsepos) : &pulsepos,
+                        &zerommt, &firstmmt, _gz1_zero_moment.fixedflag ? (_temp615_gz1_zero_moment=gz1_zero_moment,&_temp615_gz1_zero_moment) : &gz1_zero_moment, _gz1_first_moment.fixedflag ? (_temp616_gz1_first_moment=gz1_first_moment,&_temp616_gz1_first_moment) : &gz1_first_moment);
+            rampmoments(a_gzrf1, a_gzrf1, pw_constant/2, invertphase, _pulsepos.fixedflag ? (_temp617_pulsepos=pulsepos,&_temp617_pulsepos) : &pulsepos,
+                        &zerommt, &firstmmt, _gz1_zero_moment.fixedflag ? (_temp618_gz1_zero_moment=gz1_zero_moment,&_temp618_gz1_zero_moment) : &gz1_zero_moment, _gz1_first_moment.fixedflag ? (_temp619_gz1_first_moment=gz1_first_moment,&_temp619_gz1_first_moment) : &gz1_first_moment);
             pos_moment_start  = _pos_moment_start.fixedflag ?        ((void)(pos_start+t_exa+(num_rf1lobe/2)*pw_gzrf1lobe-pw_constant/2), pos_moment_start) : pos_start+t_exa+(num_rf1lobe/2)*pw_gzrf1lobe-pw_constant/2;
         }
 
@@ -21115,18 +21259,18 @@ STATUS ssEval2(void)
     if (ss_rf1 == 0) {
         gradz[GZRF1_SLOT].ptype = G_TRAP;
 
-        gradz[GZRF1_SLOT].attack = _pw_gzrf1a.fixedflag ? (_temp618_pw_gzrf1a=pw_gzrf1a,&_temp618_pw_gzrf1a) : &pw_gzrf1a;
-        gradz[GZRF1_SLOT].decay = _pw_gzrf1d.fixedflag ? (_temp619_pw_gzrf1d=pw_gzrf1d,&_temp619_pw_gzrf1d) : &pw_gzrf1d;
-        gradz[GZRF1_SLOT].pw = _pw_gzrf1.fixedflag ? (_temp620_pw_gzrf1=pw_gzrf1,&_temp620_pw_gzrf1) : &pw_gzrf1;
+        gradz[GZRF1_SLOT].attack = _pw_gzrf1a.fixedflag ? (_temp620_pw_gzrf1a=pw_gzrf1a,&_temp620_pw_gzrf1a) : &pw_gzrf1a;
+        gradz[GZRF1_SLOT].decay = _pw_gzrf1d.fixedflag ? (_temp621_pw_gzrf1d=pw_gzrf1d,&_temp621_pw_gzrf1d) : &pw_gzrf1d;
+        gradz[GZRF1_SLOT].pw = _pw_gzrf1.fixedflag ? (_temp622_pw_gzrf1=pw_gzrf1,&_temp622_pw_gzrf1) : &pw_gzrf1;
         gradz[GZRF1_SLOT].scale = 1.0;
         gradz[GZRF1_SLOT].num = 1;
 
     } else {
         gradz[GZRF1_SLOT].ptype = G_USER;
 
-        gradz[GZRF1_SLOT].attack = _pw_ss_rampz.fixedflag ? (_temp621_pw_ss_rampz=pw_ss_rampz,&_temp621_pw_ss_rampz) : &pw_ss_rampz;
-        gradz[GZRF1_SLOT].decay = _pw_ss_rampz.fixedflag ? (_temp622_pw_ss_rampz=pw_ss_rampz,&_temp622_pw_ss_rampz) : &pw_ss_rampz;
-        gradz[GZRF1_SLOT].pw = _pw_constant.fixedflag ? (_temp623_pw_constant=pw_constant,&_temp623_pw_constant) : &pw_constant;
+        gradz[GZRF1_SLOT].attack = _pw_ss_rampz.fixedflag ? (_temp623_pw_ss_rampz=pw_ss_rampz,&_temp623_pw_ss_rampz) : &pw_ss_rampz;
+        gradz[GZRF1_SLOT].decay = _pw_ss_rampz.fixedflag ? (_temp624_pw_ss_rampz=pw_ss_rampz,&_temp624_pw_ss_rampz) : &pw_ss_rampz;
+        gradz[GZRF1_SLOT].pw = _pw_constant.fixedflag ? (_temp625_pw_constant=pw_constant,&_temp625_pw_constant) : &pw_constant;
         gradz[GZRF1_SLOT].scale = 1.0;
         gradz[GZRF1_SLOT].num = num_rf1lobe;
 
@@ -22406,7 +22550,7 @@ T1flair_analytical_ManualTR(void)
         }
     }
 
-    if (maxpass(_acqs.fixedflag ? (_temp624_acqs=acqs,&_temp624_acqs) : &acqs,seq_type,(int)exist(opslquant), avmaxslquant) == FAILURE) {
+    if (maxpass(_acqs.fixedflag ? (_temp626_acqs=acqs,&_temp626_acqs) : &acqs,seq_type,(int)exist(opslquant), avmaxslquant) == FAILURE) {
         epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"maxpass");
         return FAILURE;
     }
@@ -22423,7 +22567,7 @@ T1flair_analytical_ManualTR(void)
     act_acqs  = _act_acqs.fixedflag ?  ((void)(acqs), act_acqs) : acqs;
     avmaxacqs = act_acqs;
 
-    if (slicein1(_slquant_per_trig.fixedflag ? (_temp625_slquant_per_trig=slquant_per_trig,&_temp625_slquant_per_trig) : &slquant_per_trig, acqs, seq_type) == FAILURE) {
+    if (slicein1(_slquant_per_trig.fixedflag ? (_temp627_slquant_per_trig=slquant_per_trig,&_temp627_slquant_per_trig) : &slquant_per_trig, acqs, seq_type) == FAILURE) {
         epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"slicein1");
         slquant_per_trig  = _slquant_per_trig.fixedflag ? ((void)(1), slquant_per_trig) : 1;
         return FAILURE;
@@ -23386,13 +23530,13 @@ STATUS T2flair_automintr_set_display_acqs( int null_period, int Packs )
         {
             if (exist(optracq) > 0)
             {
-                if(slicein1(_sl_acq.fixedflag ? (_temp626_sl_acq=sl_acq,&_temp626_sl_acq) : &sl_acq,exist(optracq) , seq_type) == FAILURE) {
+                if(slicein1(_sl_acq.fixedflag ? (_temp628_sl_acq=sl_acq,&_temp628_sl_acq) : &sl_acq,exist(optracq) , seq_type) == FAILURE) {
                     epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"slicein1");
                     sl_acq  = _sl_acq.fixedflag ? ((void)(1), sl_acq) : 1;
                     return FAILURE;
                 }
 
-                if(maxslquant1_T2flair(sl_acq, _tr_acq.fixedflag ? (_temp627_tr_acq=tr_acq,&_temp627_tr_acq) : &tr_acq, null_period, Packs, seq_type, tmin_total, gating) == FAILURE) {
+                if(maxslquant1_T2flair(sl_acq, _tr_acq.fixedflag ? (_temp629_tr_acq=tr_acq,&_temp629_tr_acq) : &tr_acq, null_period, Packs, seq_type, tmin_total, gating) == FAILURE) {
                     epic_error(use_ermes,supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"maxslquant1_T2flair");
                     return FAILURE;
                 }
@@ -23407,7 +23551,7 @@ STATUS T2flair_automintr_set_display_acqs( int null_period, int Packs )
                 cvoverride(optr,tr_acq,PSD_FIX_OFF,PSD_EXIST_ON);
 
                 /* Recalculate avail_image_time, make sure TR is overridden before calling imgtimutil */
-                if(imgtimutil(premid_rf90, seq_type, gating, _avail_image_time.fixedflag ? (_temp628_avail_image_time=avail_image_time,&_temp628_avail_image_time) : &avail_image_time)==FAILURE) {
+                if(imgtimutil(premid_rf90, seq_type, gating, _avail_image_time.fixedflag ? (_temp630_avail_image_time=avail_image_time,&_temp630_avail_image_time) : &avail_image_time)==FAILURE) {
                     epic_error(use_ermes,"%s failed",EM_PSD_ROUTINE_FAILURE,EE_ARGS(1), STRING_ARG,"imgtimutil");
                     return FAILURE;  /* DCZ: need return FAILURE */
                 }
@@ -23421,13 +23565,13 @@ STATUS T2flair_automintr_set_display_acqs( int null_period, int Packs )
                     cvoverride(optracq, exist(optracq)+1, PSD_FIX_ON, PSD_EXIST_ON);
                 }
 
-                if(maxpass(_acqs.fixedflag ? (_temp629_acqs=acqs,&_temp629_acqs) : &acqs,seq_type,(int)exist(opslquant),avmaxslquant) == FAILURE)
+                if(maxpass(_acqs.fixedflag ? (_temp631_acqs=acqs,&_temp631_acqs) : &acqs,seq_type,(int)exist(opslquant),avmaxslquant) == FAILURE)
                 {
                     epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"maxpass");
                     return FAILURE;
                 }
 
-                if(slicein1(_slquant_per_trig.fixedflag ? (_temp630_slquant_per_trig=slquant_per_trig,&_temp630_slquant_per_trig) : &slquant_per_trig, acqs , seq_type) == FAILURE) {
+                if(slicein1(_slquant_per_trig.fixedflag ? (_temp632_slquant_per_trig=slquant_per_trig,&_temp632_slquant_per_trig) : &slquant_per_trig, acqs , seq_type) == FAILURE) {
                     epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"slicein1");
                     slquant_per_trig  = _slquant_per_trig.fixedflag ? ((void)(1), slquant_per_trig) : 1;
                     return FAILURE;
@@ -23446,7 +23590,7 @@ STATUS T2flair_automintr_set_display_acqs( int null_period, int Packs )
                 tmp_acqs_num = avmaxacqs-1;
                 for(i=avmaxacqs-1; i>=1 ;i--)
                 {
-                    if (slicein1(_sl_acq_val2.fixedflag ? (_temp631_sl_acq_val2=sl_acq_val2,&_temp631_sl_acq_val2) : &sl_acq_val2, i, seq_type) == FAILURE) {
+                    if (slicein1(_sl_acq_val2.fixedflag ? (_temp633_sl_acq_val2=sl_acq_val2,&_temp633_sl_acq_val2) : &sl_acq_val2, i, seq_type) == FAILURE) {
                         epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),STRING_ARG,"slicein1");
                         sl_acq_val2  = _sl_acq_val2.fixedflag ? ((void)(1), sl_acq_val2) : 1;
                         return FAILURE;
@@ -23457,7 +23601,7 @@ STATUS T2flair_automintr_set_display_acqs( int null_period, int Packs )
                         break;
                 }
 
-                if(maxslquant1_T2flair(sl_acq_val2, _tr_acq_val2.fixedflag ? (_temp632_tr_acq_val2=tr_acq_val2,&_temp632_tr_acq_val2) : &tr_acq_val2, null_period, Packs, seq_type, tmin_total, gating) == FAILURE) {
+                if(maxslquant1_T2flair(sl_acq_val2, _tr_acq_val2.fixedflag ? (_temp634_tr_acq_val2=tr_acq_val2,&_temp634_tr_acq_val2) : &tr_acq_val2, null_period, Packs, seq_type, tmin_total, gating) == FAILURE) {
                         epic_error(use_ermes,supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"maxslquant1_T2flair");
                         return FAILURE;
                 }
@@ -23494,13 +23638,13 @@ STATUS T2flair_automintr_set_display_acqs( int null_period, int Packs )
                 tr_acq_val2  = _tr_acq_val2.fixedflag ?  ((void)(pitrval2), tr_acq_val2) : pitrval2;
             }
 
-            if(slicein1(_sl_acq_val3.fixedflag ? (_temp633_sl_acq_val3=sl_acq_val3,&_temp633_sl_acq_val3) : &sl_acq_val3, avmaxacqs, seq_type) == FAILURE) {
+            if(slicein1(_sl_acq_val3.fixedflag ? (_temp635_sl_acq_val3=sl_acq_val3,&_temp635_sl_acq_val3) : &sl_acq_val3, avmaxacqs, seq_type) == FAILURE) {
                 epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"slicein1");
                 sl_acq_val3  = _sl_acq_val3.fixedflag ? ((void)(1), sl_acq_val3) : 1;
                 return FAILURE;
             }
 
-            if(maxslquant1_T2flair(sl_acq_val3, _tr_acq_val3.fixedflag ? (_temp634_tr_acq_val3=tr_acq_val3,&_temp634_tr_acq_val3) : &tr_acq_val3, null_period, Packs, seq_type, tmin_total, gating) == FAILURE) {
+            if(maxslquant1_T2flair(sl_acq_val3, _tr_acq_val3.fixedflag ? (_temp636_tr_acq_val3=tr_acq_val3,&_temp636_tr_acq_val3) : &tr_acq_val3, null_period, Packs, seq_type, tmin_total, gating) == FAILURE) {
                 epic_error(use_ermes,supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"maxslquant1_T2flair");
                 return FAILURE;
             }
@@ -23526,7 +23670,7 @@ STATUS T2flair_automintr_set_display_acqs( int null_period, int Packs )
             tmp_acqs_num = avmaxacqs+1;
             for(i=avmaxacqs+1; i<=exist(opslquant) ;i++)
             {
-                if(slicein1(_sl_acq_val4.fixedflag ? (_temp635_sl_acq_val4=sl_acq_val4,&_temp635_sl_acq_val4) : &sl_acq_val4, i, seq_type) == FAILURE)
+                if(slicein1(_sl_acq_val4.fixedflag ? (_temp637_sl_acq_val4=sl_acq_val4,&_temp637_sl_acq_val4) : &sl_acq_val4, i, seq_type) == FAILURE)
                 {
                     epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"slicein1");
                     sl_acq_val4  = _sl_acq_val4.fixedflag ? ((void)(1), sl_acq_val4) : 1;
@@ -23540,7 +23684,7 @@ STATUS T2flair_automintr_set_display_acqs( int null_period, int Packs )
 
             if(avmaxacqs < exist(opslquant))
             {
-                if(maxslquant1_T2flair(sl_acq_val4, _tr_acq_val4.fixedflag ? (_temp636_tr_acq_val4=tr_acq_val4,&_temp636_tr_acq_val4) : &tr_acq_val4, null_period, Packs, seq_type, tmin_total, gating) == FAILURE) {
+                if(maxslquant1_T2flair(sl_acq_val4, _tr_acq_val4.fixedflag ? (_temp638_tr_acq_val4=tr_acq_val4,&_temp638_tr_acq_val4) : &tr_acq_val4, null_period, Packs, seq_type, tmin_total, gating) == FAILURE) {
                     epic_error(use_ermes,supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"maxslquant1_T2flair");
                     return FAILURE;
                 }
@@ -24074,7 +24218,7 @@ get_diffusion_time( void )
         
         if( gCoilType == PSD_CRM_COIL ) {
             /* X diffusion pulses */
-            if (optramp(_pw_gxdla.fixedflag ? (_temp637_pw_gxdla=pw_gxdla,&_temp637_pw_gxdla) : &pw_gxdla, MaxAmpx, MaxAmpx, minRamp,TYPDEF) == FAILURE) {
+            if (optramp(_pw_gxdla.fixedflag ? (_temp639_pw_gxdla=pw_gxdla,&_temp639_pw_gxdla) : &pw_gxdla, MaxAmpx, MaxAmpx, minRamp,TYPDEF) == FAILURE) {
                 epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "optramp:pw_gxdla" );
                 return FAILURE;
             } 
@@ -24108,7 +24252,7 @@ get_diffusion_time( void )
         }  /* end CRM coil check */
         
         /* X diffusion pulses */
-        if (optramp(_pw_gxdla.fixedflag ? (_temp638_pw_gxdla=pw_gxdla,&_temp638_pw_gxdla) : &pw_gxdla, MaxAmpx, MaxAmpx, minRamp, TYPDEF) == FAILURE) {
+        if (optramp(_pw_gxdla.fixedflag ? (_temp640_pw_gxdla=pw_gxdla,&_temp640_pw_gxdla) : &pw_gxdla, MaxAmpx, MaxAmpx, minRamp, TYPDEF) == FAILURE) {
             epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "optramp:pw_gxdla" );
             return FAILURE;
         }
@@ -24151,7 +24295,7 @@ get_diffusion_time( void )
         pw_gxdrd  = _pw_gxdrd.fixedflag ?  ((void)(pw_gxdra), pw_gxdrd) : pw_gxdra;
         a_gxdl  = _a_gxdl.fixedflag ?  ((void)(a_gxdr), a_gxdl) : a_gxdr;            
         
-        incdifx  = _incdifx.fixedflag ?         ((void)(calc_incdif(_DELTAx.fixedflag ? (_temp639_DELTAx=DELTAx,&_temp639_DELTAx) : &DELTAx,_deltax.fixedflag ? (_temp640_deltax=deltax,&_temp640_deltax) : &deltax,Delta_time,pw_gxdl,pw_gxdld,pw_gxdla,pw_gxdra,bvaltemp_x)), incdifx) : calc_incdif(_DELTAx.fixedflag ? (_temp639_DELTAx=DELTAx,&_temp639_DELTAx) : &DELTAx,_deltax.fixedflag ? (_temp640_deltax=deltax,&_temp640_deltax) : &deltax,Delta_time,pw_gxdl,pw_gxdld,pw_gxdla,pw_gxdra,bvaltemp_x);
+        incdifx  = _incdifx.fixedflag ?         ((void)(calc_incdif(_DELTAx.fixedflag ? (_temp641_DELTAx=DELTAx,&_temp641_DELTAx) : &DELTAx,_deltax.fixedflag ? (_temp642_deltax=deltax,&_temp642_deltax) : &deltax,Delta_time,pw_gxdl,pw_gxdld,pw_gxdla,pw_gxdra,bvaltemp_x)), incdifx) : calc_incdif(_DELTAx.fixedflag ? (_temp641_DELTAx=DELTAx,&_temp641_DELTAx) : &DELTAx,_deltax.fixedflag ? (_temp642_deltax=deltax,&_temp642_deltax) : &deltax,Delta_time,pw_gxdl,pw_gxdld,pw_gxdla,pw_gxdra,bvaltemp_x);
 
         /* MRIge49153 */
         if(incdifx > MaxAmpx)
@@ -24288,7 +24432,7 @@ get_diffusion_time( void )
         if(mpg_opt_flag && (!isStarterSystem())) minRamp = minRamp * mpg_opt_derate;
         /**********************/
 
-        if (optramp(_pw_gydla.fixedflag ? (_temp641_pw_gydla=pw_gydla,&_temp641_pw_gydla) : &pw_gydla, MaxAmpy, MaxAmpy,minRamp , TYPDEF) == FAILURE) {
+        if (optramp(_pw_gydla.fixedflag ? (_temp643_pw_gydla=pw_gydla,&_temp643_pw_gydla) : &pw_gydla, MaxAmpy, MaxAmpy,minRamp , TYPDEF) == FAILURE) {
             epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "optramp:pw_gydla" );
             return FAILURE;
 	} 
@@ -24335,7 +24479,7 @@ get_diffusion_time( void )
         
         /* Calculate initial amplitude estimate */
 
-        incdify  = _incdify.fixedflag ?         ((void)(calc_incdif(_DELTAy.fixedflag ? (_temp642_DELTAy=DELTAy,&_temp642_DELTAy) : &DELTAy,_deltay.fixedflag ? (_temp643_deltay=deltay,&_temp643_deltay) : &deltay,Delta_time,pw_gydl,pw_gydld,pw_gydla,pw_gydra,bvaltemp_y)), incdify) : calc_incdif(_DELTAy.fixedflag ? (_temp642_DELTAy=DELTAy,&_temp642_DELTAy) : &DELTAy,_deltay.fixedflag ? (_temp643_deltay=deltay,&_temp643_deltay) : &deltay,Delta_time,pw_gydl,pw_gydld,pw_gydla,pw_gydra,bvaltemp_y);
+        incdify  = _incdify.fixedflag ?         ((void)(calc_incdif(_DELTAy.fixedflag ? (_temp644_DELTAy=DELTAy,&_temp644_DELTAy) : &DELTAy,_deltay.fixedflag ? (_temp645_deltay=deltay,&_temp645_deltay) : &deltay,Delta_time,pw_gydl,pw_gydld,pw_gydla,pw_gydra,bvaltemp_y)), incdify) : calc_incdif(_DELTAy.fixedflag ? (_temp644_DELTAy=DELTAy,&_temp644_DELTAy) : &DELTAy,_deltay.fixedflag ? (_temp645_deltay=deltay,&_temp645_deltay) : &deltay,Delta_time,pw_gydl,pw_gydld,pw_gydla,pw_gydra,bvaltemp_y);
 
         /* MRIge49153 */
         if(incdify> MaxAmpy)
@@ -24453,7 +24597,7 @@ get_diffusion_time( void )
         if(mpg_opt_flag && (!isStarterSystem())) minRamp = minRamp * mpg_opt_derate;
         /**********************/        
         
-        if (optramp(_pw_gzdla.fixedflag ? (_temp644_pw_gzdla=pw_gzdla,&_temp644_pw_gzdla) : &pw_gzdla, MaxAmpz, MaxAmpz, minRamp, TYPDEF) == FAILURE) {
+        if (optramp(_pw_gzdla.fixedflag ? (_temp646_pw_gzdla=pw_gzdla,&_temp646_pw_gzdla) : &pw_gzdla, MaxAmpz, MaxAmpz, minRamp, TYPDEF) == FAILURE) {
             epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "optramp:pw_gzdla" );
             return FAILURE;
 	} 
@@ -24500,7 +24644,7 @@ get_diffusion_time( void )
         
         /* Calculate initial amplitude estimate */
         
-        incdifz  = _incdifz.fixedflag ?         ((void)(calc_incdif(_DELTAz.fixedflag ? (_temp645_DELTAz=DELTAz,&_temp645_DELTAz) : &DELTAz,_deltaz.fixedflag ? (_temp646_deltaz=deltaz,&_temp646_deltaz) : &deltaz,Delta_time,pw_gzdl,pw_gzdld,pw_gzdla,pw_gzdra,bvaltemp_z)), incdifz) : calc_incdif(_DELTAz.fixedflag ? (_temp645_DELTAz=DELTAz,&_temp645_DELTAz) : &DELTAz,_deltaz.fixedflag ? (_temp646_deltaz=deltaz,&_temp646_deltaz) : &deltaz,Delta_time,pw_gzdl,pw_gzdld,pw_gzdla,pw_gzdra,bvaltemp_z);
+        incdifz  = _incdifz.fixedflag ?         ((void)(calc_incdif(_DELTAz.fixedflag ? (_temp647_DELTAz=DELTAz,&_temp647_DELTAz) : &DELTAz,_deltaz.fixedflag ? (_temp648_deltaz=deltaz,&_temp648_deltaz) : &deltaz,Delta_time,pw_gzdl,pw_gzdld,pw_gzdla,pw_gzdra,bvaltemp_z)), incdifz) : calc_incdif(_DELTAz.fixedflag ? (_temp647_DELTAz=DELTAz,&_temp647_DELTAz) : &DELTAz,_deltaz.fixedflag ? (_temp648_deltaz=deltaz,&_temp648_deltaz) : &deltaz,Delta_time,pw_gzdl,pw_gzdld,pw_gzdla,pw_gzdra,bvaltemp_z);
 	   
         /* MRIge49153 */
         if(incdifz> MaxAmpz)
@@ -24510,33 +24654,6 @@ get_diffusion_time( void )
         /*     calcs use largest diffusion set if multiple b-value scan       */
         a_gzdl  = _a_gzdl.fixedflag ?  ((void)(incdifz), a_gzdl) : incdifz;
         a_gzdr  = _a_gzdr.fixedflag ?  ((void)(a_gzdl), a_gzdr) : a_gzdl;
-
-    	/* granty temporary edit to to calculate timings for full time diffusion encoding.*/
-    	if(ftde_flag == PSD_ON){
-		/* compute minimum gradient durations */
-		calcpwabc(max_bval, get_sse_waittime(), pw_gzrf2l1_tot + pw_gzrf2 + pw_gzrf2r1_tot,MaxAmpx/100, pw_gxdla, _pw_gxdl.fixedflag ? (_temp647_pw_gxdl=pw_gxdl,&_temp647_pw_gxdl) : &pw_gxdl, _pw_gxde.fixedflag ? (_temp648_pw_gxde=pw_gxde,&_temp648_pw_gxde) : &pw_gxde, _pw_gxdr.fixedflag ? (_temp649_pw_gxdr=pw_gxdr,&_temp649_pw_gxdr) : &pw_gxdr);
-		pw_gxdr  = _pw_gxdr.fixedflag ?  ((void)(RUP_GRD(pw_gxdr)), pw_gxdr) : RUP_GRD(pw_gxdr);
-		pw_gxdl  = _pw_gxdl.fixedflag ?      ((void)(RUP_GRD((get_sse_waittime()-pw_gxdla+2*pw_gxdr)/2)), pw_gxdl) : RUP_GRD((get_sse_waittime()-pw_gxdla+2*pw_gxdr)/2);
-		pw_gxde  = _pw_gxde.fixedflag ?      ((void)(RUP_GRD(pw_gxdl-pw_gxdr-pw_gxdla)), pw_gxde) : RUP_GRD(pw_gxdl-pw_gxdr-pw_gxdla);
-		pw_gxdea  = _pw_gxdea.fixedflag ?  ((void)(pw_gxdla), pw_gxdea) : pw_gxdla;
-		pw_gxded  = _pw_gxded.fixedflag ?  ((void)(pw_gxdld), pw_gxded) : pw_gxdld;
-
-		pw_gydr  = _pw_gydr.fixedflag ?  ((void)(pw_gxdr), pw_gydr) : pw_gxdr;
-		pw_gydl  = _pw_gydl.fixedflag ?  ((void)(pw_gxdl), pw_gydl) : pw_gxdl;
-		pw_gyde  = _pw_gyde.fixedflag ?  ((void)(pw_gxde), pw_gyde) : pw_gxde;
-		pw_gydea  = _pw_gydea.fixedflag ?  ((void)(pw_gxdea), pw_gydea) : pw_gxdea;
-		pw_gyded  = _pw_gyded.fixedflag ?  ((void)(pw_gxded), pw_gyded) : pw_gxded;
-
-		pw_gzdr  = _pw_gzdr.fixedflag ?  ((void)(pw_gxdr), pw_gzdr) : pw_gxdr;
-		pw_gzdl  = _pw_gzdl.fixedflag ?  ((void)(pw_gxdl), pw_gzdl) : pw_gxdl;
-		pw_gzde  = _pw_gzde.fixedflag ?  ((void)(pw_gxde), pw_gzde) : pw_gxde;
-		pw_gzdea  = _pw_gzdea.fixedflag ?  ((void)(pw_gxdea), pw_gzdea) : pw_gxdea;
-		pw_gzded  = _pw_gzded.fixedflag ?  ((void)(pw_gxded), pw_gzded) : pw_gxded;
-
-		pw_wgzdl  = _pw_wgzdl.fixedflag ?  ((void)(4), pw_wgzdl) : 4;
-		pw_wgydl  = _pw_wgydl.fixedflag ?  ((void)(4), pw_wgydl) : 4;
-		pw_wgxdl  = _pw_wgxdl.fixedflag ?  ((void)(4), pw_wgxdl) : 4;
-    	}
         
         /* BJM: (dsp) get diffusion lobe timing */
         if (PSD_ON == dualspinecho_flag)
@@ -24644,34 +24761,69 @@ get_diffusion_time( void )
     }
 
     if (PSD_OFF == dualspinecho_flag)
-    {/* granty edit */
-	if(PSD_OFF == ftde_flag){
-        xdiff_time1  = _xdiff_time1.fixedflag ?       
-                               ((void)((((opdiffuse==1)||tensor_flag==PSD_ON)?pw_gxdla+pw_gxdl+pw_gxdld+pw_wgxdl:0)), xdiff_time1) : (((opdiffuse==1)||tensor_flag==PSD_ON)?pw_gxdla+pw_gxdl+pw_gxdld+pw_wgxdl:0);
-        xdiff_time2  = _xdiff_time2.fixedflag ?       
-                               ((void)((((opdiffuse==1)||tensor_flag==PSD_ON)?pw_wgxdr+pw_gxdra+pw_gxdr+pw_gxdrd:0)), xdiff_time2) : (((opdiffuse==1)||tensor_flag==PSD_ON)?pw_wgxdr+pw_gxdra+pw_gxdr+pw_gxdrd:0);
-        ydiff_time1  = _ydiff_time1.fixedflag ?       
-                               ((void)((((opdiffuse==1)||tensor_flag==PSD_ON)?pw_gydla+pw_gydl+pw_gydld+pw_wgydl:0)), ydiff_time1) : (((opdiffuse==1)||tensor_flag==PSD_ON)?pw_gydla+pw_gydl+pw_gydld+pw_wgydl:0);
-        ydiff_time2  = _ydiff_time2.fixedflag ?       
-                               ((void)((((opdiffuse==1)||tensor_flag==PSD_ON)?pw_wgydr+pw_gydra+pw_gydr+pw_gydrd:0)), ydiff_time2) : (((opdiffuse==1)||tensor_flag==PSD_ON)?pw_wgydr+pw_gydra+pw_gydr+pw_gydrd:0);
-        zdiff_time1  = _zdiff_time1.fixedflag ?       
-                               ((void)((((opdiffuse==1)||tensor_flag==PSD_ON)?pw_gzdla+pw_gzdl+pw_gzdld+pw_wgzdl:0)), zdiff_time1) : (((opdiffuse==1)||tensor_flag==PSD_ON)?pw_gzdla+pw_gzdl+pw_gzdld+pw_wgzdl:0);
-        zdiff_time2  = _zdiff_time2.fixedflag ?       
-                               ((void)((((opdiffuse==1)||tensor_flag==PSD_ON)?pw_wgzdr+pw_gzdra+pw_gzdr+pw_gzdrd:0)), zdiff_time2) : (((opdiffuse==1)||tensor_flag==PSD_ON)?pw_wgzdr+pw_gzdra+pw_gzdr+pw_gzdrd:0);
-    }else{
-            xdiff_time1  = _xdiff_time1.fixedflag ?       
-                                  ((void)((((opdiffuse==1)||tensor_flag==PSD_ON)?pw_gxdla+pw_gxdl+pw_gxdld+pw_wgxdl+pw_gxde+pw_gxdea+pw_gxded:0)), xdiff_time1) : (((opdiffuse==1)||tensor_flag==PSD_ON)?pw_gxdla+pw_gxdl+pw_gxdld+pw_wgxdl+pw_gxde+pw_gxdea+pw_gxded:0);
-            xdiff_time2  = _xdiff_time2.fixedflag ?       
-                                ((void)((((opdiffuse==1)||tensor_flag==PSD_ON)?pw_wgxdr+pw_gxdra+pw_gxdr+pw_gxdrd:0)), xdiff_time2) : (((opdiffuse==1)||tensor_flag==PSD_ON)?pw_wgxdr+pw_gxdra+pw_gxdr+pw_gxdrd:0);
-            ydiff_time1  = _ydiff_time1.fixedflag ?       
-                                     ((void)((((opdiffuse==1)||tensor_flag==PSD_ON)?pw_gydla+pw_gydl+pw_gydld+pw_wgydl+pw_gyde+pw_gydea+pw_gyded:0)), ydiff_time1) : (((opdiffuse==1)||tensor_flag==PSD_ON)?pw_gydla+pw_gydl+pw_gydld+pw_wgydl+pw_gyde+pw_gydea+pw_gyded:0);
-            ydiff_time2  = _ydiff_time2.fixedflag ?       
-                               ((void)((((opdiffuse==1)||tensor_flag==PSD_ON)?pw_wgydr+pw_gydra+pw_gydr+pw_gydrd:0)), ydiff_time2) : (((opdiffuse==1)||tensor_flag==PSD_ON)?pw_wgydr+pw_gydra+pw_gydr+pw_gydrd:0);
-            zdiff_time1  = _zdiff_time1.fixedflag ?       
-                                     ((void)((((opdiffuse==1)||tensor_flag==PSD_ON)?pw_gzdla+pw_gzdl+pw_gzdld+pw_wgzdl+pw_gzde+pw_gzdea+pw_gzded:0)), zdiff_time1) : (((opdiffuse==1)||tensor_flag==PSD_ON)?pw_gzdla+pw_gzdl+pw_gzdld+pw_wgzdl+pw_gzde+pw_gzdea+pw_gzded:0);
-            zdiff_time2  = _zdiff_time2.fixedflag ?       
-                               ((void)((((opdiffuse==1)||tensor_flag==PSD_ON)?pw_wgzdr+pw_gzdra+pw_gzdr+pw_gzdrd:0)), zdiff_time2) : (((opdiffuse==1)||tensor_flag==PSD_ON)?pw_wgzdr+pw_gzdra+pw_gzdr+pw_gzdrd:0);
-    }
+    {
+/* original */
+		/* 
+        xdiff_time1 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
+                       pw_gxdla + pw_gxdl + pw_gxdld + pw_wgxdl : 0);
+        xdiff_time2 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
+                       pw_wgxdr + pw_gxdra + pw_gxdr + pw_gxdrd : 0);
+        ydiff_time1 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
+                       pw_gydla + pw_gydl + pw_gydld + pw_wgydl : 0);
+        ydiff_time2 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
+                       pw_wgydr + pw_gydra + pw_gydr + pw_gydrd : 0);
+        zdiff_time1 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
+                       pw_gzdla + pw_gzdl + pw_gzdld + pw_wgzdl : 0);
+        zdiff_time2 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
+                       pw_wgzdr + pw_gzdra + pw_gzdr + pw_gzdrd : 0);
+		*/
+	/* granty reset diffusion gradient durations ??? */
+	pw_gxdl  = _pw_gxdl.fixedflag ?  ((void)(4*res_gd1), pw_gxdl) : 4*res_gd1;
+	pw_gxdr  = _pw_gxdr.fixedflag ?  ((void)(4*res_gd2), pw_gxdr) : 4*res_gd2;
+	pw_gydl  = _pw_gydl.fixedflag ?  ((void)(4*res_gd1), pw_gydl) : 4*res_gd1;
+	pw_gydr  = _pw_gydr.fixedflag ?  ((void)(4*res_gd2), pw_gydr) : 4*res_gd2;
+	pw_gzdl  = _pw_gzdl.fixedflag ?  ((void)(4*res_gd1), pw_gzdl) : 4*res_gd1;
+	pw_gzdr  = _pw_gzdr.fixedflag ?  ((void)(4*res_gd2), pw_gzdr) : 4*res_gd2;
+	/* granty reset a_g?dl to max amplitude */
+	a_gxdl  = _a_gxdl.fixedflag ?  ((void)(loggrd.tx_xyz), a_gxdl) : loggrd.tx_xyz;
+	a_gxdr  = _a_gxdr.fixedflag ?  ((void)(a_gxdl), a_gxdr) : a_gxdl;
+	a_gydl  = _a_gydl.fixedflag ?  ((void)(loggrd.ty_xyz), a_gydl) : loggrd.ty_xyz;
+	a_gydr  = _a_gydr.fixedflag ?  ((void)(a_gydl), a_gydr) : a_gydl;
+	a_gzdl  = _a_gzdl.fixedflag ?  ((void)(loggrd.tz_xyz), a_gzdl) : loggrd.tz_xyz;
+	a_gzdr  = _a_gzdr.fixedflag ?  ((void)(a_gzdl), a_gzdr) : a_gzdl;
+
+	incdifx  = _incdifx.fixedflag ?  ((void)(a_gxdl), incdifx) : a_gxdl;
+	incdify  = _incdify.fixedflag ?  ((void)(a_gydl), incdify) : a_gydl;
+	incdifz  = _incdifz.fixedflag ?  ((void)(a_gzdl), incdifz) : a_gzdl;
+
+	/* granty set wait pulses to maintain 10 ms between diffusion pulses*/
+	pw_wgxdl  = _pw_wgxdl.fixedflag ?        ((void)(RUP_GRD((10000-(pw_gzrf2l1_tot+pw_gzrf2+pw_gzrf2r1_tot))/2)), pw_wgxdl) : RUP_GRD((10000-(pw_gzrf2l1_tot+pw_gzrf2+pw_gzrf2r1_tot))/2);
+	pw_wgxdr  = _pw_wgxdr.fixedflag ?  ((void)(pw_wgxdl), pw_wgxdr) : pw_wgxdl;
+	pw_wgydl  = _pw_wgydl.fixedflag ?  ((void)(pw_wgxdl), pw_wgydl) : pw_wgxdl;
+	pw_wgydr  = _pw_wgydr.fixedflag ?  ((void)(pw_wgxdl), pw_wgydr) : pw_wgxdl;
+	pw_wgzdl  = _pw_wgzdl.fixedflag ?  ((void)(pw_wgxdl), pw_wgzdl) : pw_wgxdl;
+	pw_wgzdr  = _pw_wgzdr.fixedflag ?  ((void)(pw_wgxdl), pw_wgzdr) : pw_wgxdl;
+	/* granty edit since we know the length of the custom diffusion pulses */
+	xdiff_time1  = _xdiff_time1.fixedflag ?    ((void)(pw_gxdl+pw_wgxdl), xdiff_time1) : pw_gxdl+pw_wgxdl;
+	xdiff_time2  = _xdiff_time2.fixedflag ?    ((void)(pw_gxdr+pw_wgxdr), xdiff_time2) : pw_gxdr+pw_wgxdr;
+	ydiff_time1  = _ydiff_time1.fixedflag ?    ((void)(pw_gydl+pw_wgydl), ydiff_time1) : pw_gydl+pw_wgydl;
+	ydiff_time2  = _ydiff_time2.fixedflag ?    ((void)(pw_gydr+pw_wgydr), ydiff_time2) : pw_gydr+pw_wgydr;
+	zdiff_time1  = _zdiff_time1.fixedflag ?    ((void)(pw_gzdl+pw_wgzdl), zdiff_time1) : pw_gzdl+pw_wgzdl;
+	zdiff_time2  = _zdiff_time2.fixedflag ?    ((void)(pw_gzdr+pw_wgzdr), zdiff_time2) : pw_gzdr+pw_wgzdr;
+	/* granty set ramp times to zero... */
+	pw_gxdla  = _pw_gxdla.fixedflag ?  ((void)(0), pw_gxdla) : 0;
+	pw_gxdra  = _pw_gxdra.fixedflag ?  ((void)(0), pw_gxdra) : 0;
+	pw_gydla  = _pw_gydla.fixedflag ?  ((void)(0), pw_gydla) : 0;
+	pw_gydra  = _pw_gydra.fixedflag ?  ((void)(0), pw_gydra) : 0;
+	pw_gzdla  = _pw_gzdla.fixedflag ?  ((void)(0), pw_gzdla) : 0;
+	pw_gzdra  = _pw_gzdra.fixedflag ?  ((void)(0), pw_gzdra) : 0;
+	pw_gxdld  = _pw_gxdld.fixedflag ?  ((void)(0), pw_gxdld) : 0;
+	pw_gxdrd  = _pw_gxdrd.fixedflag ?  ((void)(0), pw_gxdrd) : 0;
+	pw_gydld  = _pw_gydld.fixedflag ?  ((void)(0), pw_gydld) : 0;
+	pw_gydrd  = _pw_gydrd.fixedflag ?  ((void)(0), pw_gydrd) : 0;
+	pw_gzdld  = _pw_gzdld.fixedflag ?  ((void)(0), pw_gzdld) : 0;
+	pw_gzdrd  = _pw_gzdrd.fixedflag ?  ((void)(0), pw_gzdrd) : 0;
+
     } 
     else {
         xdiff_time1  = _xdiff_time1.fixedflag ?       
@@ -24696,8 +24848,6 @@ get_diffusion_time( void )
 
     return SUCCESS;
 } /* end diffusion_timing */
-
-#include "ftde.c" /* granty edit */
 
 /*
  * Update SSE manual TE Diffusion_Timing:
@@ -24799,21 +24949,21 @@ static STATUS update_sse_diffusion_time( void )
 
     Delta_time = pw_wgxdl + pw_gzrf2l1_tot + pw_gzrf2 + pw_gzrf2r1_tot + pw_wgxdr;
 
-    incdifx  = _incdifx.fixedflag ?         ((void)(calc_incdif(_DELTAx.fixedflag ? (_temp650_DELTAx=DELTAx,&_temp650_DELTAx) : &DELTAx,_deltax.fixedflag ? (_temp651_deltax=deltax,&_temp651_deltax) : &deltax,Delta_time,pw_gxdl,pw_gxdld,pw_gxdla,pw_gxdra,bvaltemp_x)), incdifx) : calc_incdif(_DELTAx.fixedflag ? (_temp650_DELTAx=DELTAx,&_temp650_DELTAx) : &DELTAx,_deltax.fixedflag ? (_temp651_deltax=deltax,&_temp651_deltax) : &deltax,Delta_time,pw_gxdl,pw_gxdld,pw_gxdla,pw_gxdra,bvaltemp_x);
+    incdifx  = _incdifx.fixedflag ?         ((void)(calc_incdif(_DELTAx.fixedflag ? (_temp649_DELTAx=DELTAx,&_temp649_DELTAx) : &DELTAx,_deltax.fixedflag ? (_temp650_deltax=deltax,&_temp650_deltax) : &deltax,Delta_time,pw_gxdl,pw_gxdld,pw_gxdla,pw_gxdra,bvaltemp_x)), incdifx) : calc_incdif(_DELTAx.fixedflag ? (_temp649_DELTAx=DELTAx,&_temp649_DELTAx) : &DELTAx,_deltax.fixedflag ? (_temp650_deltax=deltax,&_temp650_deltax) : &deltax,Delta_time,pw_gxdl,pw_gxdld,pw_gxdla,pw_gxdra,bvaltemp_x);
 
     a_gxdl  = _a_gxdl.fixedflag ?  ((void)(incdifx), a_gxdl) : incdifx;
     a_gxdr  = _a_gxdr.fixedflag ?  ((void)(a_gxdl), a_gxdr) : a_gxdl;
 
     Delta_time = pw_wgydl + pw_gzrf2l1_tot + pw_gzrf2 + pw_gzrf2r1_tot + pw_wgydr;
 
-    incdify  = _incdify.fixedflag ?         ((void)(calc_incdif(_DELTAy.fixedflag ? (_temp652_DELTAy=DELTAy,&_temp652_DELTAy) : &DELTAy,_deltay.fixedflag ? (_temp653_deltay=deltay,&_temp653_deltay) : &deltay,Delta_time,pw_gydl,pw_gydld,pw_gydla,pw_gydra,bvaltemp_y)), incdify) : calc_incdif(_DELTAy.fixedflag ? (_temp652_DELTAy=DELTAy,&_temp652_DELTAy) : &DELTAy,_deltay.fixedflag ? (_temp653_deltay=deltay,&_temp653_deltay) : &deltay,Delta_time,pw_gydl,pw_gydld,pw_gydla,pw_gydra,bvaltemp_y);
+    incdify  = _incdify.fixedflag ?         ((void)(calc_incdif(_DELTAy.fixedflag ? (_temp651_DELTAy=DELTAy,&_temp651_DELTAy) : &DELTAy,_deltay.fixedflag ? (_temp652_deltay=deltay,&_temp652_deltay) : &deltay,Delta_time,pw_gydl,pw_gydld,pw_gydla,pw_gydra,bvaltemp_y)), incdify) : calc_incdif(_DELTAy.fixedflag ? (_temp651_DELTAy=DELTAy,&_temp651_DELTAy) : &DELTAy,_deltay.fixedflag ? (_temp652_deltay=deltay,&_temp652_deltay) : &deltay,Delta_time,pw_gydl,pw_gydld,pw_gydla,pw_gydra,bvaltemp_y);
 
     a_gydl  = _a_gydl.fixedflag ?  ((void)(incdify), a_gydl) : incdify;
     a_gydr  = _a_gydr.fixedflag ?  ((void)(a_gydl), a_gydr) : a_gydl;
 
     Delta_time = pw_wgzdl + pw_gzrf2l1_tot + pw_gzrf2 + pw_gzrf2r1_tot + pw_wgzdr;
 
-    incdifz  = _incdifz.fixedflag ?         ((void)(calc_incdif(_DELTAz.fixedflag ? (_temp654_DELTAz=DELTAz,&_temp654_DELTAz) : &DELTAz,_deltaz.fixedflag ? (_temp655_deltaz=deltaz,&_temp655_deltaz) : &deltaz,Delta_time,pw_gzdl,pw_gzdld,pw_gzdla,pw_gzdra,bvaltemp_z)), incdifz) : calc_incdif(_DELTAz.fixedflag ? (_temp654_DELTAz=DELTAz,&_temp654_DELTAz) : &DELTAz,_deltaz.fixedflag ? (_temp655_deltaz=deltaz,&_temp655_deltaz) : &deltaz,Delta_time,pw_gzdl,pw_gzdld,pw_gzdla,pw_gzdra,bvaltemp_z);
+    incdifz  = _incdifz.fixedflag ?         ((void)(calc_incdif(_DELTAz.fixedflag ? (_temp653_DELTAz=DELTAz,&_temp653_DELTAz) : &DELTAz,_deltaz.fixedflag ? (_temp654_deltaz=deltaz,&_temp654_deltaz) : &deltaz,Delta_time,pw_gzdl,pw_gzdld,pw_gzdla,pw_gzdra,bvaltemp_z)), incdifz) : calc_incdif(_DELTAz.fixedflag ? (_temp653_DELTAz=DELTAz,&_temp653_DELTAz) : &DELTAz,_deltaz.fixedflag ? (_temp654_deltaz=deltaz,&_temp654_deltaz) : &deltaz,Delta_time,pw_gzdl,pw_gzdld,pw_gzdla,pw_gzdra,bvaltemp_z);
 
     a_gzdl  = _a_gzdl.fixedflag ?  ((void)(incdifz), a_gzdl) : incdifz;
     a_gzdr  = _a_gzdr.fixedflag ?  ((void)(a_gzdl), a_gzdr) : a_gzdl;
@@ -25165,8 +25315,9 @@ set_tensor_orientations( void )
         int max_chars_per_line = MAXCHAR;   /* lines in tensor.dat header */ 
         int num_tensor_len;
 #ifndef SIM
-        const char *tensor_datapath="/usr/g/bin/";/* path to tensor.dat files - hw  */
-        char tensor_datafile[80]; /* filename of tensor.dat file */
+        /* const char *tensor_datapath="/usr/g/bin/";*/ /* path to tensor.dat files - hw  */
+        const char *tensor_datapath="/usr/g/research/daiep/qti/";/* path to tensor.dat files - hw  */
+		char tensor_datafile[80]; /* filename of tensor.dat file */
         if (rhtensor_file_number == 0)
         {
             sprintf(tensor_datafile, "tensor.dat");
@@ -25441,7 +25592,148 @@ set_tensor_orientations( void )
          */
         calc_orientations();
     }
+/* granty edit for reading from file to specify diffusion waveform to play*/
+    if( (read_from_file == PSD_ON)  && (tensor_flag == PSD_ON )) {
+        FILE *fp;                           /* file pointer */
+        char filestring[MAXCHAR];           /* buffer used to open data file */ 
+        char compstring[MAXCHAR];           /* buffer used to open data file */ 
+        char tempstring[MAXCHAR];           /* buffer to access file */
+        int max_chars_per_line = MAXCHAR;   /* lines in tensor.dat header */ 
+        int num_tensor_len;
+#ifndef SIM
+        const char *tensor_datapath="/usr/g/research/daiep/qti/";/* path to tensor.dat files - hw  */
+        char tensor_datafile[80]; /* filename of tensor.dat file */
+        if (rhtensor_file_number == 0)
+        {
+            sprintf(tensor_datafile, "waveform.dat");
+        }
+        else 
+        {
+            sprintf(tensor_datafile, "waveform%d.dat", rhtensor_file_number);
+        }
+#else /* !SIM */
+        const char *tensor_datapath="./";         /* path to tensor.dat files - sim */
+        char tensor_datafile[80];                    /* filename of tensor.dat file */
 
+        if (rhtensor_file_number == 0)
+        {
+            if(PSD_VRMW_COIL == gCoilType)
+            {
+                sprintf(tensor_datafile, "waveform.dat");
+            }
+            else
+            {
+                sprintf(tensor_datafile, "waveform.dat");
+            }
+        }
+        else 
+        { 
+            sprintf(tensor_datafile, "waveform%d.dat", rhtensor_file_number);
+        }
+#endif /* SIM */
+        
+        /* Check tensor file. Move check here to get the right response to user. */
+        if (PSD_ON == exist(opresearch))
+        {
+            if ( ((0 != rhtensor_file_number) && (rhtensor_file_number < TENSOR_FILE_RSRCH_START))  ||
+                    (rhtensor_file_number > TENSOR_FILE_RSRCH_MAX) )
+            {
+                epic_error( use_ermes, "%s is out of range", EM_PSD_CV_OUT_OF_RANGE, EE_ARGS(1), STRING_ARG, _rhtensor_file_number.descr);
+                return FAILURE;
+            }
+        }
+        else
+        {   /* Not available in Clinical Mode */
+            if ( 0 != rhtensor_file_number )
+            {
+                epic_error( use_ermes, "%s is out of range", EM_PSD_CV_OUT_OF_RANGE, EE_ARGS(1), STRING_ARG, _rhtensor_file_number.descr);
+                return FAILURE;
+            }
+        }
+        
+        
+        /* Setup for file search - set the number of directions requested */
+        sprintf( compstring, "%d", num_tensor );
+        num_tensor_len = strlen( compstring );
+
+        /* Set tensor.dat file path and append filename base and suffix */
+        strcpy( filestring, tensor_datapath );
+        strcat( filestring, tensor_datafile );
+
+        /* Open file */
+        if( (fp = fopen( filestring, "r" )) == NULL ) {
+            char err_string[300];
+            sprintf(err_string, "Can't read %s\n", filestring);
+            epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, err_string );
+            validTensorFile  = _validTensorFile.fixedflag ?  ((void)(0), validTensorFile) : 0;
+            return ADVISORY_FAILURE;
+        }
+        validTensorFile  = _validTensorFile.fixedflag ?  ((void)(1), validTensorFile) : 1;
+
+        /*
+         * The tensor.dat file is a concatanation of several files.
+         * We need to skip over all the lines until we reach the location
+         * that stores the "num_tensor" orientations.
+         */
+        {
+            int read_skip = 1;
+
+            while( read_skip ) {
+                if (fgets( tempstring, max_chars_per_line, fp ) == NULL)
+                {   /* Error response to user if the file cannot be read for the user-desired entry */
+                    fclose(fp); /* PWW */
+                    epic_error( use_ermes, supfailfmt, 
+                            EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "Can't find entry in tensor file");
+                    validTensorFileAndEntry  = _validTensorFileAndEntry.fixedflag ?  ((void)(0), validTensorFileAndEntry) : 0;
+                    return ADVISORY_FAILURE;
+                }
+                read_skip = strncmp( compstring, tempstring, num_tensor_len );
+            }
+            validTensorFileAndEntry  = _validTensorFileAndEntry.fixedflag ?  ((void)(1), validTensorFileAndEntry) : 1;
+        }
+ 
+        if(debugTensor == PSD_ON) {
+           printf( "Waveform Read (Host) = %d\n", num_tensor );
+        }
+
+        /*
+         * Next, after reaching the desired point in the file           
+         * iterate over num_tensor & put the data in TENSOR_HOST[i][j] 
+         */
+
+        /* BJM: assign the T2 images first - want multiple B = 0 images */
+        for( j = 0; j < num_B0; ++j ) {
+            WAVE_HOST[j] = 0.0;
+
+            if(debugTensor == PSD_ON) {
+                printf( "T2 #%d, B-tensor rank = %f \n", j, WAVE_HOST[j] );
+                fflush( stdout );
+            }
+
+        }
+		/* maybe granty */
+        /* Now do the rest of the shots */
+        /*  Skip the multiple B = 0 images.  Start at num_B0 plus 1 in
+            the TENSOR_HOST[][] array. */
+        for ( j = num_B0; j < num_tensor + num_B0; ++j ) {          
+            if( fgets( tempstring, MAXCHAR, fp ) == NULL ) { 
+                printf( "ERROR: invalid tensor.dat file format!\n" ); 
+            }          
+            sscanf( tempstring, "%f", &WAVE_HOST[j] );
+
+            if(debugTensor == PSD_ON) {
+                printf( "Shot = %d, B-tensor rank = %f\n", j, WAVE_HOST[j] );
+                fflush( stdout );
+            }
+        }
+
+        fclose(fp); 
+
+
+     } else {
+        /* Assign the T2 image first */
+	WAVE_HOST[0] = 0.0;
+    }
     return SUCCESS;
 
 }   /* end set_tensor_orientations() */
@@ -25728,7 +26020,7 @@ STATUS automintr_set_display_acqs_enh(int dummyslice_type)
             {
                 int tmp_dummyslice_flag = 0;
 
-                if(slicein1(_sl_acq.fixedflag ? (_temp656_sl_acq=sl_acq,&_temp656_sl_acq) : &sl_acq,exist(optracq) , seq_type) == FAILURE) {
+                if(slicein1(_sl_acq.fixedflag ? (_temp655_sl_acq=sl_acq,&_temp655_sl_acq) : &sl_acq,exist(optracq) , seq_type) == FAILURE) {
                     epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"slicein1");
                     sl_acq  = _sl_acq.fixedflag ? ((void)(1), sl_acq) : 1;
                     return FAILURE;
@@ -25745,13 +26037,13 @@ STATUS automintr_set_display_acqs_enh(int dummyslice_type)
                         tmp_dummyslice_flag = 1;
                     }
                     /* ZZ: multiband use multiband_slquant, not opslquant*/
-                    if(maxslquant1(multiband_flag?multiband_slquant:(sl_acq+tmp_dummyslice_flag), _tr_acq.fixedflag ? (_temp657_tr_acq=tr_acq,&_temp657_tr_acq) : &tr_acq, seq_type, tmin_total, gating) == FAILURE) {
+                    if(maxslquant1(multiband_flag?multiband_slquant:(sl_acq+tmp_dummyslice_flag), _tr_acq.fixedflag ? (_temp656_tr_acq=tr_acq,&_temp656_tr_acq) : &tr_acq, seq_type, tmin_total, gating) == FAILURE) {
                         epic_error(use_ermes,supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"maxslquant1");
                         return FAILURE;
                     }
 #ifdef PSD_FSE
                 } else {
-                    if(maxslquant1_flair(sl_acq, _tr_acq.fixedflag ? (_temp658_tr_acq=tr_acq,&_temp658_tr_acq) : &tr_acq, seq_type, tmin_total, gating) == FAILURE) {
+                    if(maxslquant1_flair(sl_acq, _tr_acq.fixedflag ? (_temp657_tr_acq=tr_acq,&_temp657_tr_acq) : &tr_acq, seq_type, tmin_total, gating) == FAILURE) {
                         epic_error(use_ermes,supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"maxslquant1_flair");
                         return FAILURE;
                     }
@@ -25797,7 +26089,7 @@ STATUS automintr_set_display_acqs_enh(int dummyslice_type)
                 cvoverride(optr,tr_acq,PSD_FIX_OFF,PSD_EXIST_ON);
 
                 /* Recalculate avail_image_time, make sure TR is overridden before calling imgtimutil */
-                if(imgtimutil(premid_rf90, seq_type, gating, _avail_image_time.fixedflag ? (_temp659_avail_image_time=avail_image_time,&_temp659_avail_image_time) : &avail_image_time)==FAILURE) {
+                if(imgtimutil(premid_rf90, seq_type, gating, _avail_image_time.fixedflag ? (_temp658_avail_image_time=avail_image_time,&_temp658_avail_image_time) : &avail_image_time)==FAILURE) {
                     epic_error(use_ermes,"%s failed",EM_PSD_ROUTINE_FAILURE,EE_ARGS(1), STRING_ARG,"imgtimutil");
                     return FAILURE;  /* DCZ: need return FAILURE */
                 }
@@ -25810,12 +26102,12 @@ STATUS automintr_set_display_acqs_enh(int dummyslice_type)
                     fflush(stdout);
                 }
 
-                if(maxpass(_acqs.fixedflag ? (_temp660_acqs=acqs,&_temp660_acqs) : &acqs,seq_type,(int)exist(opslquant),avmaxslquant) == FAILURE) {
+                if(maxpass(_acqs.fixedflag ? (_temp659_acqs=acqs,&_temp659_acqs) : &acqs,seq_type,(int)exist(opslquant),avmaxslquant) == FAILURE) {
                     epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"maxpass");
                     return FAILURE;
                 }
 
-                if(slicein1(_slquant_per_trig.fixedflag ? (_temp661_slquant_per_trig=slquant_per_trig,&_temp661_slquant_per_trig) : &slquant_per_trig, acqs , seq_type) == FAILURE) {
+                if(slicein1(_slquant_per_trig.fixedflag ? (_temp660_slquant_per_trig=slquant_per_trig,&_temp660_slquant_per_trig) : &slquant_per_trig, acqs , seq_type) == FAILURE) {
                     epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"slicein1");
                     slquant_per_trig  = _slquant_per_trig.fixedflag ? ((void)(1), slquant_per_trig) : 1;
                     return FAILURE;
@@ -25853,7 +26145,7 @@ STATUS automintr_set_display_acqs_enh(int dummyslice_type)
                 tmp_acqs_num = avmaxacqs-1;
                 for(i=avmaxacqs-1; i>=1 ;i--)
                 {
-                    if (slicein1(_sl_acq_val2.fixedflag ? (_temp662_sl_acq_val2=sl_acq_val2,&_temp662_sl_acq_val2) : &sl_acq_val2, i, seq_type) == FAILURE) {
+                    if (slicein1(_sl_acq_val2.fixedflag ? (_temp661_sl_acq_val2=sl_acq_val2,&_temp661_sl_acq_val2) : &sl_acq_val2, i, seq_type) == FAILURE) {
                         epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),STRING_ARG,"slicein1");
                         sl_acq_val2  = _sl_acq_val2.fixedflag ? ((void)(1), sl_acq_val2) : 1;
                         return FAILURE;
@@ -25873,13 +26165,13 @@ STATUS automintr_set_display_acqs_enh(int dummyslice_type)
                     {
                         sl_acq_val2  = _sl_acq_val2.fixedflag ?  ((void)(1), sl_acq_val2) : sl_acq_val2+1;
                     }
-                    if(maxslquant1(sl_acq_val2, _tr_acq_val2.fixedflag ? (_temp663_tr_acq_val2=tr_acq_val2,&_temp663_tr_acq_val2) : &tr_acq_val2, seq_type, tmin_total, gating) == FAILURE) {
+                    if(maxslquant1(sl_acq_val2, _tr_acq_val2.fixedflag ? (_temp662_tr_acq_val2=tr_acq_val2,&_temp662_tr_acq_val2) : &tr_acq_val2, seq_type, tmin_total, gating) == FAILURE) {
                         epic_error(use_ermes,supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"maxslquant1");
                         return FAILURE;
                     }
 #ifdef PSD_FSE
                 } else {
-                    if(maxslquant1_flair(sl_acq_val2, _tr_acq_val2.fixedflag ? (_temp664_tr_acq_val2=tr_acq_val2,&_temp664_tr_acq_val2) : &tr_acq_val2, seq_type, tmin_total, gating) == FAILURE) {
+                    if(maxslquant1_flair(sl_acq_val2, _tr_acq_val2.fixedflag ? (_temp663_tr_acq_val2=tr_acq_val2,&_temp663_tr_acq_val2) : &tr_acq_val2, seq_type, tmin_total, gating) == FAILURE) {
                         epic_error(use_ermes,supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"maxslquant1_flair");
                         return FAILURE;
                     }
@@ -25928,7 +26220,7 @@ STATUS automintr_set_display_acqs_enh(int dummyslice_type)
             and is shown for consistency purposes only.
             */
 
-            if(slicein1(_sl_acq_val3.fixedflag ? (_temp665_sl_acq_val3=sl_acq_val3,&_temp665_sl_acq_val3) : &sl_acq_val3, avmaxacqs, seq_type) == FAILURE) {
+            if(slicein1(_sl_acq_val3.fixedflag ? (_temp664_sl_acq_val3=sl_acq_val3,&_temp664_sl_acq_val3) : &sl_acq_val3, avmaxacqs, seq_type) == FAILURE) {
                 epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"slicein1");
                 sl_acq_val3  = _sl_acq_val3.fixedflag ? ((void)(1), sl_acq_val3) : 1;
                 return FAILURE;
@@ -25944,13 +26236,13 @@ STATUS automintr_set_display_acqs_enh(int dummyslice_type)
                 {
                     sl_acq_val3  = _sl_acq_val3.fixedflag ?  ((void)(1), sl_acq_val3) : sl_acq_val3+1;
                 }
-                if(maxslquant1(multiband_flag?multiband_slquant:sl_acq_val3, _tr_acq_val3.fixedflag ? (_temp666_tr_acq_val3=tr_acq_val3,&_temp666_tr_acq_val3) : &tr_acq_val3, seq_type, tmin_total, gating) == FAILURE) {
+                if(maxslquant1(multiband_flag?multiband_slquant:sl_acq_val3, _tr_acq_val3.fixedflag ? (_temp665_tr_acq_val3=tr_acq_val3,&_temp665_tr_acq_val3) : &tr_acq_val3, seq_type, tmin_total, gating) == FAILURE) {
                     epic_error(use_ermes,supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"maxslquant1");
                     return FAILURE;
                 }
 #ifdef PSD_FSE
             } else {
-                if(maxslquant1_flair(sl_acq_val3, _tr_acq_val3.fixedflag ? (_temp667_tr_acq_val3=tr_acq_val3,&_temp667_tr_acq_val3) : &tr_acq_val3, seq_type, tmin_total, gating) == FAILURE) {
+                if(maxslquant1_flair(sl_acq_val3, _tr_acq_val3.fixedflag ? (_temp666_tr_acq_val3=tr_acq_val3,&_temp666_tr_acq_val3) : &tr_acq_val3, seq_type, tmin_total, gating) == FAILURE) {
                     epic_error(use_ermes,supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"maxslquant1_flair");
                     return FAILURE;
                 }
@@ -25993,7 +26285,7 @@ STATUS automintr_set_display_acqs_enh(int dummyslice_type)
             tmp_acqs_num = avmaxacqs+1;
             for(i=avmaxacqs+1; i<=exist(opslquant) ;i++)
             {
-                if(slicein1(_sl_acq_val4.fixedflag ? (_temp668_sl_acq_val4=sl_acq_val4,&_temp668_sl_acq_val4) : &sl_acq_val4, i, seq_type) == FAILURE)
+                if(slicein1(_sl_acq_val4.fixedflag ? (_temp667_sl_acq_val4=sl_acq_val4,&_temp667_sl_acq_val4) : &sl_acq_val4, i, seq_type) == FAILURE)
                 {
                     epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"slicein1");
                     sl_acq_val4  = _sl_acq_val4.fixedflag ? ((void)(1), sl_acq_val4) : 1;
@@ -26017,13 +26309,13 @@ STATUS automintr_set_display_acqs_enh(int dummyslice_type)
                     {
                         sl_acq_val4  = _sl_acq_val4.fixedflag ?  ((void)(1), sl_acq_val4) : sl_acq_val4+1;
                     }
-                    if(maxslquant1(multiband_flag?multiband_slquant:sl_acq_val4, _tr_acq_val4.fixedflag ? (_temp669_tr_acq_val4=tr_acq_val4,&_temp669_tr_acq_val4) : &tr_acq_val4, seq_type, tmin_total, gating) == FAILURE) {
+                    if(maxslquant1(multiband_flag?multiband_slquant:sl_acq_val4, _tr_acq_val4.fixedflag ? (_temp668_tr_acq_val4=tr_acq_val4,&_temp668_tr_acq_val4) : &tr_acq_val4, seq_type, tmin_total, gating) == FAILURE) {
                         epic_error(use_ermes,supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"maxslquant1");
                         return FAILURE;
                     }
 #ifdef PSD_FSE
                 } else {
-                    if(maxslquant1_flair(sl_acq_val4, _tr_acq_val4.fixedflag ? (_temp670_tr_acq_val4=tr_acq_val4,&_temp670_tr_acq_val4) : &tr_acq_val4, seq_type, tmin_total, gating) == FAILURE) {
+                    if(maxslquant1_flair(sl_acq_val4, _tr_acq_val4.fixedflag ? (_temp669_tr_acq_val4=tr_acq_val4,&_temp669_tr_acq_val4) : &tr_acq_val4, seq_type, tmin_total, gating) == FAILURE) {
                         epic_error(use_ermes,supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),STRING_ARG,"maxslquant1_flair");
                         return FAILURE;
                     }
@@ -26357,15 +26649,15 @@ STATUS get_flowcomp_time(void)
         /* compute moments for blips */
         pulsepos  = _pulsepos.fixedflag ?            ((void)(pw_gy1_tot+pw_gxwad+esp-pw_gxwad/2-pw_gyb/2-pw_gybd), pulsepos) : pw_gy1_tot+pw_gxwad+esp-pw_gxwad/2-pw_gyb/2-pw_gybd;
         for (pulsecnt=0;pulsecnt<blips2cent;pulsecnt++) {
-            rampmoments(0.0, a_gyb, pw_gyba, invertphase, _pulsepos.fixedflag ? (_temp671_pulsepos=pulsepos,&_temp671_pulsepos) : &pulsepos,
-                        _zeromoment.fixedflag ? (_temp672_zeromoment=zeromoment,&_temp672_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp673_firstmoment=firstmoment,&_temp673_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp674_zeromomentsum=zeromomentsum,&_temp674_zeromomentsum) : &zeromomentsum,
-                        _firstmomentsum.fixedflag ? (_temp675_firstmomentsum=firstmomentsum,&_temp675_firstmomentsum) : &firstmomentsum);
-            rampmoments(a_gyb, a_gyb, pw_gyb, invertphase, _pulsepos.fixedflag ? (_temp676_pulsepos=pulsepos,&_temp676_pulsepos) : &pulsepos,
-                        _zeromoment.fixedflag ? (_temp677_zeromoment=zeromoment,&_temp677_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp678_firstmoment=firstmoment,&_temp678_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp679_zeromomentsum=zeromomentsum,&_temp679_zeromomentsum) : &zeromomentsum,
-                        _firstmomentsum.fixedflag ? (_temp680_firstmomentsum=firstmomentsum,&_temp680_firstmomentsum) : &firstmomentsum);
-            rampmoments(a_gyb, 0.0, pw_gybd, invertphase, _pulsepos.fixedflag ? (_temp681_pulsepos=pulsepos,&_temp681_pulsepos) : &pulsepos,
-                        _zeromoment.fixedflag ? (_temp682_zeromoment=zeromoment,&_temp682_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp683_firstmoment=firstmoment,&_temp683_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp684_zeromomentsum=zeromomentsum,&_temp684_zeromomentsum) : &zeromomentsum,
-                        _firstmomentsum.fixedflag ? (_temp685_firstmomentsum=firstmomentsum,&_temp685_firstmomentsum) : &firstmomentsum);
+            rampmoments(0.0, a_gyb, pw_gyba, invertphase, _pulsepos.fixedflag ? (_temp670_pulsepos=pulsepos,&_temp670_pulsepos) : &pulsepos,
+                        _zeromoment.fixedflag ? (_temp671_zeromoment=zeromoment,&_temp671_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp672_firstmoment=firstmoment,&_temp672_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp673_zeromomentsum=zeromomentsum,&_temp673_zeromomentsum) : &zeromomentsum,
+                        _firstmomentsum.fixedflag ? (_temp674_firstmomentsum=firstmomentsum,&_temp674_firstmomentsum) : &firstmomentsum);
+            rampmoments(a_gyb, a_gyb, pw_gyb, invertphase, _pulsepos.fixedflag ? (_temp675_pulsepos=pulsepos,&_temp675_pulsepos) : &pulsepos,
+                        _zeromoment.fixedflag ? (_temp676_zeromoment=zeromoment,&_temp676_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp677_firstmoment=firstmoment,&_temp677_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp678_zeromomentsum=zeromomentsum,&_temp678_zeromomentsum) : &zeromomentsum,
+                        _firstmomentsum.fixedflag ? (_temp679_firstmomentsum=firstmomentsum,&_temp679_firstmomentsum) : &firstmomentsum);
+            rampmoments(a_gyb, 0.0, pw_gybd, invertphase, _pulsepos.fixedflag ? (_temp680_pulsepos=pulsepos,&_temp680_pulsepos) : &pulsepos,
+                        _zeromoment.fixedflag ? (_temp681_zeromoment=zeromoment,&_temp681_zeromoment) : &zeromoment, _firstmoment.fixedflag ? (_temp682_firstmoment=firstmoment,&_temp682_firstmoment) : &firstmoment, _zeromomentsum.fixedflag ? (_temp683_zeromomentsum=zeromomentsum,&_temp683_zeromomentsum) : &zeromomentsum,
+                        _firstmomentsum.fixedflag ? (_temp684_firstmomentsum=firstmomentsum,&_temp684_firstmomentsum) : &firstmomentsum);
             pulsepos  = _pulsepos.fixedflag ?      ((void)((esp-pw_gyba-pw_gyb/2)), pulsepos) : pulsepos+(esp-pw_gyba-pw_gyb/2);
         }
         gyb_tot_0thmoment  = _gyb_tot_0thmoment.fixedflag ?  ((void)(zeromomentsum), gyb_tot_0thmoment) : zeromomentsum;
@@ -26380,7 +26672,7 @@ STATUS get_flowcomp_time(void)
 
         amppwygmn(gyb_tot_0thmoment, gyb_tot_1stmoment, pw_gy1a, pw_gy1,
                   pw_gy1d, 0.0, 0.0, loggrd.ty_xyz, (float)loggrd.yrt*loggrd.scale_3axis_risetime,
-                  0, _pw_gymn2a.fixedflag ? (_temp686_pw_gymn2a=pw_gymn2a,&_temp686_pw_gymn2a) : &pw_gymn2a, _pw_gymn2.fixedflag ? (_temp687_pw_gymn2=pw_gymn2,&_temp687_pw_gymn2) : &pw_gymn2, _pw_gymn2d.fixedflag ? (_temp688_pw_gymn2d=pw_gymn2d,&_temp688_pw_gymn2d) : &pw_gymn2d, _a_gymn2.fixedflag ? (_temp689_a_gymn2=a_gymn2,&_temp689_a_gymn2) : &a_gymn2);
+                  0, _pw_gymn2a.fixedflag ? (_temp685_pw_gymn2a=pw_gymn2a,&_temp685_pw_gymn2a) : &pw_gymn2a, _pw_gymn2.fixedflag ? (_temp686_pw_gymn2=pw_gymn2,&_temp686_pw_gymn2) : &pw_gymn2, _pw_gymn2d.fixedflag ? (_temp687_pw_gymn2d=pw_gymn2d,&_temp687_pw_gymn2d) : &pw_gymn2d, _a_gymn2.fixedflag ? (_temp688_a_gymn2=a_gymn2,&_temp688_a_gymn2) : &a_gymn2);
 
         a_gymn2  = _a_gymn2.fixedflag ?  ((void)(-a_gymn2), a_gymn2) : -a_gymn2;
         a_gymn1  = _a_gymn1.fixedflag ?  ((void)(-a_gymn2), a_gymn1) : -a_gymn2;
@@ -26411,7 +26703,7 @@ STATUS get_gy1_time(void)
     /* Find the amplitudes and pulse widths of the trapezoidal
        phase encoding pulse. */
 
-    if (amppwtpe(_a_gy1a.fixedflag ? (_temp690_a_gy1a=a_gy1a,&_temp690_a_gy1a) : &a_gy1a,_a_gy1b.fixedflag ? (_temp691_a_gy1b=a_gy1b,&_temp691_a_gy1b) : &a_gy1b,_pw_gy1.fixedflag ? (_temp692_pw_gy1=pw_gy1,&_temp692_pw_gy1) : &pw_gy1,_pw_gy1a.fixedflag ? (_temp693_pw_gy1a=pw_gy1a,&_temp693_pw_gy1a) : &pw_gy1a,_pw_gy1d.fixedflag ? (_temp694_pw_gy1d=pw_gy1d,&_temp694_pw_gy1d) : &pw_gy1d,
+    if (amppwtpe(_a_gy1a.fixedflag ? (_temp689_a_gy1a=a_gy1a,&_temp689_a_gy1a) : &a_gy1a,_a_gy1b.fixedflag ? (_temp690_a_gy1b=a_gy1b,&_temp690_a_gy1b) : &a_gy1b,_pw_gy1.fixedflag ? (_temp691_pw_gy1=pw_gy1,&_temp691_pw_gy1) : &pw_gy1,_pw_gy1a.fixedflag ? (_temp692_pw_gy1a=pw_gy1a,&_temp692_pw_gy1a) : &pw_gy1a,_pw_gy1d.fixedflag ? (_temp693_pw_gy1d=pw_gy1d,&_temp693_pw_gy1d) : &pw_gy1d,
                  loggrd.ty_xyz/endview_scale,loggrd.yrt*loggrd.scale_3axis_risetime,
                  area_gy1) == FAILURE)
     {
@@ -27166,6 +27458,8 @@ STATUS calc_b_matrix( FLOAT * curr_bvalue,
                 a_gydr  = _a_gydr.fixedflag ?  ((void)(TENSOR_HOST[1][i]*dif_amp[1]), a_gydr) : TENSOR_HOST[1][i]*dif_amp[1];
                 a_gzdl  = _a_gzdl.fixedflag ?  ((void)(TENSOR_HOST[2][i]*dif_amp[2]), a_gzdl) : TENSOR_HOST[2][i]*dif_amp[2];
                 a_gzdr  = _a_gzdr.fixedflag ?  ((void)(TENSOR_HOST[2][i]*dif_amp[2]), a_gzdr) : TENSOR_HOST[2][i]*dif_amp[2];
+		/* granty edit for custom waveforms */
+		waveform_type  = _waveform_type.fixedflag ?  ((void)(WAVE_HOST[i]), waveform_type) : WAVE_HOST[i];
                 
             } else {
                 a_gxdl1  = _a_gxdl1.fixedflag ?  ((void)(TENSOR_HOST[0][i]*dif_amp[0]), a_gxdl1) : TENSOR_HOST[0][i]*dif_amp[0];
@@ -29252,6 +29546,76 @@ STATUS DTI_Predownload()
             diff_ampz[0] = incdifz;
         }
         else if (b0calmode != 1) {
+	    /* store gradient amplitudes for retrieval later */
+	    int ampx_tmp = a_gxdl;
+	    int ampy_tmp = a_gydl;
+	    int ampz_tmp = a_gzdl;
+
+	    /* set all gradient amplitudes to system max */
+	    a_gxdl  = _a_gxdl.fixedflag ?  ((void)(loggrd.tx_xyz), a_gxdl) : loggrd.tx_xyz;
+	    a_gxdr  = _a_gxdr.fixedflag ?  ((void)(a_gxdl), a_gxdr) : a_gxdl;
+	    a_gydl  = _a_gydl.fixedflag ?  ((void)(loggrd.ty_xyz), a_gydl) : loggrd.ty_xyz;
+	    a_gydr  = _a_gydr.fixedflag ?  ((void)(a_gydl), a_gydr) : a_gydl;
+	    a_gzdl  = _a_gzdl.fixedflag ?  ((void)(loggrd.tz_xyz), a_gzdl) : loggrd.tz_xyz;
+	    a_gzdr  = _a_gzdr.fixedflag ?  ((void)(a_gzdl), a_gzdr) : a_gzdl;
+
+	    /* granty edit calculate b-value in pulsegen */
+	    seg_debug  = _seg_debug.fixedflag ?  ((void)(1), seg_debug) : 1;
+	    waveform_type  = _waveform_type.fixedflag ?  ((void)(3), waveform_type) : 3; /* load isotropic waveform into instruction memory in pg */
+            pgen_calc_bval_flag  = _pgen_calc_bval_flag.fixedflag ?  ((void)(PSD_ON), pgen_calc_bval_flag) : PSD_ON;
+	    bmat_flag = 1;
+        printf("daiep test1...\n" ); /* daiep test */  
+        fflush(stdout); 
+
+            status =  pgen_calcbvalue( curr_bvalue, rf_excite_location, rf_180_location,
+                                       num_180s, opte, GAM, &loggrd, seq_entry_index, tsamp,
+                                       act_tr, use_ermes, seg_debug, bmat_flag);
+        printf("daiep test2...\n" ); /* daiep test */  
+        fflush(stdout); 
+
+            if(status == FAILURE || status == SKIP) {
+            	epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "pgen_calcbvalue()" );
+            	return FAILURE;
+            }
+
+        printf("daiep test3...\n" ); /* daiep test */  
+        fflush(stdout); 
+
+            pgen_calc_bval_flag  = _pgen_calc_bval_flag.fixedflag ?  ((void)(PSD_OFF), pgen_calc_bval_flag) : PSD_OFF;
+	    ide_max_bval  = _ide_max_bval.fixedflag ?      ((void)(curr_bvalue[0]+curr_bvalue[1]+curr_bvalue[2]), ide_max_bval) : curr_bvalue[0]+curr_bvalue[1]+curr_bvalue[2];
+	    if(ide_max_bval < max_bval){ 
+		max_bval  = _max_bval.fixedflag ?   ((void)(ide_max_bval), max_bval) : ide_max_bval;
+	    }
+
+	    printf("current IDE b-value = %f \n", curr_bvalue[0] + curr_bvalue[1] + curr_bvalue[2]);
+	    fflush(stdout);
+
+            /* Calculate bvalue using pulsegen */
+	    waveform_type  = _waveform_type.fixedflag ?  ((void)(1), waveform_type) : 1; /* load sde waveform into instruction memory in pg */
+            pgen_calc_bval_flag  = _pgen_calc_bval_flag.fixedflag ?  ((void)(PSD_ON), pgen_calc_bval_flag) : PSD_ON;
+	    bmat_flag = 1;
+            status =  pgen_calcbvalue( curr_bvalue, rf_excite_location, rf_180_location,
+                                       num_180s, opte, GAM, &loggrd, seq_entry_index, tsamp,
+                                       act_tr, use_ermes, seg_debug, bmat_flag);
+            if(status == FAILURE || status == SKIP) {
+            	epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "pgen_calcbvalue()" );
+            	return FAILURE;
+            }
+            pgen_calc_bval_flag  = _pgen_calc_bval_flag.fixedflag ?  ((void)(PSD_OFF), pgen_calc_bval_flag) : PSD_OFF;
+	    sde_max_bval  = _sde_max_bval.fixedflag ?      ((void)((curr_bvalue[0]+curr_bvalue[1]+curr_bvalue[2])/3), sde_max_bval) : (curr_bvalue[0]+curr_bvalue[1]+curr_bvalue[2])/3;
+	    if(ide_max_bval < max_bval) max_bval  = _max_bval.fixedflag ?   ((void)(sde_max_bval), max_bval) : sde_max_bval;
+	    printf("current SDE b-value = %f \n",(curr_bvalue[0] + curr_bvalue[1] + curr_bvalue[2])/3);
+     	    fflush(stdout);
+ 
+ 	    /* set all gradient amplitudes to original values */
+	    a_gxdl  = _a_gxdl.fixedflag ?  ((void)(ampx_tmp), a_gxdl) : ampx_tmp;
+	    a_gxdr  = _a_gxdr.fixedflag ?  ((void)(a_gxdl), a_gxdr) : a_gxdl;
+	    a_gydl  = _a_gydl.fixedflag ?  ((void)(ampy_tmp), a_gydl) : ampy_tmp;
+	    a_gydr  = _a_gydr.fixedflag ?  ((void)(a_gydl), a_gydr) : a_gydl;
+	    a_gzdl  = _a_gzdl.fixedflag ?  ((void)(ampz_tmp), a_gzdl) : ampz_tmp;
+	    a_gzdr  = _a_gzdr.fixedflag ?  ((void)(a_gzdl), a_gzdr) : a_gzdl;
+
+	    /* verify b-value */
             status = verify_bvalue(curr_bvalue, rf_excite_location, rf_180_location,
                                    num_180s,seq_entry_index,bmat_flag,seg_debug);
             if(status == FAILURE || status == SKIP) {
@@ -29543,7 +29907,7 @@ predownload( void )
             rhdacqctrl  = _rhdacqctrl.fixedflag ?  ((void)(~(RHDC_RAWDATA)), rhdacqctrl) : rhdacqctrl&~(RHDC_RAWDATA);
         }
 
-        set_echo_flip(_rhdacqctrl.fixedflag ? (_temp695_rhdacqctrl=rhdacqctrl,&_temp695_rhdacqctrl) : &rhdacqctrl, &chksum_rhdacqctrl, eepf, oepf, eeff, oeff);
+        set_echo_flip(_rhdacqctrl.fixedflag ? (_temp694_rhdacqctrl=rhdacqctrl,&_temp694_rhdacqctrl) : &rhdacqctrl, &chksum_rhdacqctrl, eepf, oepf, eeff, oeff);
 
         rhexecctrl  = _rhexecctrl.fixedflag ?      
                         ((void)(RHXC_AUTO_DISPLAY|RHXC_AUTO_LOCK*(0<autolock)|RHXC_AUTO_LOCK_ALLRECS*(2==autolock)|RHXC_XFER_IM|RHXC_INTERMEDIATE*saveinter), rhexecctrl) : RHXC_AUTO_DISPLAY|RHXC_AUTO_LOCK*(0<autolock)|RHXC_AUTO_LOCK_ALLRECS*(2==autolock)|RHXC_XFER_IM|RHXC_INTERMEDIATE*saveinter;
@@ -29770,7 +30134,7 @@ predownload( void )
 
             if (B0_30000 == cffield || PSD_PURE_COMPATIBLE_2==pipure) /* 3.0 T platform */
             {
-                if (FAILURE == getPUREMixParameters(model_parameters, coilInfo, exist(opanatomy), &pure_mix, _pure_mix_tx_scale.fixedflag ? (_temp696_pure_mix_tx_scale=pure_mix_tx_scale,&_temp696_pure_mix_tx_scale) : &pure_mix_tx_scale))
+                if (FAILURE == getPUREMixParameters(model_parameters, coilInfo, exist(opanatomy), &pure_mix, _pure_mix_tx_scale.fixedflag ? (_temp695_pure_mix_tx_scale=pure_mix_tx_scale,&_temp695_pure_mix_tx_scale) : &pure_mix_tx_scale))
                 {
                     epic_error(use_ermes, "Support routine %s failed.",
                                EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
@@ -30735,7 +31099,7 @@ if (arc_ph_flag || arc_sl_flag)
     {
         oepf  = _oepf.fixedflag ?  ((void)(0), oepf) : 0;
     }
-    set_echo_flip(_rhdacqctrl.fixedflag ? (_temp697_rhdacqctrl=rhdacqctrl,&_temp697_rhdacqctrl) : &rhdacqctrl, &chksum_rhdacqctrl, eepf, oepf, eeff, oeff); /* clear bit 1 - flips image in phase dir */
+    set_echo_flip(_rhdacqctrl.fixedflag ? (_temp696_rhdacqctrl=rhdacqctrl,&_temp696_rhdacqctrl) : &rhdacqctrl, &chksum_rhdacqctrl, eepf, oepf, eeff, oeff); /* clear bit 1 - flips image in phase dir */
 
     rhdaxres  = _rhdaxres.fixedflag ?  ((void)(rhfrsize), rhdaxres) : rhfrsize;
 
@@ -30999,6 +31363,14 @@ if (arc_ph_flag || arc_sl_flag)
       rhpclin  = _rhpclin.fixedflag ?  ((void)(1), rhpclin) : 1;
     }
 
+    /* update for addition of external gradient waveforms for qti - granty */
+    ia_gxdl  = _ia_gxdl.fixedflag ?  ((void)(a_gxdl*MAX_PG_IAMP), ia_gxdl) : a_gxdl*MAX_PG_IAMP;
+    ia_gxdr  = _ia_gxdr.fixedflag ?  ((void)(a_gxdr*MAX_PG_IAMP), ia_gxdr) : a_gxdr*MAX_PG_IAMP;
+    ia_gydl  = _ia_gydl.fixedflag ?  ((void)(a_gydl*MAX_PG_IAMP), ia_gydl) : a_gydl*MAX_PG_IAMP;
+    ia_gydr  = _ia_gydr.fixedflag ?  ((void)(a_gydr*MAX_PG_IAMP), ia_gydr) : a_gydr*MAX_PG_IAMP;
+    ia_gzdl  = _ia_gzdl.fixedflag ?  ((void)(a_gzdl*MAX_PG_IAMP), ia_gzdl) : a_gzdl*MAX_PG_IAMP;
+    ia_gzdr  = _ia_gzdr.fixedflag ?  ((void)(a_gzdr*MAX_PG_IAMP), ia_gzdr) : a_gzdr*MAX_PG_IAMP;
+
     /* Coil Selection */
     cvmax(rhpccoil, (INT)((cfrecvend - cfrecvst)+1));
     cvmin(rhpccoil, (INT)(-1));
@@ -31225,9 +31597,9 @@ if (arc_ph_flag || arc_sl_flag)
     if(rpg_flag > 0)
     {
         /* Other Distortion Correction  options include:  RH_DIST_CORR_RIGID, RH_DIST_OUTPUT_REVERSET2 */
-        rhdistcorr_ctrl  = _rhdistcorr_ctrl.fixedflag ?      ((void)(RH_DIST_CORR_B0+(rpg_in_scan_flag?RH_DIST_CORR_RPG:0)+RH_DIST_CORR_AFFINE), rhdistcorr_ctrl) : RH_DIST_CORR_B0+(rpg_in_scan_flag?RH_DIST_CORR_RPG:0)+RH_DIST_CORR_AFFINE; 
+        rhdistcorr_ctrl  = _rhdistcorr_ctrl.fixedflag ?      ((void)(RH_DIST_CORR_B0+(rpg_in_scan_flag?RH_DIST_CORR_RPG:0)+RH_DIST_CORR_AFFINE), rhdistcorr_ctrl) : RH_DIST_CORR_B0+(rpg_in_scan_flag?RH_DIST_CORR_RPG:0)+RH_DIST_CORR_AFFINE;
 	/* granty edit force save of reverse polarity B0 images 7/2/2018 */
-	rhdistcorr_ctrl  = _rhdistcorr_ctrl.fixedflag ?  ((void)(29), rhdistcorr_ctrl) : 29;
+	rhdistcorr_ctrl  = _rhdistcorr_ctrl.fixedflag ?  ((void)(29), rhdistcorr_ctrl) : 29; 
     }
     else
     {
@@ -31312,13 +31684,6 @@ if (arc_ph_flag || arc_sl_flag)
 
             ia_gzdl  = _ia_gzdl.fixedflag ?     ((void)((int)(a_gzdl*(float)max_pg_iamp/loggrd.tz)), ia_gzdl) : (int)(a_gzdl*(float)max_pg_iamp/loggrd.tz);
             ia_gzdr  = _ia_gzdr.fixedflag ?     ((void)((int)(a_gzdr*(float)max_pg_iamp/loggrd.tz)), ia_gzdr) : (int)(a_gzdr*(float)max_pg_iamp/loggrd.tz);
-	    if(ftde_flag == PSD_ON){ /*granty edit for full time diffusion encoding option */
-            	ia_gxde  = _ia_gxde.fixedflag ?     ((void)((int)(a_gxde*(float)max_pg_iamp/loggrd.tx)), ia_gxde) : (int)(a_gxde*(float)max_pg_iamp/loggrd.tx);
-
-            	ia_gyde  = _ia_gyde.fixedflag ?     ((void)((int)(a_gyde*(float)max_pg_iamp/loggrd.ty)), ia_gyde) : (int)(a_gyde*(float)max_pg_iamp/loggrd.ty);
-
-            	ia_gzde  = _ia_gzde.fixedflag ?     ((void)((int)(a_gzde*(float)max_pg_iamp/loggrd.tz)), ia_gzde) : (int)(a_gzde*(float)max_pg_iamp/loggrd.tz);
-	    }
         } 
         else 
         {
@@ -31933,7 +32298,9 @@ if (arc_ph_flag || arc_sl_flag)
         enforce_minseqseg  = _enforce_minseqseg.fixedflag ?  ((void)(0), enforce_minseqseg) : 0;
         enable_acoustic_model  = _enable_acoustic_model.fixedflag ?  ((void)(0), enable_acoustic_model) : 0;
     }
-
+    /* granty edit save p-files by default */ 
+    rhtype1  = _rhtype1.fixedflag ?    ((void)(rhtype1|4096), rhtype1) : rhtype1|4096; 
+    autolock  = _autolock.fixedflag ?  ((void)(1), autolock) : 1;
     return SUCCESS;
 }   /* end predownload() */
 
@@ -31950,7 +32317,7 @@ predownload1( void )
 
     /* Prescan Slice Calc **********************/
 
-    if (prescanslice(_pre_pass.fixedflag ? (_temp698_pre_pass=pre_pass,&_temp698_pre_pass) : &pre_pass, _pre_slice.fixedflag ? (_temp699_pre_slice=pre_slice,&_temp699_pre_slice) : &pre_slice, opslquant) == FAILURE) {
+    if (prescanslice(_pre_pass.fixedflag ? (_temp697_pre_pass=pre_pass,&_temp697_pre_pass) : &pre_pass, _pre_slice.fixedflag ? (_temp698_pre_slice=pre_slice,&_temp698_pre_slice) : &pre_slice, opslquant) == FAILURE) {
         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "prescanslice" );
         return FAILURE;
     }
@@ -32181,7 +32548,7 @@ predownload1( void )
 
     /*multiband*/
     if (FAILURE == Monitor_Predownload( rfpulse, entry_point_table, (int)RF_FREE, (int)(act_tr/((mux_flag)?mux_slquant:slquant1)),
-                                        _monave_sar.fixedflag ? (_temp700_monave_sar=monave_sar,&_temp700_monave_sar) : &monave_sar, _moncave_sar.fixedflag ? (_temp701_moncave_sar=moncave_sar,&_temp701_moncave_sar) : &moncave_sar, _monpeak_sar.fixedflag ? (_temp702_monpeak_sar=monpeak_sar,&_temp702_monpeak_sar) : &monpeak_sar ))
+                                        _monave_sar.fixedflag ? (_temp699_monave_sar=monave_sar,&_temp699_monave_sar) : &monave_sar, _moncave_sar.fixedflag ? (_temp700_moncave_sar=moncave_sar,&_temp700_moncave_sar) : &moncave_sar, _monpeak_sar.fixedflag ? (_temp701_monpeak_sar=monpeak_sar,&_temp701_monpeak_sar) : &monpeak_sar ))
     {
         epic_error(use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
                    STRING_ARG, "Monitor_Predownload");
@@ -32213,7 +32580,7 @@ predownload1( void )
        check in predownload to make sure the impact on various workflow can be fully 
        captured */
     if ((tensor_flag == PSD_ON) && (hoecc_flag == PSD_OFF) && (dualspinecho_flag == PSD_OFF) 
-        && (rfov_flag == PSD_OFF) && (opresearch == PSD_OFF)) /*daiep begin 190319 */
+        && (rfov_flag == PSD_OFF) && (opresearch == PSD_OFF)) /* add the last condition to make the simulator work, daiep */
     {
         epic_error(use_ermes, 
                    "For the current prescription, either Dual Spin Echo or Real Time Field Adjustment needs to be turned on.", 
@@ -32517,7 +32884,7 @@ if (smartprep_flag || navigator_flag)
 
 #ifndef SIM
     /* compute interpolated time delays for phase-encode blip correction method */
-    if ( FAILURE == blipcorrdel(_bc_delx.fixedflag ? (_temp703_bc_delx=bc_delx,&_temp703_bc_delx) : &bc_delx, _bc_dely.fixedflag ? (_temp704_bc_dely=bc_dely,&_temp704_bc_dely) : &bc_dely, _bc_delz.fixedflag ? (_temp705_bc_delz=bc_delz,&_temp705_bc_delz) : &bc_delz, esp,
+    if ( FAILURE == blipcorrdel(_bc_delx.fixedflag ? (_temp702_bc_delx=bc_delx,&_temp702_bc_delx) : &bc_delx, _bc_dely.fixedflag ? (_temp703_bc_dely=bc_dely,&_temp703_bc_dely) : &bc_dely, _bc_delz.fixedflag ? (_temp704_bc_delz=bc_delz,&_temp704_bc_delz) : &bc_delz, esp,
                                 getTxCoilType(), debug_oblcorr) ) {
         epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "blipcorrdel" );
         return FAILURE;
@@ -32950,9 +33317,24 @@ calcPulseParams( int encode_mode )
             {
                 for( kk=0; kk< (opdifnumdirs + opdifnumt2); kk++) 
                 {
-                    scale_difx  = _scale_difx.fixedflag ?    ((void)(TENSOR_HOST[0][kk]*TENSOR_HOST[0][kk]), scale_difx) : scale_difx+TENSOR_HOST[0][kk]*TENSOR_HOST[0][kk];
-                    scale_dify  = _scale_dify.fixedflag ?    ((void)(TENSOR_HOST[1][kk]*TENSOR_HOST[1][kk]), scale_dify) : scale_dify+TENSOR_HOST[1][kk]*TENSOR_HOST[1][kk];
-                    scale_difz  = _scale_difz.fixedflag ?    ((void)(TENSOR_HOST[2][kk]*TENSOR_HOST[2][kk]), scale_difz) : scale_difz+TENSOR_HOST[2][kk]*TENSOR_HOST[2][kk];
+					/*
+                    scale_difx += TENSOR_HOST[0][kk] * TENSOR_HOST[0][kk];
+                    scale_dify += TENSOR_HOST[1][kk] * TENSOR_HOST[1][kk];
+                    scale_difz += TENSOR_HOST[2][kk] * TENSOR_HOST[2][kk];
+					*/
+					/* original */
+
+			/* granty edit to adjust for different diffusion waveforms 5/15/2018 */
+		    if(floatsAlmostEqualEpsilons(WAVE_HOST[kk], 1, 2)){
+                    	scale_difx  = _scale_difx.fixedflag ?      ((void)(TENSOR_HOST[0][kk]*TENSOR_HOST[0][kk]*max_bval/sde_max_bval), scale_difx) : scale_difx+TENSOR_HOST[0][kk]*TENSOR_HOST[0][kk]*max_bval/sde_max_bval;
+                    	scale_dify  = _scale_dify.fixedflag ?      ((void)(TENSOR_HOST[1][kk]*TENSOR_HOST[1][kk]*max_bval/sde_max_bval), scale_dify) : scale_dify+TENSOR_HOST[1][kk]*TENSOR_HOST[1][kk]*max_bval/sde_max_bval;
+                    	scale_difz  = _scale_difz.fixedflag ?      ((void)(TENSOR_HOST[2][kk]*TENSOR_HOST[2][kk]*max_bval/sde_max_bval), scale_difz) : scale_difz+TENSOR_HOST[2][kk]*TENSOR_HOST[2][kk]*max_bval/sde_max_bval;
+		    } else if (floatsAlmostEqualEpsilons(WAVE_HOST[kk], 3, 2)) {
+                   	scale_difx  = _scale_difx.fixedflag ?      ((void)(TENSOR_HOST[0][kk]*TENSOR_HOST[0][kk]*max_bval/ide_max_bval), scale_difx) : scale_difx+TENSOR_HOST[0][kk]*TENSOR_HOST[0][kk]*max_bval/ide_max_bval;
+                    	scale_dify  = _scale_dify.fixedflag ?      ((void)(TENSOR_HOST[1][kk]*TENSOR_HOST[1][kk]*max_bval/ide_max_bval), scale_dify) : scale_dify+TENSOR_HOST[1][kk]*TENSOR_HOST[1][kk]*max_bval/ide_max_bval;
+                    	scale_difz  = _scale_difz.fixedflag ?      ((void)(TENSOR_HOST[2][kk]*TENSOR_HOST[2][kk]*max_bval/ide_max_bval), scale_difz) : scale_difz+TENSOR_HOST[2][kk]*TENSOR_HOST[2][kk]*max_bval/ide_max_bval;
+		    }
+ 		    /* end edit */
                     if ( weighted_avg_debug == PSD_ON ) 
                     {
                         fprintf(fp_grad,"TENSOR_HOST[0][%d]=%f, TENSOR_HOST[1][%d]=%f, TENSOR_HOST[2][%d]=%f\n",
@@ -33222,13 +33604,6 @@ calcPulseParams( int encode_mode )
             /* z axis scaled - scale_difz = 0*/
             a_gzdl  = _a_gzdl.fixedflag ?  ((void)(gradz[GZDL_SLOT].num*a_gzdl*scale_difz), a_gzdl) : gradz[GZDL_SLOT].num*a_gzdl*scale_difz;
             a_gzdr  = _a_gzdr.fixedflag ?  ((void)(a_gzdl), a_gzdr) : a_gzdl; 
-	    
-	    /* granty edit for full time diffusion encoding */
-	    if(ftde_flag == PSD_ON){
-		a_gxde  = _a_gxde.fixedflag ?  ((void)(-a_gxdr), a_gxde) : -a_gxdr;
-		a_gyde  = _a_gyde.fixedflag ?  ((void)(-a_gydr), a_gyde) : -a_gydr;
-		a_gzde  = _a_gzde.fixedflag ?  ((void)(-a_gzdr), a_gzde) : -a_gzdr;
-	    }
 
             /* Obl 3in1 opt */
             if (obl_3in1_opt)
@@ -33261,15 +33636,6 @@ calcPulseParams( int encode_mode )
 
             ia_gzdl  = _ia_gzdl.fixedflag ?     ((void)((int)(a_gzdl*(float)max_pg_iamp/loggrd.tz)), ia_gzdl) : (int)(a_gzdl*(float)max_pg_iamp/loggrd.tz);
             ia_gzdr  = _ia_gzdr.fixedflag ?     ((void)((int)(a_gzdr*(float)max_pg_iamp/loggrd.tz)), ia_gzdr) : (int)(a_gzdr*(float)max_pg_iamp/loggrd.tz);
-
-	    if(ftde_flag == PSD_ON){/* granty maybe */
-            	ia_gxde  = _ia_gxde.fixedflag ?     ((void)((int)(a_gxde*(float)max_pg_iamp/loggrd.tx)), ia_gxde) : (int)(a_gxde*(float)max_pg_iamp/loggrd.tx);
-
-            	ia_gyde  = _ia_gyde.fixedflag ?     ((void)((int)(a_gyde*(float)max_pg_iamp/loggrd.ty)), ia_gyde) : (int)(a_gyde*(float)max_pg_iamp/loggrd.ty);
-
-            	ia_gzde  = _ia_gzde.fixedflag ?     ((void)((int)(a_gzde*(float)max_pg_iamp/loggrd.tz)), ia_gzde) : (int)(a_gzde*(float)max_pg_iamp/loggrd.tz);
-	    }
-
         }
         else 
         {
@@ -33362,12 +33728,6 @@ calcPulseParams( int encode_mode )
             /* z axis scaled */
             a_gzdl  = _a_gzdl.fixedflag ?  ((void)(agzdif_tmp), a_gzdl) : agzdif_tmp;
             a_gzdr  = _a_gzdr.fixedflag ?  ((void)(a_gzdl), a_gzdr) : a_gzdl;
-
-	    if(ftde_flag == PSD_ON){/* granty maybe */
-		a_gzde  = _a_gzde.fixedflag ?  ((void)(-a_gzdr), a_gzde) : -a_gzdr;
-		a_gyde  = _a_gyde.fixedflag ?  ((void)(-a_gydr), a_gyde) : -a_gydr;
-		a_gxde  = _a_gxde.fixedflag ?  ((void)(-a_gxdr), a_gxde) : -a_gxdr;
-	    }
         } 
         else 
         {
@@ -33394,7 +33754,11 @@ calcPulseParams( int encode_mode )
     ia_incdifx  = _ia_incdifx.fixedflag ?     ((void)((int)(incdifx*(float)max_pg_iamp/loggrd.tx)), ia_incdifx) : (int)(incdifx*(float)max_pg_iamp/loggrd.tx);
     ia_incdify  = _ia_incdify.fixedflag ?     ((void)((int)(incdify*(float)max_pg_iamp/loggrd.ty)), ia_incdify) : (int)(incdify*(float)max_pg_iamp/loggrd.ty);
     ia_incdifz  = _ia_incdifz.fixedflag ?     ((void)((int)(incdifz*(float)max_pg_iamp/loggrd.tz)), ia_incdifz) : (int)(incdifz*(float)max_pg_iamp/loggrd.tz);
+    /* maybe granty unsure */
 
+	printf("loggrd.tx = %f\n",loggrd.tx);
+    printf("loggrd.tx_xyz = %f\n",loggrd.tx_xyz);
+    fflush(stdout);	
     /*
      * Rio diffusion will generate multi-TR cornerPoints in the MAXIMUM_POWER mode
      */
@@ -34202,13 +34566,13 @@ ChemSatEval( INT *time_cssat )
 
             if (DB_FE == DB_flag)
             {
-                if (ampslice(_a_dbgxrfcssat.fixedflag ? (_temp706_a_dbgxrfcssat=a_dbgxrfcssat,&_temp706_a_dbgxrfcssat) : &a_dbgxrfcssat, bw_rfcssat, dbsatthickx, 1.0, TYPDEF) == FAILURE)
+                if (ampslice(_a_dbgxrfcssat.fixedflag ? (_temp705_a_dbgxrfcssat=a_dbgxrfcssat,&_temp705_a_dbgxrfcssat) : &a_dbgxrfcssat, bw_rfcssat, dbsatthickx, 1.0, TYPDEF) == FAILURE)
                 {
                     epic_error(use_ermes, "%s failed for dbgxrfcssat", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "ampslice");
                     return FAILURE;
                 }
 
-                if (optramp(_pw_dbgxrfcssata.fixedflag ? (_temp707_pw_dbgxrfcssata=pw_dbgxrfcssata,&_temp707_pw_dbgxrfcssata) : &pw_dbgxrfcssata, a_dbgxrfcssat, loggrd.tx_xyz,
+                if (optramp(_pw_dbgxrfcssata.fixedflag ? (_temp706_pw_dbgxrfcssata=pw_dbgxrfcssata,&_temp706_pw_dbgxrfcssata) : &pw_dbgxrfcssata, a_dbgxrfcssat, loggrd.tx_xyz,
                             loggrd.xrt, TYPDEF) == FAILURE)
                 {
                     epic_error(use_ermes, "%s failed for dbgxrfcssat", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
@@ -34233,13 +34597,13 @@ ChemSatEval( INT *time_cssat )
             }
             if (DB_PE == DB_flag)
             {
-                if (ampslice(_a_dbgyrfcssat.fixedflag ? (_temp708_a_dbgyrfcssat=a_dbgyrfcssat,&_temp708_a_dbgyrfcssat) : &a_dbgyrfcssat, bw_rfcssat, dbsatthicky, 1.0, TYPDEF) == FAILURE)
+                if (ampslice(_a_dbgyrfcssat.fixedflag ? (_temp707_a_dbgyrfcssat=a_dbgyrfcssat,&_temp707_a_dbgyrfcssat) : &a_dbgyrfcssat, bw_rfcssat, dbsatthicky, 1.0, TYPDEF) == FAILURE)
                 {
                     epic_error(use_ermes, "%s failed for dbgyrfcssat", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "ampslice");
                     return FAILURE;
                 }
     
-                if (optramp(_pw_dbgyrfcssata.fixedflag ? (_temp709_pw_dbgyrfcssata=pw_dbgyrfcssata,&_temp709_pw_dbgyrfcssata) : &pw_dbgyrfcssata, a_dbgyrfcssat, loggrd.ty_xyz,
+                if (optramp(_pw_dbgyrfcssata.fixedflag ? (_temp708_pw_dbgyrfcssata=pw_dbgyrfcssata,&_temp708_pw_dbgyrfcssata) : &pw_dbgyrfcssata, a_dbgyrfcssat, loggrd.ty_xyz,
                             loggrd.yrt, TYPDEF) == FAILURE)
                 {
                     epic_error(use_ermes, "%s failed for dbgyrfcssat", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
@@ -34264,13 +34628,13 @@ ChemSatEval( INT *time_cssat )
             }
             if (DB_SS == DB_flag)
             {
-                if (ampslice(_a_dbgzrfcssat.fixedflag ? (_temp710_a_dbgzrfcssat=a_dbgzrfcssat,&_temp710_a_dbgzrfcssat) : &a_dbgzrfcssat, bw_rfcssat, dbsatthickz, 1.0, TYPDEF) == FAILURE)
+                if (ampslice(_a_dbgzrfcssat.fixedflag ? (_temp709_a_dbgzrfcssat=a_dbgzrfcssat,&_temp709_a_dbgzrfcssat) : &a_dbgzrfcssat, bw_rfcssat, dbsatthickz, 1.0, TYPDEF) == FAILURE)
                 {
                     epic_error(use_ermes, "%s failed for dbgzrfcssat", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "ampslice");
                     return FAILURE;
                 }
     
-                if (optramp(_pw_dbgzrfcssata.fixedflag ? (_temp711_pw_dbgzrfcssata=pw_dbgzrfcssata,&_temp711_pw_dbgzrfcssata) : &pw_dbgzrfcssata, a_dbgzrfcssat, loggrd.tz_xyz,
+                if (optramp(_pw_dbgzrfcssata.fixedflag ? (_temp710_pw_dbgzrfcssata=pw_dbgzrfcssata,&_temp710_pw_dbgzrfcssata) : &pw_dbgzrfcssata, a_dbgzrfcssat, loggrd.tz_xyz,
                             loggrd.zrt, TYPDEF) == FAILURE)
                 {
                     epic_error(use_ermes, "%s failed for dbgzrfcssat", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
@@ -37062,7 +37426,7 @@ SpSatEval( INT *time_spsat )
                 (TX_COIL_BODY == getTxCoilType()) && 
                 ((exist(opexsatparal) & PSD_1_PARALLEL) == PSD_1_PARALLEL))
             {
-                SDL_InitSPSATRFPulseInfo(cffield,RFSE1_SLOT,_pw_rfse1.fixedflag ? (_temp712_pw_rfse1=pw_rfse1,&_temp712_pw_rfse1) : &pw_rfse1,rfpulseInfo);
+                SDL_InitSPSATRFPulseInfo(cffield,RFSE1_SLOT,_pw_rfse1.fixedflag ? (_temp711_pw_rfse1=pw_rfse1,&_temp711_pw_rfse1) : &pw_rfse1,rfpulseInfo);
             }
 
             sp_get_rot_matrix(&sat_info[0][0],
@@ -37073,13 +37437,13 @@ SpSatEval( INT *time_spsat )
             if (obloptimize(&satloggrd, &phygrd, 
                             &satscaninfo, 1,
                             PSD_OBL, SAT_COAX, SAT_OBL_METHOD,
-                            sat_obl_debug, _sat_newgeo.fixedflag ? (_temp713_sat_newgeo=sat_newgeo,&_temp713_sat_newgeo) : &sat_newgeo, cfsrmode)==FAILURE) {
+                            sat_obl_debug, _sat_newgeo.fixedflag ? (_temp712_sat_newgeo=sat_newgeo,&_temp712_sat_newgeo) : &sat_newgeo, cfsrmode)==FAILURE) {
                 epic_error(use_ermes, failstr, EM_PSD_SUPPORT_FAILURE,
                            EE_ARGS(1), STRING_ARG, "obloptimize:sat");
                 return FAILURE;
             }
-            sp_set_rfpulse(vrgsat, &rfpulse[RFSE1_SLOT], _res_rfse1.fixedflag ? (_temp714_res_rfse1=res_rfse1,&_temp714_res_rfse1) : &res_rfse1,
-                           _pw_rfse1.fixedflag ? (_temp715_pw_rfse1=pw_rfse1,&_temp715_pw_rfse1) : &pw_rfse1, &bw_rfse1, SAT_EXPLICIT);
+            sp_set_rfpulse(vrgsat, &rfpulse[RFSE1_SLOT], _res_rfse1.fixedflag ? (_temp713_res_rfse1=res_rfse1,&_temp713_res_rfse1) : &res_rfse1,
+                           _pw_rfse1.fixedflag ? (_temp714_pw_rfse1=pw_rfse1,&_temp714_pw_rfse1) : &pw_rfse1, &bw_rfse1, SAT_EXPLICIT);
 
             sat_rot_ex_indices[sat_rot_index] = 1;
             sat_rot_index  = _sat_rot_index.fixedflag ?    ((void)(sat_rot_index+1), sat_rot_index) : sat_rot_index+1;
@@ -37098,8 +37462,8 @@ SpSatEval( INT *time_spsat )
             if (status == FAILURE)
                 return (FAILURE);
 
-            status = sp_set_slice_select(_pw_gzrfse1.fixedflag ? (_temp716_pw_gzrfse1=pw_gzrfse1,&_temp716_pw_gzrfse1) : &pw_gzrfse1, _pw_gzrfse1a.fixedflag ? (_temp717_pw_gzrfse1a=pw_gzrfse1a,&_temp717_pw_gzrfse1a) : &pw_gzrfse1a, 
-                                         _pw_gzrfse1d.fixedflag ? (_temp718_pw_gzrfse1d=pw_gzrfse1d,&_temp718_pw_gzrfse1d) : &pw_gzrfse1d, pw_rfse1, _a_gzrfse1.fixedflag ? (_temp719_a_gzrfse1=a_gzrfse1,&_temp719_a_gzrfse1) : &a_gzrfse1, &bw_rfse1, exsatthick1,
+            status = sp_set_slice_select(_pw_gzrfse1.fixedflag ? (_temp715_pw_gzrfse1=pw_gzrfse1,&_temp715_pw_gzrfse1) : &pw_gzrfse1, _pw_gzrfse1a.fixedflag ? (_temp716_pw_gzrfse1a=pw_gzrfse1a,&_temp716_pw_gzrfse1a) : &pw_gzrfse1a, 
+                                         _pw_gzrfse1d.fixedflag ? (_temp717_pw_gzrfse1d=pw_gzrfse1d,&_temp717_pw_gzrfse1d) : &pw_gzrfse1d, pw_rfse1, _a_gzrfse1.fixedflag ? (_temp718_a_gzrfse1=a_gzrfse1,&_temp718_a_gzrfse1) : &a_gzrfse1, &bw_rfse1, exsatthick1,
                                          satloggrd.tz,satloggrd.zrt,vrgsat);
             gradz[GZRFSE1_SLOT].powscale = satloggrd.zfs/satloggrd.tz;
             /* set .powscale  QT*/
@@ -37174,14 +37538,14 @@ SpSatEval( INT *time_spsat )
             if (obloptimize(&satloggrd, &phygrd, 
                             &satscaninfo, 1,
                             PSD_OBL, SAT_COAX, SAT_OBL_METHOD,
-                            sat_obl_debug, _sat_newgeo.fixedflag ? (_temp720_sat_newgeo=sat_newgeo,&_temp720_sat_newgeo) : &sat_newgeo, cfsrmode)==FAILURE) {
+                            sat_obl_debug, _sat_newgeo.fixedflag ? (_temp719_sat_newgeo=sat_newgeo,&_temp719_sat_newgeo) : &sat_newgeo, cfsrmode)==FAILURE) {
                 epic_error(use_ermes, failstr, EM_PSD_SUPPORT_FAILURE,
                            EE_ARGS(1), STRING_ARG, "obloptimize:sat");
                 return FAILURE;
             }
 
-            sp_set_rfpulse(vrgsat, &rfpulse[RFSE2_SLOT], _res_rfse2.fixedflag ? (_temp721_res_rfse2=res_rfse2,&_temp721_res_rfse2) : &res_rfse2,
-                           _pw_rfse2.fixedflag ? (_temp722_pw_rfse2=pw_rfse2,&_temp722_pw_rfse2) : &pw_rfse2, &bw_rfse2, SAT_EXPLICIT);
+            sp_set_rfpulse(vrgsat, &rfpulse[RFSE2_SLOT], _res_rfse2.fixedflag ? (_temp720_res_rfse2=res_rfse2,&_temp720_res_rfse2) : &res_rfse2,
+                           _pw_rfse2.fixedflag ? (_temp721_pw_rfse2=pw_rfse2,&_temp721_pw_rfse2) : &pw_rfse2, &bw_rfse2, SAT_EXPLICIT);
 
             sat_rot_ex_indices[sat_rot_index] = 2;
             sat_rot_index  = _sat_rot_index.fixedflag ?    ((void)(sat_rot_index+1), sat_rot_index) : sat_rot_index+1;
@@ -37192,8 +37556,8 @@ SpSatEval( INT *time_spsat )
             if (status == FAILURE)
                 return (FAILURE);
 
-            status = sp_set_slice_select(_pw_gzrfse2.fixedflag ? (_temp723_pw_gzrfse2=pw_gzrfse2,&_temp723_pw_gzrfse2) : &pw_gzrfse2, _pw_gzrfse2a.fixedflag ? (_temp724_pw_gzrfse2a=pw_gzrfse2a,&_temp724_pw_gzrfse2a) : &pw_gzrfse2a, 
-                                         _pw_gzrfse2d.fixedflag ? (_temp725_pw_gzrfse2d=pw_gzrfse2d,&_temp725_pw_gzrfse2d) : &pw_gzrfse2d, pw_rfse2, _a_gzrfse2.fixedflag ? (_temp726_a_gzrfse2=a_gzrfse2,&_temp726_a_gzrfse2) : &a_gzrfse2, &bw_rfse2, exsatthick2,
+            status = sp_set_slice_select(_pw_gzrfse2.fixedflag ? (_temp722_pw_gzrfse2=pw_gzrfse2,&_temp722_pw_gzrfse2) : &pw_gzrfse2, _pw_gzrfse2a.fixedflag ? (_temp723_pw_gzrfse2a=pw_gzrfse2a,&_temp723_pw_gzrfse2a) : &pw_gzrfse2a, 
+                                         _pw_gzrfse2d.fixedflag ? (_temp724_pw_gzrfse2d=pw_gzrfse2d,&_temp724_pw_gzrfse2d) : &pw_gzrfse2d, pw_rfse2, _a_gzrfse2.fixedflag ? (_temp725_a_gzrfse2=a_gzrfse2,&_temp725_a_gzrfse2) : &a_gzrfse2, &bw_rfse2, exsatthick2,
                                          satloggrd.tz,satloggrd.zrt,vrgsat);
 
             gradz[GZRFSE2_SLOT].powscale = satloggrd.zfs/satloggrd.tz;
@@ -37268,7 +37632,7 @@ SpSatEval( INT *time_spsat )
                 (TX_COIL_BODY == getTxCoilType()) &&
                 ((exist(opexsatparal) & PSD_2_PARALLEL) == PSD_2_PARALLEL))
             {
-                SDL_InitSPSATRFPulseInfo(cffield,RFSE3_SLOT,_pw_rfse3.fixedflag ? (_temp727_pw_rfse3=pw_rfse3,&_temp727_pw_rfse3) : &pw_rfse3,rfpulseInfo);
+                SDL_InitSPSATRFPulseInfo(cffield,RFSE3_SLOT,_pw_rfse3.fixedflag ? (_temp726_pw_rfse3=pw_rfse3,&_temp726_pw_rfse3) : &pw_rfse3,rfpulseInfo);
             }
 
             sp_get_rot_matrix(&sat_info[2][0],
@@ -37279,14 +37643,14 @@ SpSatEval( INT *time_spsat )
             if (obloptimize(&satloggrd, &phygrd, 
                             &satscaninfo, 1,
                             PSD_OBL, SAT_COAX, SAT_OBL_METHOD,
-                            sat_obl_debug, _sat_newgeo.fixedflag ? (_temp728_sat_newgeo=sat_newgeo,&_temp728_sat_newgeo) : &sat_newgeo, cfsrmode)==FAILURE) {
+                            sat_obl_debug, _sat_newgeo.fixedflag ? (_temp727_sat_newgeo=sat_newgeo,&_temp727_sat_newgeo) : &sat_newgeo, cfsrmode)==FAILURE) {
                 epic_error(use_ermes, failstr, EM_PSD_SUPPORT_FAILURE,
                            EE_ARGS(1), STRING_ARG, "obloptimize:sat");
                 return FAILURE;
             }
 
-            sp_set_rfpulse(vrgsat, &rfpulse[RFSE3_SLOT], _res_rfse3.fixedflag ? (_temp729_res_rfse3=res_rfse3,&_temp729_res_rfse3) : &res_rfse3,
-                           _pw_rfse3.fixedflag ? (_temp730_pw_rfse3=pw_rfse3,&_temp730_pw_rfse3) : &pw_rfse3, &bw_rfse3, SAT_EXPLICIT);
+            sp_set_rfpulse(vrgsat, &rfpulse[RFSE3_SLOT], _res_rfse3.fixedflag ? (_temp728_res_rfse3=res_rfse3,&_temp728_res_rfse3) : &res_rfse3,
+                           _pw_rfse3.fixedflag ? (_temp729_pw_rfse3=pw_rfse3,&_temp729_pw_rfse3) : &pw_rfse3, &bw_rfse3, SAT_EXPLICIT);
 
             sat_rot_ex_indices[sat_rot_index] = 3;
             sat_rot_index  = _sat_rot_index.fixedflag ?    ((void)(sat_rot_index+1), sat_rot_index) : sat_rot_index+1;
@@ -37305,8 +37669,8 @@ SpSatEval( INT *time_spsat )
             if (status == FAILURE)
                 return (FAILURE);
 
-            status = sp_set_slice_select(_pw_gzrfse3.fixedflag ? (_temp731_pw_gzrfse3=pw_gzrfse3,&_temp731_pw_gzrfse3) : &pw_gzrfse3, _pw_gzrfse3a.fixedflag ? (_temp732_pw_gzrfse3a=pw_gzrfse3a,&_temp732_pw_gzrfse3a) : &pw_gzrfse3a, 
-                                         _pw_gzrfse3d.fixedflag ? (_temp733_pw_gzrfse3d=pw_gzrfse3d,&_temp733_pw_gzrfse3d) : &pw_gzrfse3d, pw_rfse3, _a_gzrfse3.fixedflag ? (_temp734_a_gzrfse3=a_gzrfse3,&_temp734_a_gzrfse3) : &a_gzrfse3, &bw_rfse3, exsatthick3,
+            status = sp_set_slice_select(_pw_gzrfse3.fixedflag ? (_temp730_pw_gzrfse3=pw_gzrfse3,&_temp730_pw_gzrfse3) : &pw_gzrfse3, _pw_gzrfse3a.fixedflag ? (_temp731_pw_gzrfse3a=pw_gzrfse3a,&_temp731_pw_gzrfse3a) : &pw_gzrfse3a, 
+                                         _pw_gzrfse3d.fixedflag ? (_temp732_pw_gzrfse3d=pw_gzrfse3d,&_temp732_pw_gzrfse3d) : &pw_gzrfse3d, pw_rfse3, _a_gzrfse3.fixedflag ? (_temp733_a_gzrfse3=a_gzrfse3,&_temp733_a_gzrfse3) : &a_gzrfse3, &bw_rfse3, exsatthick3,
                                          satloggrd.tz,satloggrd.zrt,vrgsat);
             gradz[GZRFSE3_SLOT].powscale = satloggrd.zfs/satloggrd.tz;
             /* set .powscale  QT*/
@@ -37381,14 +37745,14 @@ SpSatEval( INT *time_spsat )
             if (obloptimize(&satloggrd, &phygrd, 
                             &satscaninfo, 1,
                             PSD_OBL, SAT_COAX, SAT_OBL_METHOD,
-                            sat_obl_debug, _sat_newgeo.fixedflag ? (_temp735_sat_newgeo=sat_newgeo,&_temp735_sat_newgeo) : &sat_newgeo, cfsrmode)==FAILURE) {
+                            sat_obl_debug, _sat_newgeo.fixedflag ? (_temp734_sat_newgeo=sat_newgeo,&_temp734_sat_newgeo) : &sat_newgeo, cfsrmode)==FAILURE) {
                 epic_error(use_ermes, failstr, EM_PSD_SUPPORT_FAILURE,
                            EE_ARGS(1), STRING_ARG, "obloptimize:sat");
                 return FAILURE;
             }
 
-            sp_set_rfpulse(vrgsat, &rfpulse[RFSE4_SLOT], _res_rfse4.fixedflag ? (_temp736_res_rfse4=res_rfse4,&_temp736_res_rfse4) : &res_rfse4,
-                           _pw_rfse4.fixedflag ? (_temp737_pw_rfse4=pw_rfse4,&_temp737_pw_rfse4) : &pw_rfse4, &bw_rfse4, SAT_EXPLICIT);
+            sp_set_rfpulse(vrgsat, &rfpulse[RFSE4_SLOT], _res_rfse4.fixedflag ? (_temp735_res_rfse4=res_rfse4,&_temp735_res_rfse4) : &res_rfse4,
+                           _pw_rfse4.fixedflag ? (_temp736_pw_rfse4=pw_rfse4,&_temp736_pw_rfse4) : &pw_rfse4, &bw_rfse4, SAT_EXPLICIT);
 
             sat_rot_ex_indices[sat_rot_index] = 4;
             sat_rot_index  = _sat_rot_index.fixedflag ?    ((void)(sat_rot_index+1), sat_rot_index) : sat_rot_index+1;
@@ -37399,8 +37763,8 @@ SpSatEval( INT *time_spsat )
             if (status == FAILURE)
                 return (FAILURE);
 
-            status = sp_set_slice_select(_pw_gzrfse4.fixedflag ? (_temp738_pw_gzrfse4=pw_gzrfse4,&_temp738_pw_gzrfse4) : &pw_gzrfse4, _pw_gzrfse4a.fixedflag ? (_temp739_pw_gzrfse4a=pw_gzrfse4a,&_temp739_pw_gzrfse4a) : &pw_gzrfse4a, 
-                                         _pw_gzrfse4d.fixedflag ? (_temp740_pw_gzrfse4d=pw_gzrfse4d,&_temp740_pw_gzrfse4d) : &pw_gzrfse4d, pw_rfse4, _a_gzrfse4.fixedflag ? (_temp741_a_gzrfse4=a_gzrfse4,&_temp741_a_gzrfse4) : &a_gzrfse4, &bw_rfse4, exsatthick4,
+            status = sp_set_slice_select(_pw_gzrfse4.fixedflag ? (_temp737_pw_gzrfse4=pw_gzrfse4,&_temp737_pw_gzrfse4) : &pw_gzrfse4, _pw_gzrfse4a.fixedflag ? (_temp738_pw_gzrfse4a=pw_gzrfse4a,&_temp738_pw_gzrfse4a) : &pw_gzrfse4a, 
+                                         _pw_gzrfse4d.fixedflag ? (_temp739_pw_gzrfse4d=pw_gzrfse4d,&_temp739_pw_gzrfse4d) : &pw_gzrfse4d, pw_rfse4, _a_gzrfse4.fixedflag ? (_temp740_a_gzrfse4=a_gzrfse4,&_temp740_a_gzrfse4) : &a_gzrfse4, &bw_rfse4, exsatthick4,
                                          satloggrd.tz,satloggrd.zrt,vrgsat);
             gradz[GZRFSE4_SLOT].powscale = satloggrd.zfs/satloggrd.tz;
             /* set .powscale    QT*/
@@ -37471,7 +37835,7 @@ SpSatEval( INT *time_spsat )
                 (TX_COIL_BODY == getTxCoilType()) &&
                 ((exist(opexsatparal) & PSD_3_PARALLEL) == PSD_3_PARALLEL))
             {
-                SDL_InitSPSATRFPulseInfo(cffield,RFSE5_SLOT,_pw_rfse5.fixedflag ? (_temp742_pw_rfse5=pw_rfse5,&_temp742_pw_rfse5) : &pw_rfse5,rfpulseInfo);
+                SDL_InitSPSATRFPulseInfo(cffield,RFSE5_SLOT,_pw_rfse5.fixedflag ? (_temp741_pw_rfse5=pw_rfse5,&_temp741_pw_rfse5) : &pw_rfse5,rfpulseInfo);
             }
 
             sp_get_rot_matrix(&sat_info[4][0],
@@ -37482,7 +37846,7 @@ SpSatEval( INT *time_spsat )
             if (obloptimize(&satloggrd, &phygrd, 
                             &satscaninfo, 1,
                             PSD_OBL, SAT_COAX, SAT_OBL_METHOD,
-                            sat_obl_debug, _sat_newgeo.fixedflag ? (_temp743_sat_newgeo=sat_newgeo,&_temp743_sat_newgeo) : &sat_newgeo, cfsrmode)==FAILURE) {
+                            sat_obl_debug, _sat_newgeo.fixedflag ? (_temp742_sat_newgeo=sat_newgeo,&_temp742_sat_newgeo) : &sat_newgeo, cfsrmode)==FAILURE) {
                 epic_error(use_ermes, failstr, EM_PSD_SUPPORT_FAILURE,
                            EE_ARGS(1), STRING_ARG, "obloptimize:sat");
                 return FAILURE;
@@ -37492,8 +37856,8 @@ SpSatEval( INT *time_spsat )
             sat_rot_index  = _sat_rot_index.fixedflag ?    ((void)(sat_rot_index+1), sat_rot_index) : sat_rot_index+1;
             array_index += 2;
 
-            sp_set_rfpulse(vrgsat, &rfpulse[RFSE5_SLOT], _res_rfse5.fixedflag ? (_temp744_res_rfse5=res_rfse5,&_temp744_res_rfse5) : &res_rfse5,
-                           _pw_rfse5.fixedflag ? (_temp745_pw_rfse5=pw_rfse5,&_temp745_pw_rfse5) : &pw_rfse5, &bw_rfse5, SAT_EXPLICIT);
+            sp_set_rfpulse(vrgsat, &rfpulse[RFSE5_SLOT], _res_rfse5.fixedflag ? (_temp743_res_rfse5=res_rfse5,&_temp743_res_rfse5) : &res_rfse5,
+                           _pw_rfse5.fixedflag ? (_temp744_pw_rfse5=pw_rfse5,&_temp744_pw_rfse5) : &pw_rfse5, &bw_rfse5, SAT_EXPLICIT);
 
             /* Can use Hadamard RF pulse */
             if ((parallel_mask & PSD_3_PARALLEL) != 0)
@@ -37508,8 +37872,8 @@ SpSatEval( INT *time_spsat )
             if (status == FAILURE)
                 return (FAILURE);
 
-            status = sp_set_slice_select(_pw_gzrfse5.fixedflag ? (_temp746_pw_gzrfse5=pw_gzrfse5,&_temp746_pw_gzrfse5) : &pw_gzrfse5, _pw_gzrfse5a.fixedflag ? (_temp747_pw_gzrfse5a=pw_gzrfse5a,&_temp747_pw_gzrfse5a) : &pw_gzrfse5a, 
-                                         _pw_gzrfse5d.fixedflag ? (_temp748_pw_gzrfse5d=pw_gzrfse5d,&_temp748_pw_gzrfse5d) : &pw_gzrfse5d, pw_rfse5, _a_gzrfse5.fixedflag ? (_temp749_a_gzrfse5=a_gzrfse5,&_temp749_a_gzrfse5) : &a_gzrfse5, &bw_rfse5, exsatthick5,
+            status = sp_set_slice_select(_pw_gzrfse5.fixedflag ? (_temp745_pw_gzrfse5=pw_gzrfse5,&_temp745_pw_gzrfse5) : &pw_gzrfse5, _pw_gzrfse5a.fixedflag ? (_temp746_pw_gzrfse5a=pw_gzrfse5a,&_temp746_pw_gzrfse5a) : &pw_gzrfse5a, 
+                                         _pw_gzrfse5d.fixedflag ? (_temp747_pw_gzrfse5d=pw_gzrfse5d,&_temp747_pw_gzrfse5d) : &pw_gzrfse5d, pw_rfse5, _a_gzrfse5.fixedflag ? (_temp748_a_gzrfse5=a_gzrfse5,&_temp748_a_gzrfse5) : &a_gzrfse5, &bw_rfse5, exsatthick5,
                                          satloggrd.tz,satloggrd.zrt,vrgsat);
             gradz[GZRFSE5_SLOT].powscale = satloggrd.zfs/satloggrd.tz;
             /* set .powscale    QT*/
@@ -37587,14 +37951,14 @@ SpSatEval( INT *time_spsat )
             if (obloptimize(&satloggrd, &phygrd, 
                             &satscaninfo, 1,
                             PSD_OBL, SAT_COAX, SAT_OBL_METHOD,
-                            sat_obl_debug, _sat_newgeo.fixedflag ? (_temp750_sat_newgeo=sat_newgeo,&_temp750_sat_newgeo) : &sat_newgeo, cfsrmode)==FAILURE) {
+                            sat_obl_debug, _sat_newgeo.fixedflag ? (_temp749_sat_newgeo=sat_newgeo,&_temp749_sat_newgeo) : &sat_newgeo, cfsrmode)==FAILURE) {
                 epic_error(use_ermes, failstr, EM_PSD_SUPPORT_FAILURE,
                            EE_ARGS(1), STRING_ARG, "obloptimize:sat");
                 return FAILURE;
             }
 
-            sp_set_rfpulse(vrgsat, &rfpulse[RFSE6_SLOT], _res_rfse6.fixedflag ? (_temp751_res_rfse6=res_rfse6,&_temp751_res_rfse6) : &res_rfse6,
-                           _pw_rfse6.fixedflag ? (_temp752_pw_rfse6=pw_rfse6,&_temp752_pw_rfse6) : &pw_rfse6, &bw_rfse6, SAT_EXPLICIT);
+            sp_set_rfpulse(vrgsat, &rfpulse[RFSE6_SLOT], _res_rfse6.fixedflag ? (_temp750_res_rfse6=res_rfse6,&_temp750_res_rfse6) : &res_rfse6,
+                           _pw_rfse6.fixedflag ? (_temp751_pw_rfse6=pw_rfse6,&_temp751_pw_rfse6) : &pw_rfse6, &bw_rfse6, SAT_EXPLICIT);
 
             sat_rot_ex_indices[sat_rot_index] = 6;
             sat_rot_index  = _sat_rot_index.fixedflag ?    ((void)(sat_rot_index+1), sat_rot_index) : sat_rot_index+1;
@@ -37606,8 +37970,8 @@ SpSatEval( INT *time_spsat )
             if (status == FAILURE)
                 return (FAILURE);
 
-            status = sp_set_slice_select(_pw_gzrfse6.fixedflag ? (_temp753_pw_gzrfse6=pw_gzrfse6,&_temp753_pw_gzrfse6) : &pw_gzrfse6, _pw_gzrfse6a.fixedflag ? (_temp754_pw_gzrfse6a=pw_gzrfse6a,&_temp754_pw_gzrfse6a) : &pw_gzrfse6a, 
-                                         _pw_gzrfse6d.fixedflag ? (_temp755_pw_gzrfse6d=pw_gzrfse6d,&_temp755_pw_gzrfse6d) : &pw_gzrfse6d, pw_rfse6, _a_gzrfse6.fixedflag ? (_temp756_a_gzrfse6=a_gzrfse6,&_temp756_a_gzrfse6) : &a_gzrfse6, &bw_rfse6, exsatthick6,
+            status = sp_set_slice_select(_pw_gzrfse6.fixedflag ? (_temp752_pw_gzrfse6=pw_gzrfse6,&_temp752_pw_gzrfse6) : &pw_gzrfse6, _pw_gzrfse6a.fixedflag ? (_temp753_pw_gzrfse6a=pw_gzrfse6a,&_temp753_pw_gzrfse6a) : &pw_gzrfse6a, 
+                                         _pw_gzrfse6d.fixedflag ? (_temp754_pw_gzrfse6d=pw_gzrfse6d,&_temp754_pw_gzrfse6d) : &pw_gzrfse6d, pw_rfse6, _a_gzrfse6.fixedflag ? (_temp755_a_gzrfse6=a_gzrfse6,&_temp755_a_gzrfse6) : &a_gzrfse6, &bw_rfse6, exsatthick6,
                                          satloggrd.tz,satloggrd.zrt,vrgsat);
             gradz[GZRFSE6_SLOT].powscale = satloggrd.zfs/satloggrd.tz;
             /* set .powscale    QT*/
@@ -37710,11 +38074,11 @@ SpSatEval( INT *time_spsat )
                 (TX_COIL_BODY == getTxCoilType()) &&
                 (exist(opsatx) == PSD_SATHAD) )
             {
-                SDL_InitSPSATRFPulseInfo(cffield,RFSX1_SLOT,_pw_rfsx1.fixedflag ? (_temp757_pw_rfsx1=pw_rfsx1,&_temp757_pw_rfsx1) : &pw_rfsx1,rfpulseInfo);
+                SDL_InitSPSATRFPulseInfo(cffield,RFSX1_SLOT,_pw_rfsx1.fixedflag ? (_temp756_pw_rfsx1=pw_rfsx1,&_temp756_pw_rfsx1) : &pw_rfsx1,rfpulseInfo);
             }
 
-            sp_set_rfpulse(vrgsat, &rfpulse[RFSX1_SLOT], _res_rfsx1.fixedflag ? (_temp758_res_rfsx1=res_rfsx1,&_temp758_res_rfsx1) : &res_rfsx1, 
-                           _pw_rfsx1.fixedflag ? (_temp759_pw_rfsx1=pw_rfsx1,&_temp759_pw_rfsx1) : &pw_rfsx1, &bw_rfsx1, SAT_DEFAULT);
+            sp_set_rfpulse(vrgsat, &rfpulse[RFSX1_SLOT], _res_rfsx1.fixedflag ? (_temp757_res_rfsx1=res_rfsx1,&_temp757_res_rfsx1) : &res_rfsx1, 
+                           _pw_rfsx1.fixedflag ? (_temp758_pw_rfsx1=pw_rfsx1,&_temp758_pw_rfsx1) : &pw_rfsx1, &bw_rfsx1, SAT_DEFAULT);
 	  
             sat_rot_index  = _sat_rot_index.fixedflag ?    ((void)(sat_rot_index+1), sat_rot_index) : sat_rot_index+1;
             array_index += 2;
@@ -37725,8 +38089,8 @@ SpSatEval( INT *time_spsat )
                 sp_set_num_pulses(&rfpulse[RFSX2_SLOT], &gradx[GXRFSX2_SLOT]);
                 grady[GYKSX2_SLOT].num = 1;
 	      
-                sp_set_rfpulse(vrgsat, &rfpulse[RFSX2_SLOT], _res_rfsx2.fixedflag ? (_temp760_res_rfsx2=res_rfsx2,&_temp760_res_rfsx2) : &res_rfsx2,
-                               _pw_rfsx2.fixedflag ? (_temp761_pw_rfsx2=pw_rfsx2,&_temp761_pw_rfsx2) : &pw_rfsx2, &bw_rfsx2, SAT_DEFAULT);
+                sp_set_rfpulse(vrgsat, &rfpulse[RFSX2_SLOT], _res_rfsx2.fixedflag ? (_temp759_res_rfsx2=res_rfsx2,&_temp759_res_rfsx2) : &res_rfsx2,
+                               _pw_rfsx2.fixedflag ? (_temp760_pw_rfsx2=pw_rfsx2,&_temp760_pw_rfsx2) : &pw_rfsx2, &bw_rfsx2, SAT_DEFAULT);
                 sat_rot_index  = _sat_rot_index.fixedflag ?   ((void)(sat_rot_index+1), sat_rot_index) : sat_rot_index+1;
                 array_index += 2;
             }
@@ -37757,8 +38121,8 @@ SpSatEval( INT *time_spsat )
             if (status == FAILURE)
                 return (FAILURE);
 
-            status = sp_set_slice_select(_pw_gxrfsx1.fixedflag ? (_temp762_pw_gxrfsx1=pw_gxrfsx1,&_temp762_pw_gxrfsx1) : &pw_gxrfsx1, _pw_gxrfsx1a.fixedflag ? (_temp763_pw_gxrfsx1a=pw_gxrfsx1a,&_temp763_pw_gxrfsx1a) : &pw_gxrfsx1a, _pw_gxrfsx1d.fixedflag ? (_temp764_pw_gxrfsx1d=pw_gxrfsx1d,&_temp764_pw_gxrfsx1d) : &pw_gxrfsx1d, 
-                                         pw_rfsx1, _a_gxrfsx1.fixedflag ? (_temp765_a_gxrfsx1=a_gxrfsx1,&_temp765_a_gxrfsx1) : &a_gxrfsx1, &bw_rfsx1, satthickdfx,
+            status = sp_set_slice_select(_pw_gxrfsx1.fixedflag ? (_temp761_pw_gxrfsx1=pw_gxrfsx1,&_temp761_pw_gxrfsx1) : &pw_gxrfsx1, _pw_gxrfsx1a.fixedflag ? (_temp762_pw_gxrfsx1a=pw_gxrfsx1a,&_temp762_pw_gxrfsx1a) : &pw_gxrfsx1a, _pw_gxrfsx1d.fixedflag ? (_temp763_pw_gxrfsx1d=pw_gxrfsx1d,&_temp763_pw_gxrfsx1d) : &pw_gxrfsx1d, 
+                                         pw_rfsx1, _a_gxrfsx1.fixedflag ? (_temp764_a_gxrfsx1=a_gxrfsx1,&_temp764_a_gxrfsx1) : &a_gxrfsx1, &bw_rfsx1, satthickdfx,
                                          loggrd.tx,loggrd.xrt,vrgsat);
             gradx[GXRFSX1_SLOT].powscale = loggrd.xfs/loggrd.tx;
             /* set .powscale  QT*/
@@ -37835,8 +38199,8 @@ SpSatEval( INT *time_spsat )
                 if (status == FAILURE)
                     return (FAILURE);
 
-                status = sp_set_slice_select(_pw_gxrfsx2.fixedflag ? (_temp766_pw_gxrfsx2=pw_gxrfsx2,&_temp766_pw_gxrfsx2) : &pw_gxrfsx2, _pw_gxrfsx2a.fixedflag ? (_temp767_pw_gxrfsx2a=pw_gxrfsx2a,&_temp767_pw_gxrfsx2a) : &pw_gxrfsx2a, _pw_gxrfsx2d.fixedflag ? (_temp768_pw_gxrfsx2d=pw_gxrfsx2d,&_temp768_pw_gxrfsx2d) : &pw_gxrfsx2d, 
-                                             pw_rfsx2, _a_gxrfsx2.fixedflag ? (_temp769_a_gxrfsx2=a_gxrfsx2,&_temp769_a_gxrfsx2) : &a_gxrfsx2, &bw_rfsx2, satthickx2,
+                status = sp_set_slice_select(_pw_gxrfsx2.fixedflag ? (_temp765_pw_gxrfsx2=pw_gxrfsx2,&_temp765_pw_gxrfsx2) : &pw_gxrfsx2, _pw_gxrfsx2a.fixedflag ? (_temp766_pw_gxrfsx2a=pw_gxrfsx2a,&_temp766_pw_gxrfsx2a) : &pw_gxrfsx2a, _pw_gxrfsx2d.fixedflag ? (_temp767_pw_gxrfsx2d=pw_gxrfsx2d,&_temp767_pw_gxrfsx2d) : &pw_gxrfsx2d, 
+                                             pw_rfsx2, _a_gxrfsx2.fixedflag ? (_temp768_a_gxrfsx2=a_gxrfsx2,&_temp768_a_gxrfsx2) : &a_gxrfsx2, &bw_rfsx2, satthickx2,
                                              loggrd.tx,loggrd.xrt,vrgsat);
                 gradx[GXRFSX2_SLOT].powscale = loggrd.xfs/loggrd.tx;
                 /* set .powscale   QT*/
@@ -37917,10 +38281,10 @@ SpSatEval( INT *time_spsat )
                 (TX_COIL_BODY == getTxCoilType()) &&
                 (exist(opsaty) == PSD_SATHAD))
             {
-                SDL_InitSPSATRFPulseInfo(cffield,RFSY1_SLOT,_pw_rfsy1.fixedflag ? (_temp770_pw_rfsy1=pw_rfsy1,&_temp770_pw_rfsy1) : &pw_rfsy1,rfpulseInfo);
+                SDL_InitSPSATRFPulseInfo(cffield,RFSY1_SLOT,_pw_rfsy1.fixedflag ? (_temp769_pw_rfsy1=pw_rfsy1,&_temp769_pw_rfsy1) : &pw_rfsy1,rfpulseInfo);
             }
 
-            sp_set_rfpulse(vrgsat, &rfpulse[RFSY1_SLOT], _res_rfsy1.fixedflag ? (_temp771_res_rfsy1=res_rfsy1,&_temp771_res_rfsy1) : &res_rfsy1, _pw_rfsy1.fixedflag ? (_temp772_pw_rfsy1=pw_rfsy1,&_temp772_pw_rfsy1) : &pw_rfsy1,
+            sp_set_rfpulse(vrgsat, &rfpulse[RFSY1_SLOT], _res_rfsy1.fixedflag ? (_temp770_res_rfsy1=res_rfsy1,&_temp770_res_rfsy1) : &res_rfsy1, _pw_rfsy1.fixedflag ? (_temp771_pw_rfsy1=pw_rfsy1,&_temp771_pw_rfsy1) : &pw_rfsy1,
                            &bw_rfsy1, SAT_DEFAULT);
 	  
             sat_rot_index  = _sat_rot_index.fixedflag ?    ((void)(sat_rot_index+1), sat_rot_index) : sat_rot_index+1;
@@ -37932,8 +38296,8 @@ SpSatEval( INT *time_spsat )
                 sp_set_num_pulses(&rfpulse[RFSY2_SLOT], &grady[GYRFSY2_SLOT]);
                 grady[GYKSY2_SLOT].num = 1;
 	      
-                sp_set_rfpulse(vrgsat, &rfpulse[RFSY2_SLOT], _res_rfsy2.fixedflag ? (_temp773_res_rfsy2=res_rfsy2,&_temp773_res_rfsy2) : &res_rfsy2,
-                               _pw_rfsy2.fixedflag ? (_temp774_pw_rfsy2=pw_rfsy2,&_temp774_pw_rfsy2) : &pw_rfsy2, &bw_rfsy2, SAT_DEFAULT);
+                sp_set_rfpulse(vrgsat, &rfpulse[RFSY2_SLOT], _res_rfsy2.fixedflag ? (_temp772_res_rfsy2=res_rfsy2,&_temp772_res_rfsy2) : &res_rfsy2,
+                               _pw_rfsy2.fixedflag ? (_temp773_pw_rfsy2=pw_rfsy2,&_temp773_pw_rfsy2) : &pw_rfsy2, &bw_rfsy2, SAT_DEFAULT);
                 sat_rot_index  = _sat_rot_index.fixedflag ?    ((void)(sat_rot_index+1), sat_rot_index) : sat_rot_index+1;
                 array_index += 2;
             }
@@ -37964,8 +38328,8 @@ SpSatEval( INT *time_spsat )
             if (status == FAILURE)
                 return (FAILURE);
 
-            status = sp_set_slice_select(_pw_gyrfsy1.fixedflag ? (_temp775_pw_gyrfsy1=pw_gyrfsy1,&_temp775_pw_gyrfsy1) : &pw_gyrfsy1, _pw_gyrfsy1a.fixedflag ? (_temp776_pw_gyrfsy1a=pw_gyrfsy1a,&_temp776_pw_gyrfsy1a) : &pw_gyrfsy1a, _pw_gyrfsy1d.fixedflag ? (_temp777_pw_gyrfsy1d=pw_gyrfsy1d,&_temp777_pw_gyrfsy1d) : &pw_gyrfsy1d, 
-                                         pw_rfsy1, _a_gyrfsy1.fixedflag ? (_temp778_a_gyrfsy1=a_gyrfsy1,&_temp778_a_gyrfsy1) : &a_gyrfsy1, &bw_rfsy1, satthickdfy,
+            status = sp_set_slice_select(_pw_gyrfsy1.fixedflag ? (_temp774_pw_gyrfsy1=pw_gyrfsy1,&_temp774_pw_gyrfsy1) : &pw_gyrfsy1, _pw_gyrfsy1a.fixedflag ? (_temp775_pw_gyrfsy1a=pw_gyrfsy1a,&_temp775_pw_gyrfsy1a) : &pw_gyrfsy1a, _pw_gyrfsy1d.fixedflag ? (_temp776_pw_gyrfsy1d=pw_gyrfsy1d,&_temp776_pw_gyrfsy1d) : &pw_gyrfsy1d, 
+                                         pw_rfsy1, _a_gyrfsy1.fixedflag ? (_temp777_a_gyrfsy1=a_gyrfsy1,&_temp777_a_gyrfsy1) : &a_gyrfsy1, &bw_rfsy1, satthickdfy,
                                          loggrd.ty,loggrd.yrt,vrgsat);
             grady[GYRFSY1_SLOT].powscale = loggrd.yfs/loggrd.ty;
             /* set .powscale   QT*/
@@ -38042,8 +38406,8 @@ SpSatEval( INT *time_spsat )
                 if (status == FAILURE)
                     return (FAILURE);
 
-                status = sp_set_slice_select(_pw_gyrfsy2.fixedflag ? (_temp779_pw_gyrfsy2=pw_gyrfsy2,&_temp779_pw_gyrfsy2) : &pw_gyrfsy2, _pw_gyrfsy2a.fixedflag ? (_temp780_pw_gyrfsy2a=pw_gyrfsy2a,&_temp780_pw_gyrfsy2a) : &pw_gyrfsy2a, _pw_gyrfsy2d.fixedflag ? (_temp781_pw_gyrfsy2d=pw_gyrfsy2d,&_temp781_pw_gyrfsy2d) : &pw_gyrfsy2d, 
-                                             pw_rfsy2, _a_gyrfsy2.fixedflag ? (_temp782_a_gyrfsy2=a_gyrfsy2,&_temp782_a_gyrfsy2) : &a_gyrfsy2, &bw_rfsy2, satthicky2,
+                status = sp_set_slice_select(_pw_gyrfsy2.fixedflag ? (_temp778_pw_gyrfsy2=pw_gyrfsy2,&_temp778_pw_gyrfsy2) : &pw_gyrfsy2, _pw_gyrfsy2a.fixedflag ? (_temp779_pw_gyrfsy2a=pw_gyrfsy2a,&_temp779_pw_gyrfsy2a) : &pw_gyrfsy2a, _pw_gyrfsy2d.fixedflag ? (_temp780_pw_gyrfsy2d=pw_gyrfsy2d,&_temp780_pw_gyrfsy2d) : &pw_gyrfsy2d, 
+                                             pw_rfsy2, _a_gyrfsy2.fixedflag ? (_temp781_a_gyrfsy2=a_gyrfsy2,&_temp781_a_gyrfsy2) : &a_gyrfsy2, &bw_rfsy2, satthicky2,
                                              loggrd.ty,loggrd.yrt,vrgsat);
                 grady[GYRFSY2_SLOT].powscale = loggrd.yfs/loggrd.ty;
                 /* set .powscale   QT*/
@@ -38124,11 +38488,11 @@ SpSatEval( INT *time_spsat )
                 (TX_COIL_BODY == getTxCoilType()) &&
                 (exist(opsatz) == PSD_SATHAD) )
             {
-                SDL_InitSPSATRFPulseInfo(cffield,RFSZ1_SLOT,_pw_rfsz1.fixedflag ? (_temp783_pw_rfsz1=pw_rfsz1,&_temp783_pw_rfsz1) : &pw_rfsz1,rfpulseInfo);
+                SDL_InitSPSATRFPulseInfo(cffield,RFSZ1_SLOT,_pw_rfsz1.fixedflag ? (_temp782_pw_rfsz1=pw_rfsz1,&_temp782_pw_rfsz1) : &pw_rfsz1,rfpulseInfo);
             }
 
-            sp_set_rfpulse(vrgsat, &rfpulse[RFSZ1_SLOT], _res_rfsz1.fixedflag ? (_temp784_res_rfsz1=res_rfsz1,&_temp784_res_rfsz1) : &res_rfsz1, 
-                           _pw_rfsz1.fixedflag ? (_temp785_pw_rfsz1=pw_rfsz1,&_temp785_pw_rfsz1) : &pw_rfsz1, &bw_rfsz1, SAT_DEFAULT);
+            sp_set_rfpulse(vrgsat, &rfpulse[RFSZ1_SLOT], _res_rfsz1.fixedflag ? (_temp783_res_rfsz1=res_rfsz1,&_temp783_res_rfsz1) : &res_rfsz1, 
+                           _pw_rfsz1.fixedflag ? (_temp784_pw_rfsz1=pw_rfsz1,&_temp784_pw_rfsz1) : &pw_rfsz1, &bw_rfsz1, SAT_DEFAULT);
 	  
             sat_rot_index  = _sat_rot_index.fixedflag ?    ((void)(sat_rot_index+1), sat_rot_index) : sat_rot_index+1;
             array_index += 2;
@@ -38139,8 +38503,8 @@ SpSatEval( INT *time_spsat )
             {
                 sp_set_num_pulses(&rfpulse[RFSZ2_SLOT],&gradz[GZRFSZ2_SLOT]);
                 grady[GYKSZ2_SLOT].num = 1;
-                sp_set_rfpulse(vrgsat, &rfpulse[RFSZ2_SLOT], _res_rfsz2.fixedflag ? (_temp786_res_rfsz2=res_rfsz2,&_temp786_res_rfsz2) : &res_rfsz2,
-                               _pw_rfsz2.fixedflag ? (_temp787_pw_rfsz2=pw_rfsz2,&_temp787_pw_rfsz2) : &pw_rfsz2, &bw_rfsz2, SAT_DEFAULT);
+                sp_set_rfpulse(vrgsat, &rfpulse[RFSZ2_SLOT], _res_rfsz2.fixedflag ? (_temp785_res_rfsz2=res_rfsz2,&_temp785_res_rfsz2) : &res_rfsz2,
+                               _pw_rfsz2.fixedflag ? (_temp786_pw_rfsz2=pw_rfsz2,&_temp786_pw_rfsz2) : &pw_rfsz2, &bw_rfsz2, SAT_DEFAULT);
                 sat_rot_index  = _sat_rot_index.fixedflag ?    ((void)(sat_rot_index+1), sat_rot_index) : sat_rot_index+1;
                 array_index += 2;
             }
@@ -38170,8 +38534,8 @@ SpSatEval( INT *time_spsat )
             if (status == FAILURE)
                 return (FAILURE);
 
-            status = sp_set_slice_select(_pw_gzrfsz1.fixedflag ? (_temp788_pw_gzrfsz1=pw_gzrfsz1,&_temp788_pw_gzrfsz1) : &pw_gzrfsz1, _pw_gzrfsz1a.fixedflag ? (_temp789_pw_gzrfsz1a=pw_gzrfsz1a,&_temp789_pw_gzrfsz1a) : &pw_gzrfsz1a, _pw_gzrfsz1d.fixedflag ? (_temp790_pw_gzrfsz1d=pw_gzrfsz1d,&_temp790_pw_gzrfsz1d) : &pw_gzrfsz1d, 
-                                         pw_rfsz1, _a_gzrfsz1.fixedflag ? (_temp791_a_gzrfsz1=a_gzrfsz1,&_temp791_a_gzrfsz1) : &a_gzrfsz1, &bw_rfsz1, satthickdfz,
+            status = sp_set_slice_select(_pw_gzrfsz1.fixedflag ? (_temp787_pw_gzrfsz1=pw_gzrfsz1,&_temp787_pw_gzrfsz1) : &pw_gzrfsz1, _pw_gzrfsz1a.fixedflag ? (_temp788_pw_gzrfsz1a=pw_gzrfsz1a,&_temp788_pw_gzrfsz1a) : &pw_gzrfsz1a, _pw_gzrfsz1d.fixedflag ? (_temp789_pw_gzrfsz1d=pw_gzrfsz1d,&_temp789_pw_gzrfsz1d) : &pw_gzrfsz1d, 
+                                         pw_rfsz1, _a_gzrfsz1.fixedflag ? (_temp790_a_gzrfsz1=a_gzrfsz1,&_temp790_a_gzrfsz1) : &a_gzrfsz1, &bw_rfsz1, satthickdfz,
                                          loggrd.tz,loggrd.zrt,vrgsat);
             gradz[GZRFSZ1_SLOT].powscale = loggrd.zfs/loggrd.tz;
             /* set .powscale    QT*/
@@ -38246,8 +38610,8 @@ SpSatEval( INT *time_spsat )
                 if (status == FAILURE)
                     return (FAILURE);
 
-                status = sp_set_slice_select(_pw_gzrfsz2.fixedflag ? (_temp792_pw_gzrfsz2=pw_gzrfsz2,&_temp792_pw_gzrfsz2) : &pw_gzrfsz2, _pw_gzrfsz2a.fixedflag ? (_temp793_pw_gzrfsz2a=pw_gzrfsz2a,&_temp793_pw_gzrfsz2a) : &pw_gzrfsz2a, _pw_gzrfsz2d.fixedflag ? (_temp794_pw_gzrfsz2d=pw_gzrfsz2d,&_temp794_pw_gzrfsz2d) : &pw_gzrfsz2d, 
-                                             pw_rfsz2, _a_gzrfsz2.fixedflag ? (_temp795_a_gzrfsz2=a_gzrfsz2,&_temp795_a_gzrfsz2) : &a_gzrfsz2, &bw_rfsz2, satthickz2,
+                status = sp_set_slice_select(_pw_gzrfsz2.fixedflag ? (_temp791_pw_gzrfsz2=pw_gzrfsz2,&_temp791_pw_gzrfsz2) : &pw_gzrfsz2, _pw_gzrfsz2a.fixedflag ? (_temp792_pw_gzrfsz2a=pw_gzrfsz2a,&_temp792_pw_gzrfsz2a) : &pw_gzrfsz2a, _pw_gzrfsz2d.fixedflag ? (_temp793_pw_gzrfsz2d=pw_gzrfsz2d,&_temp793_pw_gzrfsz2d) : &pw_gzrfsz2d, 
+                                             pw_rfsz2, _a_gzrfsz2.fixedflag ? (_temp794_a_gzrfsz2=a_gzrfsz2,&_temp794_a_gzrfsz2) : &a_gzrfsz2, &bw_rfsz2, satthickz2,
                                              loggrd.tz,loggrd.zrt,vrgsat);
                 gradz[GZRFSZ2_SLOT].powscale = loggrd.zfs/loggrd.tz;
                 /* set .powscale    QT*/
@@ -38848,11 +39212,11 @@ SatPlacement( INT numPasses )
     /* TG limit calc */
     if(PSD_OFF != opsatx)
     {
-        calcTGLimitAtOffset((INT)(off_rfsx1/1000.0), _sat_TGlimit.fixedflag ? (_temp796_sat_TGlimit=sat_TGlimit,&_temp796_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
+        calcTGLimitAtOffset((INT)(off_rfsx1/1000.0), _sat_TGlimit.fixedflag ? (_temp795_sat_TGlimit=sat_TGlimit,&_temp795_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
 
         if(PSD_SATPARA == opsatx)
         {
-            calcTGLimitAtOffset((INT)(off_rfsx2/1000.0), _sat_TGlimit.fixedflag ? (_temp797_sat_TGlimit=sat_TGlimit,&_temp797_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
+            calcTGLimitAtOffset((INT)(off_rfsx2/1000.0), _sat_TGlimit.fixedflag ? (_temp796_sat_TGlimit=sat_TGlimit,&_temp796_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
         }
     }
 
@@ -38934,11 +39298,11 @@ SatPlacement( INT numPasses )
     /* TG limit calc */
     if(PSD_OFF != opsaty)
     {
-        calcTGLimitAtOffset((INT)(off_rfsy1/1000.0), _sat_TGlimit.fixedflag ? (_temp798_sat_TGlimit=sat_TGlimit,&_temp798_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
+        calcTGLimitAtOffset((INT)(off_rfsy1/1000.0), _sat_TGlimit.fixedflag ? (_temp797_sat_TGlimit=sat_TGlimit,&_temp797_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
 
         if(PSD_SATPARA == opsaty)
         {
-            calcTGLimitAtOffset((INT)(off_rfsy2/1000.0), _sat_TGlimit.fixedflag ? (_temp799_sat_TGlimit=sat_TGlimit,&_temp799_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
+            calcTGLimitAtOffset((INT)(off_rfsy2/1000.0), _sat_TGlimit.fixedflag ? (_temp798_sat_TGlimit=sat_TGlimit,&_temp798_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
         }
     }
 
@@ -38989,7 +39353,7 @@ SatPlacement( INT numPasses )
         satspacez1  = _satspacez1.fixedflag ?  ((void)(0.0), satspacez1) : 0.0;
         satspacez2  = _satspacez2.fixedflag ?  ((void)(0.0), satspacez2) : 0.0;
 
-        SatGetZOffset(satzlocpos,satzlocneg, _off_rfsz1.fixedflag ? (_temp800_off_rfsz1=off_rfsz1,&_temp800_off_rfsz1) : &off_rfsz1, _off_rfsz2.fixedflag ? (_temp801_off_rfsz2=off_rfsz2,&_temp801_off_rfsz2) : &off_rfsz2);
+        SatGetZOffset(satzlocpos,satzlocneg, _off_rfsz1.fixedflag ? (_temp799_off_rfsz1=off_rfsz1,&_temp799_off_rfsz1) : &off_rfsz1, _off_rfsz2.fixedflag ? (_temp800_off_rfsz2=off_rfsz2,&_temp800_off_rfsz2) : &off_rfsz2);
 
         if (opsatz==PSD_SATHAD)
             satspacez1  = _satspacez1.fixedflag ?  ((void)(fabs(satzlocpos-satzlocneg)), satspacez1) : fabs(satzlocpos-satzlocneg);
@@ -38998,11 +39362,11 @@ SatPlacement( INT numPasses )
         /* TG limit calc */
         if(PSD_OFF != opsatz)
         {
-            calcTGLimitAtOffset((INT)(off_rfsz1/1000.0), _sat_TGlimit.fixedflag ? (_temp802_sat_TGlimit=sat_TGlimit,&_temp802_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
+            calcTGLimitAtOffset((INT)(off_rfsz1/1000.0), _sat_TGlimit.fixedflag ? (_temp801_sat_TGlimit=sat_TGlimit,&_temp801_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
 
             if(PSD_SATPARA == opsatz)
             {
-                calcTGLimitAtOffset((INT)(off_rfsz2/1000.0), _sat_TGlimit.fixedflag ? (_temp803_sat_TGlimit=sat_TGlimit,&_temp803_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
+                calcTGLimitAtOffset((INT)(off_rfsz2/1000.0), _sat_TGlimit.fixedflag ? (_temp802_sat_TGlimit=sat_TGlimit,&_temp802_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
             }
         }
     } 
@@ -39098,12 +39462,12 @@ SatPlacement( INT numPasses )
             satzloca  = _satzloca.fixedflag ?    ((void)(max[i]+loczaoff), satzloca) : max[i]+loczaoff;
             satzlocb  = _satzlocb.fixedflag ?    ((void)(min[i]-loczboff), satzlocb) : min[i]-loczboff;
 
-            SatGetZOffset(satzloca,satzlocb, _off_rfsz1.fixedflag ? (_temp804_off_rfsz1=off_rfsz1,&_temp804_off_rfsz1) : &off_rfsz1, _off_rfsz2.fixedflag ? (_temp805_off_rfsz2=off_rfsz2,&_temp805_off_rfsz2) : &off_rfsz2);
+            SatGetZOffset(satzloca,satzlocb, _off_rfsz1.fixedflag ? (_temp803_off_rfsz1=off_rfsz1,&_temp803_off_rfsz1) : &off_rfsz1, _off_rfsz2.fixedflag ? (_temp804_off_rfsz2=off_rfsz2,&_temp804_off_rfsz2) : &off_rfsz2);
             off_rfcsz[i] = off_rfsz1; 
             /* TG limit calc */
             if(PSD_OFF != opsatz)
             {
-                calcTGLimitAtOffset((INT)(off_rfsz1/1000.0), _sat_TGlimit.fixedflag ? (_temp806_sat_TGlimit=sat_TGlimit,&_temp806_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
+                calcTGLimitAtOffset((INT)(off_rfsz1/1000.0), _sat_TGlimit.fixedflag ? (_temp805_sat_TGlimit=sat_TGlimit,&_temp805_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
             }
         }
 
@@ -39188,7 +39552,7 @@ SatPlacement( INT numPasses )
                 satspace1  = _satspace1.fixedflag ?     ((void)(fabs(satloce1-satloce2)), satspace1) : fabs(satloce1-satloce2);
             }
 
-            calcTGLimitAtOffset((INT)(off_rfse1/1000.0), _sat_TGlimit.fixedflag ? (_temp807_sat_TGlimit=sat_TGlimit,&_temp807_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
+            calcTGLimitAtOffset((INT)(off_rfse1/1000.0), _sat_TGlimit.fixedflag ? (_temp806_sat_TGlimit=sat_TGlimit,&_temp806_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
         }
 
         if (((explicit_sat_mask & PSD_EXPLICIT_2) != 0) && (skip_next_sat == 0))
@@ -39196,7 +39560,7 @@ SatPlacement( INT numPasses )
             off_rfse2  = _off_rfse2.fixedflag ?      ((void)((int)(GAM*a_gzrfse2*satloce2/10)), off_rfse2) : (int)(GAM*a_gzrfse2*satloce2/10);
             satspace2  = _satspace2.fixedflag ?  ((void)(0), satspace2) : 0;
 
-            calcTGLimitAtOffset((INT)(off_rfse2/1000.0), _sat_TGlimit.fixedflag ? (_temp808_sat_TGlimit=sat_TGlimit,&_temp808_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
+            calcTGLimitAtOffset((INT)(off_rfse2/1000.0), _sat_TGlimit.fixedflag ? (_temp807_sat_TGlimit=sat_TGlimit,&_temp807_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
         }
 
         skip_next_sat = 0;
@@ -39211,14 +39575,14 @@ SatPlacement( INT numPasses )
                 off_rfse3  = _off_rfse3.fixedflag ?        ((void)((int)(GAM*a_gzrfse3*((satloce3+satloce4)/2.)/10)), off_rfse3) : (int)(GAM*a_gzrfse3*((satloce3+satloce4)/2.)/10);
                 satspace3  = _satspace3.fixedflag ?     ((void)(fabs(satloce3-satloce4)), satspace3) : fabs(satloce3-satloce4);
             }
-            calcTGLimitAtOffset((INT)(off_rfse3/1000.0), _sat_TGlimit.fixedflag ? (_temp809_sat_TGlimit=sat_TGlimit,&_temp809_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
+            calcTGLimitAtOffset((INT)(off_rfse3/1000.0), _sat_TGlimit.fixedflag ? (_temp808_sat_TGlimit=sat_TGlimit,&_temp808_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
         }
 
         if (((explicit_sat_mask & PSD_EXPLICIT_4) != 0) && (skip_next_sat == 0))
         {
             off_rfse4  = _off_rfse4.fixedflag ?      ((void)((int)(GAM*a_gzrfse4*satloce4/10)), off_rfse4) : (int)(GAM*a_gzrfse4*satloce4/10);
             satspace4  = _satspace4.fixedflag ?  ((void)(0), satspace4) : 0;
-            calcTGLimitAtOffset((INT)(off_rfse4/1000.0), _sat_TGlimit.fixedflag ? (_temp810_sat_TGlimit=sat_TGlimit,&_temp810_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
+            calcTGLimitAtOffset((INT)(off_rfse4/1000.0), _sat_TGlimit.fixedflag ? (_temp809_sat_TGlimit=sat_TGlimit,&_temp809_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
         }
 
         skip_next_sat = 0;
@@ -39233,7 +39597,7 @@ SatPlacement( INT numPasses )
                 off_rfse5  = _off_rfse5.fixedflag ?        ((void)((int)(GAM*a_gzrfse5*((satloce5+satloce6)/2.)/10)), off_rfse5) : (int)(GAM*a_gzrfse5*((satloce5+satloce6)/2.)/10);
                 satspace5  = _satspace5.fixedflag ?     ((void)(fabs(satloce5-satloce6)), satspace5) : fabs(satloce5-satloce6);
             }
-            calcTGLimitAtOffset((INT)(off_rfse5/1000.0), _sat_TGlimit.fixedflag ? (_temp811_sat_TGlimit=sat_TGlimit,&_temp811_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
+            calcTGLimitAtOffset((INT)(off_rfse5/1000.0), _sat_TGlimit.fixedflag ? (_temp810_sat_TGlimit=sat_TGlimit,&_temp810_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
         }
 
         if (((explicit_sat_mask & PSD_EXPLICIT_6) != 0) && (skip_next_sat == 0))
@@ -39241,7 +39605,7 @@ SatPlacement( INT numPasses )
             off_rfse6  = _off_rfse6.fixedflag ?      ((void)((int)(GAM*a_gzrfse6*satloce6/10)), off_rfse6) : (int)(GAM*a_gzrfse6*satloce6/10);
             satspace6  = _satspace6.fixedflag ?  ((void)(0), satspace6) : 0;
 
-            calcTGLimitAtOffset((INT)(off_rfse6/1000.0), _sat_TGlimit.fixedflag ? (_temp812_sat_TGlimit=sat_TGlimit,&_temp812_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
+            calcTGLimitAtOffset((INT)(off_rfse6/1000.0), _sat_TGlimit.fixedflag ? (_temp811_sat_TGlimit=sat_TGlimit,&_temp811_sat_TGlimit) : &sat_TGlimit, psddebugcode2);
         }
     } /* end explicit SAT */
 
@@ -39591,7 +39955,7 @@ PS1cvinit( void )
 
     ps1_newgeo  = _ps1_newgeo.fixedflag ?  ((void)(1), ps1_newgeo) : 1;
     if (obloptimize(&ps1loggrd, &phygrd, ps1scan_info, 1, PSD_OBL,
-                    0, obl_method, ps1obl_debug, _ps1_newgeo.fixedflag ? (_temp813_ps1_newgeo=ps1_newgeo,&_temp813_ps1_newgeo) : &ps1_newgeo,
+                    0, obl_method, ps1obl_debug, _ps1_newgeo.fixedflag ? (_temp812_ps1_newgeo=ps1_newgeo,&_temp812_ps1_newgeo) : &ps1_newgeo,
                     cfsrmode) == FAILURE)
     {
         epic_error(use_ermes, "%s failed in PS1cvinit.", EM_PSD_SUPPORT_FAILURE,
@@ -39719,40 +40083,40 @@ CFHcvinit( void )
     gscale_rf1cfh  = _gscale_rf1cfh.fixedflag ?  ((void)(0.90909), gscale_rf1cfh) : 0.90909;
 
 #ifdef PSD_CFH_CHEMSAT
-    rfpulse[RFCSSAT_CFH_SLOT].pw = _pw_rfcssatcfh.fixedflag ? (_temp814_pw_rfcssatcfh=pw_rfcssatcfh,&_temp814_pw_rfcssatcfh) : &pw_rfcssatcfh;
-    rfpulse[RFCSSAT_CFH_SLOT].amp = _a_rfcssatcfh.fixedflag ? (_temp815_a_rfcssatcfh=a_rfcssatcfh,&_temp815_a_rfcssatcfh) : &a_rfcssatcfh;
-    rfpulse[RFCSSAT_CFH_SLOT].act_fa = _flip_rfcssatcfh.fixedflag ? (_temp816_flip_rfcssatcfh=flip_rfcssatcfh,&_temp816_flip_rfcssatcfh) : &flip_rfcssatcfh;
+    rfpulse[RFCSSAT_CFH_SLOT].pw = _pw_rfcssatcfh.fixedflag ? (_temp813_pw_rfcssatcfh=pw_rfcssatcfh,&_temp813_pw_rfcssatcfh) : &pw_rfcssatcfh;
+    rfpulse[RFCSSAT_CFH_SLOT].amp = _a_rfcssatcfh.fixedflag ? (_temp814_a_rfcssatcfh=a_rfcssatcfh,&_temp814_a_rfcssatcfh) : &a_rfcssatcfh;
+    rfpulse[RFCSSAT_CFH_SLOT].act_fa = _flip_rfcssatcfh.fixedflag ? (_temp815_flip_rfcssatcfh=flip_rfcssatcfh,&_temp815_flip_rfcssatcfh) : &flip_rfcssatcfh;
 #endif
 
     if( presscfh_ctrl != PRESSCFH_NONE && cfh_steam_flag == PSD_ON )
     {
-        setuprfpulse(RF1_CFH_SLOT, _pw_rf1cfh.fixedflag ? (_temp817_pw_rf1cfh=pw_rf1cfh,&_temp817_pw_rf1cfh) : &pw_rf1cfh, _a_rf1cfh.fixedflag ? (_temp818_a_rf1cfh=a_rf1cfh,&_temp818_a_rf1cfh) : &a_rf1cfh, SAR_ABS_SINC3, SAR_PSINC3,
+        setuprfpulse(RF1_CFH_SLOT, _pw_rf1cfh.fixedflag ? (_temp816_pw_rf1cfh=pw_rf1cfh,&_temp816_pw_rf1cfh) : &pw_rf1cfh, _a_rf1cfh.fixedflag ? (_temp817_a_rf1cfh=a_rf1cfh,&_temp817_a_rf1cfh) : &a_rf1cfh, SAR_ABS_SINC3, SAR_PSINC3,
                      SAR_ASINC3, SAR_DTYCYC_SINC3, SAR_MAXPW_SINC3, 1,
                      MAX_B1_SINC3_90, MAX_INT_B1_SQ_SINC3_90,
-                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf1cfh.fixedflag ? (_temp819_flip_rf1cfh=flip_rf1cfh,&_temp819_flip_rf1cfh) : &flip_rf1cfh, 3200.0,
+                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf1cfh.fixedflag ? (_temp818_flip_rf1cfh=flip_rf1cfh,&_temp818_flip_rf1cfh) : &flip_rf1cfh, 3200.0,
                      3750, PSD_CFH_ON, 0,
-                     0, 0, _res_rf1cfh.fixedflag ? (_temp820_res_rf1cfh=res_rf1cfh,&_temp820_res_rf1cfh) : &res_rf1cfh, 0, _wg_rf1cfh.fixedflag ? (_temp821_wg_rf1cfh=wg_rf1cfh,&_temp821_wg_rf1cfh) : &wg_rf1cfh, 1, rfpulse);
+                     0, 0, _res_rf1cfh.fixedflag ? (_temp819_res_rf1cfh=res_rf1cfh,&_temp819_res_rf1cfh) : &res_rf1cfh, 0, _wg_rf1cfh.fixedflag ? (_temp820_wg_rf1cfh=wg_rf1cfh,&_temp820_wg_rf1cfh) : &wg_rf1cfh, 1, rfpulse);
 
-        setuprfpulse(RF2_CFH_SLOT, _pw_rf2cfh.fixedflag ? (_temp822_pw_rf2cfh=pw_rf2cfh,&_temp822_pw_rf2cfh) : &pw_rf2cfh, _a_rf2cfh.fixedflag ? (_temp823_a_rf2cfh=a_rf2cfh,&_temp823_a_rf2cfh) : &a_rf2cfh, SAR_ABS_SINC3, SAR_PSINC3,
+        setuprfpulse(RF2_CFH_SLOT, _pw_rf2cfh.fixedflag ? (_temp821_pw_rf2cfh=pw_rf2cfh,&_temp821_pw_rf2cfh) : &pw_rf2cfh, _a_rf2cfh.fixedflag ? (_temp822_a_rf2cfh=a_rf2cfh,&_temp822_a_rf2cfh) : &a_rf2cfh, SAR_ABS_SINC3, SAR_PSINC3,
                      SAR_ASINC3, SAR_DTYCYC_SINC3, SAR_MAXPW_SINC3, 1,
                      MAX_B1_SINC3_90, MAX_INT_B1_SQ_SINC3_90,
-                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf2cfh.fixedflag ? (_temp824_flip_rf2cfh=flip_rf2cfh,&_temp824_flip_rf2cfh) : &flip_rf2cfh, 3200.0,
+                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf2cfh.fixedflag ? (_temp823_flip_rf2cfh=flip_rf2cfh,&_temp823_flip_rf2cfh) : &flip_rf2cfh, 3200.0,
                      3750, PSD_CFH_ON, 0,
-                     0, 0, _res_rf2cfh.fixedflag ? (_temp825_res_rf2cfh=res_rf2cfh,&_temp825_res_rf2cfh) : &res_rf2cfh, 0, _wg_rf2cfh.fixedflag ? (_temp826_wg_rf2cfh=wg_rf2cfh,&_temp826_wg_rf2cfh) : &wg_rf2cfh, 1, rfpulse);
+                     0, 0, _res_rf2cfh.fixedflag ? (_temp824_res_rf2cfh=res_rf2cfh,&_temp824_res_rf2cfh) : &res_rf2cfh, 0, _wg_rf2cfh.fixedflag ? (_temp825_wg_rf2cfh=wg_rf2cfh,&_temp825_wg_rf2cfh) : &wg_rf2cfh, 1, rfpulse);
 
-        setuprfpulse(RF3_CFH_SLOT, _pw_rf3cfh.fixedflag ? (_temp827_pw_rf3cfh=pw_rf3cfh,&_temp827_pw_rf3cfh) : &pw_rf3cfh, _a_rf3cfh.fixedflag ? (_temp828_a_rf3cfh=a_rf3cfh,&_temp828_a_rf3cfh) : &a_rf3cfh, SAR_ABS_SINC3, SAR_PSINC3,
+        setuprfpulse(RF3_CFH_SLOT, _pw_rf3cfh.fixedflag ? (_temp826_pw_rf3cfh=pw_rf3cfh,&_temp826_pw_rf3cfh) : &pw_rf3cfh, _a_rf3cfh.fixedflag ? (_temp827_a_rf3cfh=a_rf3cfh,&_temp827_a_rf3cfh) : &a_rf3cfh, SAR_ABS_SINC3, SAR_PSINC3,
                      SAR_ASINC3, SAR_DTYCYC_SINC3, SAR_MAXPW_SINC3, 1,
                      MAX_B1_SINC3_90, MAX_INT_B1_SQ_SINC3_90,
-                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf3cfh.fixedflag ? (_temp829_flip_rf3cfh=flip_rf3cfh,&_temp829_flip_rf3cfh) : &flip_rf3cfh, 3200.0,
+                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf3cfh.fixedflag ? (_temp828_flip_rf3cfh=flip_rf3cfh,&_temp828_flip_rf3cfh) : &flip_rf3cfh, 3200.0,
                      3750, PSD_CFH_ON, 0,
-                     0, 0, _res_rf3cfh.fixedflag ? (_temp830_res_rf3cfh=res_rf3cfh,&_temp830_res_rf3cfh) : &res_rf3cfh, 0, _wg_rf3cfh.fixedflag ? (_temp831_wg_rf3cfh=wg_rf3cfh,&_temp831_wg_rf3cfh) : &wg_rf3cfh, 1, rfpulse);
+                     0, 0, _res_rf3cfh.fixedflag ? (_temp829_res_rf3cfh=res_rf3cfh,&_temp829_res_rf3cfh) : &res_rf3cfh, 0, _wg_rf3cfh.fixedflag ? (_temp830_wg_rf3cfh=wg_rf3cfh,&_temp830_wg_rf3cfh) : &wg_rf3cfh, 1, rfpulse);
 
-        setuprfpulse(RF4_CFH_SLOT, _pw_rf4cfh.fixedflag ? (_temp832_pw_rf4cfh=pw_rf4cfh,&_temp832_pw_rf4cfh) : &pw_rf4cfh, _a_rf4cfh.fixedflag ? (_temp833_a_rf4cfh=a_rf4cfh,&_temp833_a_rf4cfh) : &a_rf4cfh, SAR_ABS_SINC3, SAR_PSINC3,
+        setuprfpulse(RF4_CFH_SLOT, _pw_rf4cfh.fixedflag ? (_temp831_pw_rf4cfh=pw_rf4cfh,&_temp831_pw_rf4cfh) : &pw_rf4cfh, _a_rf4cfh.fixedflag ? (_temp832_a_rf4cfh=a_rf4cfh,&_temp832_a_rf4cfh) : &a_rf4cfh, SAR_ABS_SINC3, SAR_PSINC3,
                      SAR_ASINC3, SAR_DTYCYC_SINC3, SAR_MAXPW_SINC3, 1,
                      MAX_B1_SINC3_90, MAX_INT_B1_SQ_SINC3_90,
-                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf4cfh.fixedflag ? (_temp834_flip_rf4cfh=flip_rf4cfh,&_temp834_flip_rf4cfh) : &flip_rf4cfh, 3200.0,
+                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf4cfh.fixedflag ? (_temp833_flip_rf4cfh=flip_rf4cfh,&_temp833_flip_rf4cfh) : &flip_rf4cfh, 3200.0,
                      3750, PSD_CFH_ON, 0,
-                     0, 0, _res_rf4cfh.fixedflag ? (_temp835_res_rf4cfh=res_rf4cfh,&_temp835_res_rf4cfh) : &res_rf4cfh, 0, _wg_rf4cfh.fixedflag ? (_temp836_wg_rf4cfh=wg_rf4cfh,&_temp836_wg_rf4cfh) : &wg_rf4cfh, 1, rfpulse);
+                     0, 0, _res_rf4cfh.fixedflag ? (_temp834_res_rf4cfh=res_rf4cfh,&_temp834_res_rf4cfh) : &res_rf4cfh, 0, _wg_rf4cfh.fixedflag ? (_temp835_wg_rf4cfh=wg_rf4cfh,&_temp835_wg_rf4cfh) : &wg_rf4cfh, 1, rfpulse);
 
         a_rf0cfh  = _a_rf0cfh.fixedflag ?  ((void)(1), a_rf0cfh) : 1;
         a_rf1cfh  = _a_rf1cfh.fixedflag ?  ((void)(0.5464), a_rf1cfh) : 0.5464; /* 0.5/0.61*(60/90) */
@@ -39772,33 +40136,33 @@ CFHcvinit( void )
     }
     else
     {
-        setuprfpulse(RF1_CFH_SLOT, _pw_rf1cfh.fixedflag ? (_temp837_pw_rf1cfh=pw_rf1cfh,&_temp837_pw_rf1cfh) : &pw_rf1cfh, _a_rf1cfh.fixedflag ? (_temp838_a_rf1cfh=a_rf1cfh,&_temp838_a_rf1cfh) : &a_rf1cfh, SAR_ABS_SINC1, SAR_PSINC1,
+        setuprfpulse(RF1_CFH_SLOT, _pw_rf1cfh.fixedflag ? (_temp836_pw_rf1cfh=pw_rf1cfh,&_temp836_pw_rf1cfh) : &pw_rf1cfh, _a_rf1cfh.fixedflag ? (_temp837_a_rf1cfh=a_rf1cfh,&_temp837_a_rf1cfh) : &a_rf1cfh, SAR_ABS_SINC1, SAR_PSINC1,
                      SAR_ASINC1, SAR_DTYCYC_SINC1, SAR_MAXPW_SINC1, 1,
                      MAX_B1_SINC1_90, MAX_INT_B1_SQ_SINC1_90,
-                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf1cfh.fixedflag ? (_temp839_flip_rf1cfh=flip_rf1cfh,&_temp839_flip_rf1cfh) : &flip_rf1cfh, 3200.0,
+                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf1cfh.fixedflag ? (_temp838_flip_rf1cfh=flip_rf1cfh,&_temp838_flip_rf1cfh) : &flip_rf1cfh, 3200.0,
                      1250, PSD_CFH_ON, 0,
-                     0, 0, _res_rf1cfh.fixedflag ? (_temp840_res_rf1cfh=res_rf1cfh,&_temp840_res_rf1cfh) : &res_rf1cfh, 0, _wg_rf1cfh.fixedflag ? (_temp841_wg_rf1cfh=wg_rf1cfh,&_temp841_wg_rf1cfh) : &wg_rf1cfh, 1, rfpulse);
+                     0, 0, _res_rf1cfh.fixedflag ? (_temp839_res_rf1cfh=res_rf1cfh,&_temp839_res_rf1cfh) : &res_rf1cfh, 0, _wg_rf1cfh.fixedflag ? (_temp840_wg_rf1cfh=wg_rf1cfh,&_temp840_wg_rf1cfh) : &wg_rf1cfh, 1, rfpulse);
 
-        setuprfpulse(RF2_CFH_SLOT, _pw_rf2cfh.fixedflag ? (_temp842_pw_rf2cfh=pw_rf2cfh,&_temp842_pw_rf2cfh) : &pw_rf2cfh, _a_rf2cfh.fixedflag ? (_temp843_a_rf2cfh=a_rf2cfh,&_temp843_a_rf2cfh) : &a_rf2cfh, SAR_ABS_SINC1, SAR_PSINC1,
+        setuprfpulse(RF2_CFH_SLOT, _pw_rf2cfh.fixedflag ? (_temp841_pw_rf2cfh=pw_rf2cfh,&_temp841_pw_rf2cfh) : &pw_rf2cfh, _a_rf2cfh.fixedflag ? (_temp842_a_rf2cfh=a_rf2cfh,&_temp842_a_rf2cfh) : &a_rf2cfh, SAR_ABS_SINC1, SAR_PSINC1,
                      SAR_ASINC1, SAR_DTYCYC_SINC1, SAR_MAXPW_SINC1, 1,
                      MAX_B1_SINC1_90, MAX_INT_B1_SQ_SINC1_90,
-                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf2cfh.fixedflag ? (_temp844_flip_rf2cfh=flip_rf2cfh,&_temp844_flip_rf2cfh) : &flip_rf2cfh, 3200.0,
+                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf2cfh.fixedflag ? (_temp843_flip_rf2cfh=flip_rf2cfh,&_temp843_flip_rf2cfh) : &flip_rf2cfh, 3200.0,
                      1250, PSD_CFH_ON, 0,
-                     0, 0, _res_rf2cfh.fixedflag ? (_temp845_res_rf2cfh=res_rf2cfh,&_temp845_res_rf2cfh) : &res_rf2cfh, 0, _wg_rf2cfh.fixedflag ? (_temp846_wg_rf2cfh=wg_rf2cfh,&_temp846_wg_rf2cfh) : &wg_rf2cfh, 1, rfpulse);
+                     0, 0, _res_rf2cfh.fixedflag ? (_temp844_res_rf2cfh=res_rf2cfh,&_temp844_res_rf2cfh) : &res_rf2cfh, 0, _wg_rf2cfh.fixedflag ? (_temp845_wg_rf2cfh=wg_rf2cfh,&_temp845_wg_rf2cfh) : &wg_rf2cfh, 1, rfpulse);
 
-        setuprfpulse(RF3_CFH_SLOT, _pw_rf3cfh.fixedflag ? (_temp847_pw_rf3cfh=pw_rf3cfh,&_temp847_pw_rf3cfh) : &pw_rf3cfh, _a_rf3cfh.fixedflag ? (_temp848_a_rf3cfh=a_rf3cfh,&_temp848_a_rf3cfh) : &a_rf3cfh, SAR_ABS_SINC1, SAR_PSINC1,
+        setuprfpulse(RF3_CFH_SLOT, _pw_rf3cfh.fixedflag ? (_temp846_pw_rf3cfh=pw_rf3cfh,&_temp846_pw_rf3cfh) : &pw_rf3cfh, _a_rf3cfh.fixedflag ? (_temp847_a_rf3cfh=a_rf3cfh,&_temp847_a_rf3cfh) : &a_rf3cfh, SAR_ABS_SINC1, SAR_PSINC1,
                      SAR_ASINC1, SAR_DTYCYC_SINC1, SAR_MAXPW_SINC1, 1,
                      MAX_B1_SINC1_90, MAX_INT_B1_SQ_SINC1_90,
-                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf3cfh.fixedflag ? (_temp849_flip_rf3cfh=flip_rf3cfh,&_temp849_flip_rf3cfh) : &flip_rf3cfh, 3200.0,
+                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf3cfh.fixedflag ? (_temp848_flip_rf3cfh=flip_rf3cfh,&_temp848_flip_rf3cfh) : &flip_rf3cfh, 3200.0,
                      1250, PSD_CFH_ON, 0,
-                     0, 0, _res_rf3cfh.fixedflag ? (_temp850_res_rf3cfh=res_rf3cfh,&_temp850_res_rf3cfh) : &res_rf3cfh, 0, _wg_rf3cfh.fixedflag ? (_temp851_wg_rf3cfh=wg_rf3cfh,&_temp851_wg_rf3cfh) : &wg_rf3cfh, 1, rfpulse);
+                     0, 0, _res_rf3cfh.fixedflag ? (_temp849_res_rf3cfh=res_rf3cfh,&_temp849_res_rf3cfh) : &res_rf3cfh, 0, _wg_rf3cfh.fixedflag ? (_temp850_wg_rf3cfh=wg_rf3cfh,&_temp850_wg_rf3cfh) : &wg_rf3cfh, 1, rfpulse);
 
-        setuprfpulse(RF4_CFH_SLOT, _pw_rf4cfh.fixedflag ? (_temp852_pw_rf4cfh=pw_rf4cfh,&_temp852_pw_rf4cfh) : &pw_rf4cfh, _a_rf4cfh.fixedflag ? (_temp853_a_rf4cfh=a_rf4cfh,&_temp853_a_rf4cfh) : &a_rf4cfh, SAR_ABS_SINC1, SAR_PSINC1,
+        setuprfpulse(RF4_CFH_SLOT, _pw_rf4cfh.fixedflag ? (_temp851_pw_rf4cfh=pw_rf4cfh,&_temp851_pw_rf4cfh) : &pw_rf4cfh, _a_rf4cfh.fixedflag ? (_temp852_a_rf4cfh=a_rf4cfh,&_temp852_a_rf4cfh) : &a_rf4cfh, SAR_ABS_SINC1, SAR_PSINC1,
                      SAR_ASINC1, SAR_DTYCYC_SINC1, SAR_MAXPW_SINC1, 1,
                      MAX_B1_SINC1_90, MAX_INT_B1_SQ_SINC1_90,
-                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf4cfh.fixedflag ? (_temp854_flip_rf4cfh=flip_rf4cfh,&_temp854_flip_rf4cfh) : &flip_rf4cfh, 3200.0,
+                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf4cfh.fixedflag ? (_temp853_flip_rf4cfh=flip_rf4cfh,&_temp853_flip_rf4cfh) : &flip_rf4cfh, 3200.0,
                      1250, PSD_CFH_ON, 0,
-                     0, 0, _res_rf4cfh.fixedflag ? (_temp855_res_rf4cfh=res_rf4cfh,&_temp855_res_rf4cfh) : &res_rf4cfh, 0, _wg_rf4cfh.fixedflag ? (_temp856_wg_rf4cfh=wg_rf4cfh,&_temp856_wg_rf4cfh) : &wg_rf4cfh, 1, rfpulse);
+                     0, 0, _res_rf4cfh.fixedflag ? (_temp854_res_rf4cfh=res_rf4cfh,&_temp854_res_rf4cfh) : &res_rf4cfh, 0, _wg_rf4cfh.fixedflag ? (_temp855_wg_rf4cfh=wg_rf4cfh,&_temp855_wg_rf4cfh) : &wg_rf4cfh, 1, rfpulse);
 
         a_rf0cfh  = _a_rf0cfh.fixedflag ?  ((void)(0.61), a_rf0cfh) : 0.61;
         a_rf1cfh  = _a_rf1cfh.fixedflag ?  ((void)(0.5), a_rf1cfh) : 0.5;
@@ -39946,21 +40310,21 @@ PScvinit( void )
         PSmt  = _PSmt.fixedflag ?  ((void)(1), PSmt) : 1;
     }
 
-    pimrs[0] = _pimrsaps1.fixedflag ? (_temp857_pimrsaps1=pimrsaps1,&_temp857_pimrsaps1) : &pimrsaps1;
-    pimrs[1] = _pimrsaps2.fixedflag ? (_temp858_pimrsaps2=pimrsaps2,&_temp858_pimrsaps2) : &pimrsaps2;
-    pimrs[2] = _pimrsaps3.fixedflag ? (_temp859_pimrsaps3=pimrsaps3,&_temp859_pimrsaps3) : &pimrsaps3;
-    pimrs[3] = _pimrsaps4.fixedflag ? (_temp860_pimrsaps4=pimrsaps4,&_temp860_pimrsaps4) : &pimrsaps4;
-    pimrs[4] = _pimrsaps5.fixedflag ? (_temp861_pimrsaps5=pimrsaps5,&_temp861_pimrsaps5) : &pimrsaps5;
-    pimrs[5] = _pimrsaps6.fixedflag ? (_temp862_pimrsaps6=pimrsaps6,&_temp862_pimrsaps6) : &pimrsaps6;
-    pimrs[6] = _pimrsaps7.fixedflag ? (_temp863_pimrsaps7=pimrsaps7,&_temp863_pimrsaps7) : &pimrsaps7;
-    pimrs[7] = _pimrsaps8.fixedflag ? (_temp864_pimrsaps8=pimrsaps8,&_temp864_pimrsaps8) : &pimrsaps8;
-    pimrs[8] = _pimrsaps9.fixedflag ? (_temp865_pimrsaps9=pimrsaps9,&_temp865_pimrsaps9) : &pimrsaps9;
-    pimrs[9] = _pimrsaps10.fixedflag ? (_temp866_pimrsaps10=pimrsaps10,&_temp866_pimrsaps10) : &pimrsaps10;
-    pimrs[10] = _pimrsaps11.fixedflag ? (_temp867_pimrsaps11=pimrsaps11,&_temp867_pimrsaps11) : &pimrsaps11;
-    pimrs[11] = _pimrsaps12.fixedflag ? (_temp868_pimrsaps12=pimrsaps12,&_temp868_pimrsaps12) : &pimrsaps12;
-    pimrs[12] = _pimrsaps13.fixedflag ? (_temp869_pimrsaps13=pimrsaps13,&_temp869_pimrsaps13) : &pimrsaps13;
-    pimrs[13] = _pimrsaps14.fixedflag ? (_temp870_pimrsaps14=pimrsaps14,&_temp870_pimrsaps14) : &pimrsaps14;
-    pimrs[14] = _pimrsaps15.fixedflag ? (_temp871_pimrsaps15=pimrsaps15,&_temp871_pimrsaps15) : &pimrsaps15;
+    pimrs[0] = _pimrsaps1.fixedflag ? (_temp856_pimrsaps1=pimrsaps1,&_temp856_pimrsaps1) : &pimrsaps1;
+    pimrs[1] = _pimrsaps2.fixedflag ? (_temp857_pimrsaps2=pimrsaps2,&_temp857_pimrsaps2) : &pimrsaps2;
+    pimrs[2] = _pimrsaps3.fixedflag ? (_temp858_pimrsaps3=pimrsaps3,&_temp858_pimrsaps3) : &pimrsaps3;
+    pimrs[3] = _pimrsaps4.fixedflag ? (_temp859_pimrsaps4=pimrsaps4,&_temp859_pimrsaps4) : &pimrsaps4;
+    pimrs[4] = _pimrsaps5.fixedflag ? (_temp860_pimrsaps5=pimrsaps5,&_temp860_pimrsaps5) : &pimrsaps5;
+    pimrs[5] = _pimrsaps6.fixedflag ? (_temp861_pimrsaps6=pimrsaps6,&_temp861_pimrsaps6) : &pimrsaps6;
+    pimrs[6] = _pimrsaps7.fixedflag ? (_temp862_pimrsaps7=pimrsaps7,&_temp862_pimrsaps7) : &pimrsaps7;
+    pimrs[7] = _pimrsaps8.fixedflag ? (_temp863_pimrsaps8=pimrsaps8,&_temp863_pimrsaps8) : &pimrsaps8;
+    pimrs[8] = _pimrsaps9.fixedflag ? (_temp864_pimrsaps9=pimrsaps9,&_temp864_pimrsaps9) : &pimrsaps9;
+    pimrs[9] = _pimrsaps10.fixedflag ? (_temp865_pimrsaps10=pimrsaps10,&_temp865_pimrsaps10) : &pimrsaps10;
+    pimrs[10] = _pimrsaps11.fixedflag ? (_temp866_pimrsaps11=pimrsaps11,&_temp866_pimrsaps11) : &pimrsaps11;
+    pimrs[11] = _pimrsaps12.fixedflag ? (_temp867_pimrsaps12=pimrsaps12,&_temp867_pimrsaps12) : &pimrsaps12;
+    pimrs[12] = _pimrsaps13.fixedflag ? (_temp868_pimrsaps13=pimrsaps13,&_temp868_pimrsaps13) : &pimrsaps13;
+    pimrs[13] = _pimrsaps14.fixedflag ? (_temp869_pimrsaps14=pimrsaps14,&_temp869_pimrsaps14) : &pimrsaps14;
+    pimrs[14] = _pimrsaps15.fixedflag ? (_temp870_pimrsaps15=pimrsaps15,&_temp870_pimrsaps15) : &pimrsaps15;
 
     
     /* MRIhc15304: we will keep asfov as cv and fill it with the value
@@ -40204,7 +40568,7 @@ AScvinit( void )
   
     as_newgeo  = _as_newgeo.fixedflag ?  ((void)(1), as_newgeo) : 1;
     if (FAILURE==obloptimize(&asloggrd, &phygrd, total_asscan_info, total_asplane, PSD_OBL,
-                             0, PSD_OBL_RESTRICT, asobl_debug, _as_newgeo.fixedflag ? (_temp872_as_newgeo=as_newgeo,&_temp872_as_newgeo) : &as_newgeo,
+                             0, PSD_OBL_RESTRICT, asobl_debug, _as_newgeo.fixedflag ? (_temp871_as_newgeo=as_newgeo,&_temp871_as_newgeo) : &as_newgeo,
                              cfsrmode))
     {
         epic_error(use_ermes, "%s failed in AScvinit.", EM_PSD_SUPPORT_FAILURE,
@@ -40217,8 +40581,8 @@ AScvinit( void )
 
     /* X Killer CVs */
     if (FAILURE==amppwgrad(asx_killer_area, asloggrd.tx_xz, 0.0, 0.0, asloggrd.xrt,
-                           MIN_PLATEAU_TIME, _a_gxkas.fixedflag ? (_temp873_a_gxkas=a_gxkas,&_temp873_a_gxkas) : &a_gxkas, _pw_gxkasa.fixedflag ? (_temp874_pw_gxkasa=pw_gxkasa,&_temp874_pw_gxkasa) : &pw_gxkasa,
-                           _pw_gxkas.fixedflag ? (_temp875_pw_gxkas=pw_gxkas,&_temp875_pw_gxkas) : &pw_gxkas, _pw_gxkasd.fixedflag ? (_temp876_pw_gxkasd=pw_gxkasd,&_temp876_pw_gxkasd) : &pw_gxkasd ))
+                           MIN_PLATEAU_TIME, _a_gxkas.fixedflag ? (_temp872_a_gxkas=a_gxkas,&_temp872_a_gxkas) : &a_gxkas, _pw_gxkasa.fixedflag ? (_temp873_pw_gxkasa=pw_gxkasa,&_temp873_pw_gxkasa) : &pw_gxkasa,
+                           _pw_gxkas.fixedflag ? (_temp874_pw_gxkas=pw_gxkas,&_temp874_pw_gxkas) : &pw_gxkas, _pw_gxkasd.fixedflag ? (_temp875_pw_gxkasd=pw_gxkasd,&_temp875_pw_gxkasd) : &pw_gxkasd ))
     {
         epic_error(use_ermes, "%s failed in AScvinit.",
                    EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),
@@ -40228,8 +40592,8 @@ AScvinit( void )
 
     /* Z Killer CVs */
     if (FAILURE==amppwgrad(asz_killer_area, asloggrd.tz_xz, 0.0, 0.0, asloggrd.zrt,
-                           MIN_PLATEAU_TIME, _a_gzkas.fixedflag ? (_temp877_a_gzkas=a_gzkas,&_temp877_a_gzkas) : &a_gzkas, _pw_gzkasa.fixedflag ? (_temp878_pw_gzkasa=pw_gzkasa,&_temp878_pw_gzkasa) : &pw_gzkasa,
-                           _pw_gzkas.fixedflag ? (_temp879_pw_gzkas=pw_gzkas,&_temp879_pw_gzkas) : &pw_gzkas, _pw_gzkasd.fixedflag ? (_temp880_pw_gzkasd=pw_gzkasd,&_temp880_pw_gzkasd) : &pw_gzkasd ))
+                           MIN_PLATEAU_TIME, _a_gzkas.fixedflag ? (_temp876_a_gzkas=a_gzkas,&_temp876_a_gzkas) : &a_gzkas, _pw_gzkasa.fixedflag ? (_temp877_pw_gzkasa=pw_gzkasa,&_temp877_pw_gzkasa) : &pw_gzkasa,
+                           _pw_gzkas.fixedflag ? (_temp878_pw_gzkas=pw_gzkas,&_temp878_pw_gzkas) : &pw_gzkas, _pw_gzkasd.fixedflag ? (_temp879_pw_gzkasd=pw_gzkasd,&_temp879_pw_gzkasd) : &pw_gzkasd ))
     {
         epic_error(use_ermes, "%s failed in AScvinit.",
                    EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),
@@ -40294,7 +40658,7 @@ RScvinit( void )
     rfpulse[RFB_RFSHIM_SLOT].max_int_b1_sq = 0.00181119;
     rfpulse[RFB_RFSHIM_SLOT].max_rms_b1 = 0.0300931;
     rfpulse[RFB_RFSHIM_SLOT].nom_fa = 90.0;
-    rfpulse[RFB_RFSHIM_SLOT].act_fa = _flip_rfbrs.fixedflag ? (_temp881_flip_rfbrs=flip_rfbrs,&_temp881_flip_rfbrs) : &flip_rfbrs;
+    rfpulse[RFB_RFSHIM_SLOT].act_fa = _flip_rfbrs.fixedflag ? (_temp880_flip_rfbrs=flip_rfbrs,&_temp880_flip_rfbrs) : &flip_rfbrs;
     rfpulse[RFB_RFSHIM_SLOT].nom_pw = 2000;
     rfpulse[RFB_RFSHIM_SLOT].num = 1;
 
@@ -40382,7 +40746,7 @@ RScvinit( void )
 
     ps1_newgeo  = _ps1_newgeo.fixedflag ?  ((void)(1), ps1_newgeo) : 1;
     if (obloptimize(&rsloggrd, &phygrd, rsscan_info, 1, PSD_OBL,
-                    0, obl_method, ps1obl_debug, _ps1_newgeo.fixedflag ? (_temp882_ps1_newgeo=ps1_newgeo,&_temp882_ps1_newgeo) : &ps1_newgeo,
+                    0, obl_method, ps1obl_debug, _ps1_newgeo.fixedflag ? (_temp881_ps1_newgeo=ps1_newgeo,&_temp881_ps1_newgeo) : &ps1_newgeo,
                     cfsrmode) == FAILURE)
     {
         epic_error(use_ermes, "%s failed in RScvinit.", EM_PSD_SUPPORT_FAILURE,
@@ -40429,7 +40793,7 @@ DTGcvinit( void )
     rfpulse[RFB_DYNTG_SLOT].max_int_b1_sq = 0.00181119;
     rfpulse[RFB_DYNTG_SLOT].max_rms_b1 = 0.0300931;
     rfpulse[RFB_DYNTG_SLOT].nom_fa = 90.0;
-    rfpulse[RFB_DYNTG_SLOT].act_fa = _flip_rfbdtg.fixedflag ? (_temp883_flip_rfbdtg=flip_rfbdtg,&_temp883_flip_rfbdtg) : &flip_rfbdtg;
+    rfpulse[RFB_DYNTG_SLOT].act_fa = _flip_rfbdtg.fixedflag ? (_temp882_flip_rfbdtg=flip_rfbdtg,&_temp882_flip_rfbdtg) : &flip_rfbdtg;
     rfpulse[RFB_DYNTG_SLOT].nom_pw = 2000;
     rfpulse[RFB_DYNTG_SLOT].num = 1;
 
@@ -40520,7 +40884,7 @@ ExtCalcvinit( void )
     /* use original_phygrd to avoid ART derating; use phygrd to apply derating */
     original_pgrd = getOrigphygrd();
     if (obloptimize(&calloggrd, &original_pgrd, calscan_info, cal_slq, PSD_AXIAL,
-                    0, obl_method, ps1obl_debug, _ps1_newgeo.fixedflag ? (_temp884_ps1_newgeo=ps1_newgeo,&_temp884_ps1_newgeo) : &ps1_newgeo,
+                    0, obl_method, ps1obl_debug, _ps1_newgeo.fixedflag ? (_temp883_ps1_newgeo=ps1_newgeo,&_temp883_ps1_newgeo) : &ps1_newgeo,
                     cfsrmode) == FAILURE)
     {
         epic_error(use_ermes, "%s failed in RScvinit.", EM_PSD_SUPPORT_FAILURE,
@@ -40565,7 +40929,7 @@ AutoCoilcvinit( void )
     ps1_newgeo  = _ps1_newgeo.fixedflag ?  ((void)(1), ps1_newgeo) : 1;
 
     if (obloptimize(&coilloggrd, &phygrd, coilscan_info, coil_slq, PSD_AXIAL,
-                    0, obl_method, ps1obl_debug, _ps1_newgeo.fixedflag ? (_temp885_ps1_newgeo=ps1_newgeo,&_temp885_ps1_newgeo) : &ps1_newgeo,
+                    0, obl_method, ps1obl_debug, _ps1_newgeo.fixedflag ? (_temp884_ps1_newgeo=ps1_newgeo,&_temp884_ps1_newgeo) : &ps1_newgeo,
                     cfsrmode) == FAILURE)
     {
         epic_error(use_ermes, "%s failed in RScvinit.", EM_PSD_SUPPORT_FAILURE,
@@ -40683,7 +41047,7 @@ PS1cveval( FLOAT *opthickPS )
             TGopslthicky  = _TGopslthicky.fixedflag ?  ((void)(av_temp_float1), TGopslthicky) : av_temp_float1;
         }
 
-        if (FAILURE==ampslice(_a_gyrf1mps1.fixedflag ? (_temp886_a_gyrf1mps1=a_gyrf1mps1,&_temp886_a_gyrf1mps1) : &a_gyrf1mps1, bw_rf1mps1,TGopslthicky,gscale_rf1mps1,TYPDEF))
+        if (FAILURE==ampslice(_a_gyrf1mps1.fixedflag ? (_temp885_a_gyrf1mps1=a_gyrf1mps1,&_temp885_a_gyrf1mps1) : &a_gyrf1mps1, bw_rf1mps1,TGopslthicky,gscale_rf1mps1,TYPDEF))
         {
             epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                        EE_ARGS(1), STRING_ARG, "ampslice for gyrf1mps1.");
@@ -40691,7 +41055,7 @@ PS1cveval( FLOAT *opthickPS )
         }
 
         /* slice selection ramp */
-        if (optramp(_pw_gyrf1mps1a.fixedflag ? (_temp887_pw_gyrf1mps1a=pw_gyrf1mps1a,&_temp887_pw_gyrf1mps1a) : &pw_gyrf1mps1a, a_gyrf1mps1, ps1loggrd.ty, ps1loggrd.yrt,
+        if (optramp(_pw_gyrf1mps1a.fixedflag ? (_temp886_pw_gyrf1mps1a=pw_gyrf1mps1a,&_temp886_pw_gyrf1mps1a) : &pw_gyrf1mps1a, a_gyrf1mps1, ps1loggrd.ty, ps1loggrd.yrt,
                     TYPDEF)==FAILURE) /* vmx 5/9/95 YI */
         {
             epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -40701,7 +41065,7 @@ PS1cveval( FLOAT *opthickPS )
         pw_gyrf1mps1d  = _pw_gyrf1mps1d.fixedflag ?  ((void)(pw_gyrf1mps1a), pw_gyrf1mps1d) : pw_gyrf1mps1a;
 
         area_pulse = a_gyrf1mps1*(pw_gyrf1mps1/2 + PSoff90 + pw_gyrf1mps1d/2);
-        if (amppwgz1(_a_gy1mps1.fixedflag ? (_temp888_a_gy1mps1=a_gy1mps1,&_temp888_a_gy1mps1) : &a_gy1mps1,_pw_gy1mps1.fixedflag ? (_temp889_pw_gy1mps1=pw_gy1mps1,&_temp889_pw_gy1mps1) : &pw_gy1mps1,_pw_gy1mps1a.fixedflag ? (_temp890_pw_gy1mps1a=pw_gy1mps1a,&_temp890_pw_gy1mps1a) : &pw_gy1mps1a,_pw_gy1mps1d.fixedflag ? (_temp891_pw_gy1mps1d=pw_gy1mps1d,&_temp891_pw_gy1mps1d) : &pw_gy1mps1d,area_pulse,
+        if (amppwgz1(_a_gy1mps1.fixedflag ? (_temp887_a_gy1mps1=a_gy1mps1,&_temp887_a_gy1mps1) : &a_gy1mps1,_pw_gy1mps1.fixedflag ? (_temp888_pw_gy1mps1=pw_gy1mps1,&_temp888_pw_gy1mps1) : &pw_gy1mps1,_pw_gy1mps1a.fixedflag ? (_temp889_pw_gy1mps1a=pw_gy1mps1a,&_temp889_pw_gy1mps1a) : &pw_gy1mps1a,_pw_gy1mps1d.fixedflag ? (_temp890_pw_gy1mps1d=pw_gy1mps1d,&_temp890_pw_gy1mps1d) : &pw_gy1mps1d,area_pulse,
                      (int)(1000000),MIN_PLATEAU_TIME,ps1loggrd.zrt,ps1_tz_xz) == FAILURE)
         {
             epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -40719,7 +41083,7 @@ PS1cveval( FLOAT *opthickPS )
     else
     {
         pw_gzrf1mps1  = _pw_gzrf1mps1.fixedflag ?  ((void)(pw_rf1mps1), pw_gzrf1mps1) : pw_rf1mps1;
-        if (FAILURE==ampslice(_a_gzrf1mps1.fixedflag ? (_temp892_a_gzrf1mps1=a_gzrf1mps1,&_temp892_a_gzrf1mps1) : &a_gzrf1mps1, bw_rf1mps1,thickPS_mod,gscale_rf1mps1,TYPDEF))
+        if (FAILURE==ampslice(_a_gzrf1mps1.fixedflag ? (_temp891_a_gzrf1mps1=a_gzrf1mps1,&_temp891_a_gzrf1mps1) : &a_gzrf1mps1, bw_rf1mps1,thickPS_mod,gscale_rf1mps1,TYPDEF))
         {
             epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                        EE_ARGS(1), STRING_ARG, "ampslice for gzrf1mps1.");
@@ -40728,7 +41092,7 @@ PS1cveval( FLOAT *opthickPS )
         /* end aps1_mod changes (GE) */
 
         /* slice selection ramp */
-        if (optramp(_pw_gzrf1mps1a.fixedflag ? (_temp893_pw_gzrf1mps1a=pw_gzrf1mps1a,&_temp893_pw_gzrf1mps1a) : &pw_gzrf1mps1a, a_gzrf1mps1, ps1loggrd.tz, ps1loggrd.zrt,
+        if (optramp(_pw_gzrf1mps1a.fixedflag ? (_temp892_pw_gzrf1mps1a=pw_gzrf1mps1a,&_temp892_pw_gzrf1mps1a) : &pw_gzrf1mps1a, a_gzrf1mps1, ps1loggrd.tz, ps1loggrd.zrt,
                     TYPDEF)==FAILURE) /* vmx 5/9/95 YI */ 
         {
             epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -40740,7 +41104,7 @@ PS1cveval( FLOAT *opthickPS )
         /* Z gradient refocus */
         /* available time not calculated, defaulted to 10ms */
         area_pulse = a_gzrf1mps1*(pw_gzrf1mps1/2 + PSoff90 + pw_gzrf1mps1d/2);
-        if (amppwgz1(_a_gz1mps1.fixedflag ? (_temp894_a_gz1mps1=a_gz1mps1,&_temp894_a_gz1mps1) : &a_gz1mps1,_pw_gz1mps1.fixedflag ? (_temp895_pw_gz1mps1=pw_gz1mps1,&_temp895_pw_gz1mps1) : &pw_gz1mps1,_pw_gz1mps1a.fixedflag ? (_temp896_pw_gz1mps1a=pw_gz1mps1a,&_temp896_pw_gz1mps1a) : &pw_gz1mps1a,_pw_gz1mps1d.fixedflag ? (_temp897_pw_gz1mps1d=pw_gz1mps1d,&_temp897_pw_gz1mps1d) : &pw_gz1mps1d,area_pulse,
+        if (amppwgz1(_a_gz1mps1.fixedflag ? (_temp893_a_gz1mps1=a_gz1mps1,&_temp893_a_gz1mps1) : &a_gz1mps1,_pw_gz1mps1.fixedflag ? (_temp894_pw_gz1mps1=pw_gz1mps1,&_temp894_pw_gz1mps1) : &pw_gz1mps1,_pw_gz1mps1a.fixedflag ? (_temp895_pw_gz1mps1a=pw_gz1mps1a,&_temp895_pw_gz1mps1a) : &pw_gz1mps1a,_pw_gz1mps1d.fixedflag ? (_temp896_pw_gz1mps1d=pw_gz1mps1d,&_temp896_pw_gz1mps1d) : &pw_gz1mps1d,area_pulse,
                      (int)(1000000),MIN_PLATEAU_TIME,ps1loggrd.zrt,ps1_tz_xz) == FAILURE)
         {
             epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -40752,8 +41116,8 @@ PS1cveval( FLOAT *opthickPS )
     /* Z gradient crushers for 180 pulse */
     /* Left crusher. Denoted by the "l" after the "2"  in "gzrf2lmps1" */
     if (amppwgrad(ps_crusher_area, ps1_tz_xz, 0.0, 0.0, ps1loggrd.zrt,
-                  MIN_PLATEAU_TIME, _a_gzrf2lmps1.fixedflag ? (_temp898_a_gzrf2lmps1=a_gzrf2lmps1,&_temp898_a_gzrf2lmps1) : &a_gzrf2lmps1, _pw_gzrf2lmps1a.fixedflag ? (_temp899_pw_gzrf2lmps1a=pw_gzrf2lmps1a,&_temp899_pw_gzrf2lmps1a) : &pw_gzrf2lmps1a,
-                  _pw_gzrf2lmps1.fixedflag ? (_temp900_pw_gzrf2lmps1=pw_gzrf2lmps1,&_temp900_pw_gzrf2lmps1) : &pw_gzrf2lmps1, _pw_gzrf2lmps1d.fixedflag ? (_temp901_pw_gzrf2lmps1d=pw_gzrf2lmps1d,&_temp901_pw_gzrf2lmps1d) : &pw_gzrf2lmps1d) == FAILURE)
+                  MIN_PLATEAU_TIME, _a_gzrf2lmps1.fixedflag ? (_temp897_a_gzrf2lmps1=a_gzrf2lmps1,&_temp897_a_gzrf2lmps1) : &a_gzrf2lmps1, _pw_gzrf2lmps1a.fixedflag ? (_temp898_pw_gzrf2lmps1a=pw_gzrf2lmps1a,&_temp898_pw_gzrf2lmps1a) : &pw_gzrf2lmps1a,
+                  _pw_gzrf2lmps1.fixedflag ? (_temp899_pw_gzrf2lmps1=pw_gzrf2lmps1,&_temp899_pw_gzrf2lmps1) : &pw_gzrf2lmps1, _pw_gzrf2lmps1d.fixedflag ? (_temp900_pw_gzrf2lmps1d=pw_gzrf2lmps1d,&_temp900_pw_gzrf2lmps1d) : &pw_gzrf2lmps1d) == FAILURE)
     {
         epic_error(use_ermes, "%s failed in PScveval.", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "amppwgrad:gzrf2lmps1"); 
@@ -40774,7 +41138,7 @@ PS1cveval( FLOAT *opthickPS )
     bw_rf2mps1 = (LONG)(rfpulse[RF2_APS1_SLOT].nom_bw*rfpulse[RF2_APS1_SLOT].nom_pw/(float)pw_rf2mps1);
 
     /* begin aps1_mod changes (GE) */
-    if (FAILURE==ampslice(_a_gzrf2mps1.fixedflag ? (_temp902_a_gzrf2mps1=a_gzrf2mps1,&_temp902_a_gzrf2mps1) : &a_gzrf2mps1, bw_rf2mps1, thickPS_mod, gscale_rf2mps1, TYPDEF))
+    if (FAILURE==ampslice(_a_gzrf2mps1.fixedflag ? (_temp901_a_gzrf2mps1=a_gzrf2mps1,&_temp901_a_gzrf2mps1) : &a_gzrf2mps1, bw_rf2mps1, thickPS_mod, gscale_rf2mps1, TYPDEF))
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "ampslice for gzrf2mps1.");
@@ -40809,7 +41173,7 @@ PS1cveval( FLOAT *opthickPS )
         mpsfov  = _mpsfov.fixedflag ?  ((void)(av_temp_float1), mpsfov) : av_temp_float1;
     }
 
-    if (ampfov(_a_gxwmps1.fixedflag ? (_temp903_a_gxwmps1=a_gxwmps1,&_temp903_a_gxwmps1) : &a_gxwmps1, echo1mps1_filt.bw, mpsfov) == FAILURE)
+    if (ampfov(_a_gxwmps1.fixedflag ? (_temp902_a_gxwmps1=a_gxwmps1,&_temp902_a_gxwmps1) : &a_gxwmps1, echo1mps1_filt.bw, mpsfov) == FAILURE)
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "ampfov for gxwmps1.");
@@ -40817,7 +41181,7 @@ PS1cveval( FLOAT *opthickPS )
     }
 
     /* attack and decay ramps */
-    if (optramp(_pw_gxwmps1a.fixedflag ? (_temp904_pw_gxwmps1a=pw_gxwmps1a,&_temp904_pw_gxwmps1a) : &pw_gxwmps1a, a_gxwmps1, ps1_tx, ps1_xrt,
+    if (optramp(_pw_gxwmps1a.fixedflag ? (_temp903_pw_gxwmps1a=pw_gxwmps1a,&_temp903_pw_gxwmps1a) : &pw_gxwmps1a, a_gxwmps1, ps1_tx, ps1_xrt,
                 TYPDEF)==FAILURE)
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -40833,7 +41197,7 @@ PS1cveval( FLOAT *opthickPS )
     area_gxwmps1 = a_gxwmps1*(pw_gxwmps1);
     area_readrampmps1 = 0.5*pw_gxwmps1a*a_gxwmps1;
 
-    if (amppwgx1(_a_gx1mps1.fixedflag ? (_temp905_a_gx1mps1=a_gx1mps1,&_temp905_a_gx1mps1) : &a_gx1mps1, _pw_gx1mps1.fixedflag ? (_temp906_pw_gx1mps1=pw_gx1mps1,&_temp906_pw_gx1mps1) : &pw_gx1mps1, _pw_gx1mps1a.fixedflag ? (_temp907_pw_gx1mps1a=pw_gx1mps1a,&_temp907_pw_gx1mps1a) : &pw_gx1mps1a ,_pw_gx1mps1d.fixedflag ? (_temp908_pw_gx1mps1d=pw_gx1mps1d,&_temp908_pw_gx1mps1d) : &pw_gx1mps1d, TYPSPIN,
+    if (amppwgx1(_a_gx1mps1.fixedflag ? (_temp904_a_gx1mps1=a_gx1mps1,&_temp904_a_gx1mps1) : &a_gx1mps1, _pw_gx1mps1.fixedflag ? (_temp905_pw_gx1mps1=pw_gx1mps1,&_temp905_pw_gx1mps1) : &pw_gx1mps1, _pw_gx1mps1a.fixedflag ? (_temp906_pw_gx1mps1a=pw_gx1mps1a,&_temp906_pw_gx1mps1a) : &pw_gx1mps1a ,_pw_gx1mps1d.fixedflag ? (_temp907_pw_gx1mps1d=pw_gx1mps1d,&_temp907_pw_gx1mps1d) : &pw_gx1mps1d, TYPSPIN,
                  area_gxwmps1, (float)area_readrampmps1, 
                  (int)1000000, 1.0, MIN_PLATEAU_TIME, ps1_xrt, ps1_tx_xz) == FAILURE)
     {
@@ -40939,14 +41303,14 @@ CFLcveval( FLOAT opthickPS )
     /* MRIhc54366: new lower limit */
     opthickPS = (exist(opslthick) < 5.0) ? 5.0 : exist(opslthick);
 
-    if ( FAILURE==ampslice(_a_gzrf1cfl.fixedflag ? (_temp909_a_gzrf1cfl=a_gzrf1cfl,&_temp909_a_gzrf1cfl) : &a_gzrf1cfl, bw_rf1cfl, opthickPS, gscale_rf1cfl, TYPDEF) ) 
+    if ( FAILURE==ampslice(_a_gzrf1cfl.fixedflag ? (_temp908_a_gzrf1cfl=a_gzrf1cfl,&_temp908_a_gzrf1cfl) : &a_gzrf1cfl, bw_rf1cfl, opthickPS, gscale_rf1cfl, TYPDEF) ) 
     {
         epic_error(use_ermes, "%s failed for gzrf1cfl.",
                    EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "ampslice");
         return FAILURE;
     }
 
-    if ( FAILURE==optramp(_pw_gzrf1cfla.fixedflag ? (_temp910_pw_gzrf1cfla=pw_gzrf1cfla,&_temp910_pw_gzrf1cfla) : &pw_gzrf1cfla, a_gzrf1cfl, cflloggrd.tz, cflloggrd.zrt, TYPDEF) )  
+    if ( FAILURE==optramp(_pw_gzrf1cfla.fixedflag ? (_temp909_pw_gzrf1cfla=pw_gzrf1cfla,&_temp909_pw_gzrf1cfla) : &pw_gzrf1cfla, a_gzrf1cfl, cflloggrd.tz, cflloggrd.zrt, TYPDEF) )  
     {
         epic_error(use_ermes, "%s failed for gzrf1cfl.", 
                    EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "optramp");
@@ -40957,7 +41321,7 @@ CFLcveval( FLOAT opthickPS )
 
     /* Find Params for refocusing pulse */
     area_gz1cfl =  a_gzrf1cfl *0.5* ( pw_gzrf1cfl + pw_gzrf1cfld);
-    if ( FAILURE==amppwgz1(_a_gz1cfl.fixedflag ? (_temp911_a_gz1cfl=a_gz1cfl,&_temp911_a_gz1cfl) : &a_gz1cfl, _pw_gz1cfl.fixedflag ? (_temp912_pw_gz1cfl=pw_gz1cfl,&_temp912_pw_gz1cfl) : &pw_gz1cfl, _pw_gz1cfla.fixedflag ? (_temp913_pw_gz1cfla=pw_gz1cfla,&_temp913_pw_gz1cfla) : &pw_gz1cfla, _pw_gz1cfld.fixedflag ? (_temp914_pw_gz1cfld=pw_gz1cfld,&_temp914_pw_gz1cfld) : &pw_gz1cfld, 
+    if ( FAILURE==amppwgz1(_a_gz1cfl.fixedflag ? (_temp910_a_gz1cfl=a_gz1cfl,&_temp910_a_gz1cfl) : &a_gz1cfl, _pw_gz1cfl.fixedflag ? (_temp911_pw_gz1cfl=pw_gz1cfl,&_temp911_pw_gz1cfl) : &pw_gz1cfl, _pw_gz1cfla.fixedflag ? (_temp912_pw_gz1cfla=pw_gz1cfla,&_temp912_pw_gz1cfla) : &pw_gz1cfla, _pw_gz1cfld.fixedflag ? (_temp913_pw_gz1cfld=pw_gz1cfld,&_temp913_pw_gz1cfld) : &pw_gz1cfld, 
                            area_gz1cfl, (INT)1000000, MIN_PLATEAU_TIME,
                            cflloggrd.zrt, cflloggrd.tz) ) 
     {
@@ -40969,8 +41333,8 @@ CFLcveval( FLOAT opthickPS )
     /* Find Params for killer pulse */
     area_gykcfl  = _area_gykcfl.fixedflag ?  ((void)(amp_killer*pw_killer), area_gykcfl) : amp_killer*pw_killer;
     if ( FAILURE==amppwgrad(area_gykcfl, cflloggrd.ty, 0.0, 0.0, cflloggrd.yrt,
-                            MIN_PLATEAU_TIME, _a_gykcfl.fixedflag ? (_temp915_a_gykcfl=a_gykcfl,&_temp915_a_gykcfl) : &a_gykcfl, _pw_gykcfla.fixedflag ? (_temp916_pw_gykcfla=pw_gykcfla,&_temp916_pw_gykcfla) : &pw_gykcfla,
-                            _pw_gykcfl.fixedflag ? (_temp917_pw_gykcfl=pw_gykcfl,&_temp917_pw_gykcfl) : &pw_gykcfl, _pw_gykcfld.fixedflag ? (_temp918_pw_gykcfld=pw_gykcfld,&_temp918_pw_gykcfld) : &pw_gykcfld) ) 
+                            MIN_PLATEAU_TIME, _a_gykcfl.fixedflag ? (_temp914_a_gykcfl=a_gykcfl,&_temp914_a_gykcfl) : &a_gykcfl, _pw_gykcfla.fixedflag ? (_temp915_pw_gykcfla=pw_gykcfla,&_temp915_pw_gykcfla) : &pw_gykcfla,
+                            _pw_gykcfl.fixedflag ? (_temp916_pw_gykcfl=pw_gykcfl,&_temp916_pw_gykcfl) : &pw_gykcfl, _pw_gykcfld.fixedflag ? (_temp917_pw_gykcfld=pw_gykcfld,&_temp917_pw_gykcfld) : &pw_gykcfld) ) 
     {
         epic_error(use_ermes, "%s failed in cfl.", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "amppwgrad:gykcfl");
@@ -41036,8 +41400,8 @@ RCVNcveval( void )
     /* MRIhc47602/MRIhc47515/GEHmr03545 : Killer gradient before Receiver noise sequence */
 
     if ( FAILURE==amppwgrad( area_gxkrcvn, rcvnloggrd.tx_xyz, 0.0, 0.0, rcvnloggrd.xrt,
-                             MIN_PLATEAU_TIME, _a_gxkrcvn.fixedflag ? (_temp919_a_gxkrcvn=a_gxkrcvn,&_temp919_a_gxkrcvn) : &a_gxkrcvn, _pw_gxkrcvna.fixedflag ? (_temp920_pw_gxkrcvna=pw_gxkrcvna,&_temp920_pw_gxkrcvna) : &pw_gxkrcvna,
-                             _pw_gxkrcvn.fixedflag ? (_temp921_pw_gxkrcvn=pw_gxkrcvn,&_temp921_pw_gxkrcvn) : &pw_gxkrcvn, _pw_gxkrcvnd.fixedflag ? (_temp922_pw_gxkrcvnd=pw_gxkrcvnd,&_temp922_pw_gxkrcvnd) : &pw_gxkrcvnd ) )
+                             MIN_PLATEAU_TIME, _a_gxkrcvn.fixedflag ? (_temp918_a_gxkrcvn=a_gxkrcvn,&_temp918_a_gxkrcvn) : &a_gxkrcvn, _pw_gxkrcvna.fixedflag ? (_temp919_pw_gxkrcvna=pw_gxkrcvna,&_temp919_pw_gxkrcvna) : &pw_gxkrcvna,
+                             _pw_gxkrcvn.fixedflag ? (_temp920_pw_gxkrcvn=pw_gxkrcvn,&_temp920_pw_gxkrcvn) : &pw_gxkrcvn, _pw_gxkrcvnd.fixedflag ? (_temp921_pw_gxkrcvnd=pw_gxkrcvnd,&_temp921_pw_gxkrcvnd) : &pw_gxkrcvnd ) )
     {
         epic_error(use_ermes, "Support routine %s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "amppwgrad:gxkrcvn");
@@ -41045,8 +41409,8 @@ RCVNcveval( void )
     }
 
     if ( FAILURE==amppwgrad( area_gykrcvn, rcvnloggrd.ty_xyz, 0.0, 0.0, rcvnloggrd.yrt,
-                             MIN_PLATEAU_TIME, _a_gykrcvn.fixedflag ? (_temp923_a_gykrcvn=a_gykrcvn,&_temp923_a_gykrcvn) : &a_gykrcvn, _pw_gykrcvna.fixedflag ? (_temp924_pw_gykrcvna=pw_gykrcvna,&_temp924_pw_gykrcvna) : &pw_gykrcvna,
-                             _pw_gykrcvn.fixedflag ? (_temp925_pw_gykrcvn=pw_gykrcvn,&_temp925_pw_gykrcvn) : &pw_gykrcvn, _pw_gykrcvnd.fixedflag ? (_temp926_pw_gykrcvnd=pw_gykrcvnd,&_temp926_pw_gykrcvnd) : &pw_gykrcvnd ) )
+                             MIN_PLATEAU_TIME, _a_gykrcvn.fixedflag ? (_temp922_a_gykrcvn=a_gykrcvn,&_temp922_a_gykrcvn) : &a_gykrcvn, _pw_gykrcvna.fixedflag ? (_temp923_pw_gykrcvna=pw_gykrcvna,&_temp923_pw_gykrcvna) : &pw_gykrcvna,
+                             _pw_gykrcvn.fixedflag ? (_temp924_pw_gykrcvn=pw_gykrcvn,&_temp924_pw_gykrcvn) : &pw_gykrcvn, _pw_gykrcvnd.fixedflag ? (_temp925_pw_gykrcvnd=pw_gykrcvnd,&_temp925_pw_gykrcvnd) : &pw_gykrcvnd ) )
     {
         epic_error(use_ermes, "Support routine %s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "amppwgrad:gykrcvn");
@@ -41054,8 +41418,8 @@ RCVNcveval( void )
     }
 
     if ( FAILURE==amppwgrad( area_gzkrcvn, rcvnloggrd.tz_xyz, 0.0, 0.0, rcvnloggrd.zrt,
-                             MIN_PLATEAU_TIME, _a_gzkrcvn.fixedflag ? (_temp927_a_gzkrcvn=a_gzkrcvn,&_temp927_a_gzkrcvn) : &a_gzkrcvn, _pw_gzkrcvna.fixedflag ? (_temp928_pw_gzkrcvna=pw_gzkrcvna,&_temp928_pw_gzkrcvna) : &pw_gzkrcvna,
-                             _pw_gzkrcvn.fixedflag ? (_temp929_pw_gzkrcvn=pw_gzkrcvn,&_temp929_pw_gzkrcvn) : &pw_gzkrcvn, _pw_gzkrcvnd.fixedflag ? (_temp930_pw_gzkrcvnd=pw_gzkrcvnd,&_temp930_pw_gzkrcvnd) : &pw_gzkrcvnd ) )
+                             MIN_PLATEAU_TIME, _a_gzkrcvn.fixedflag ? (_temp926_a_gzkrcvn=a_gzkrcvn,&_temp926_a_gzkrcvn) : &a_gzkrcvn, _pw_gzkrcvna.fixedflag ? (_temp927_pw_gzkrcvna=pw_gzkrcvna,&_temp927_pw_gzkrcvna) : &pw_gzkrcvna,
+                             _pw_gzkrcvn.fixedflag ? (_temp928_pw_gzkrcvn=pw_gzkrcvn,&_temp928_pw_gzkrcvn) : &pw_gzkrcvn, _pw_gzkrcvnd.fixedflag ? (_temp929_pw_gzkrcvnd=pw_gzkrcvnd,&_temp929_pw_gzkrcvnd) : &pw_gzkrcvnd ) )
     {
         epic_error(use_ermes, "Support routine %s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "amppwgrad:gzkrcvn");
@@ -41247,7 +41611,7 @@ AScveval( void )
     /*   Z Board                                            */
     /*   Slice Selection                                    */
     /********************************************************/
-    if (FAILURE==ampslice(_a_gzrf1as.fixedflag ? (_temp931_a_gzrf1as=a_gzrf1as,&_temp931_a_gzrf1as) : &a_gzrf1as, bw_rf1as, asslthick, gscale_rf1as, TYPDEF))
+    if (FAILURE==ampslice(_a_gzrf1as.fixedflag ? (_temp930_a_gzrf1as=a_gzrf1as,&_temp930_a_gzrf1as) : &a_gzrf1as, bw_rf1as, asslthick, gscale_rf1as, TYPDEF))
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "ampslice for gzrf1as.");
@@ -41255,7 +41619,7 @@ AScveval( void )
         return FAILURE;
     }
 
-    if (FAILURE==optramp(_pw_gzrf1asa.fixedflag ? (_temp932_pw_gzrf1asa=pw_gzrf1asa,&_temp932_pw_gzrf1asa) : &pw_gzrf1asa, a_gzrf1as, asloggrd.tz_xyz, asloggrd.zrt, TYPDEF))
+    if (FAILURE==optramp(_pw_gzrf1asa.fixedflag ? (_temp931_pw_gzrf1asa=pw_gzrf1asa,&_temp931_pw_gzrf1asa) : &pw_gzrf1asa, a_gzrf1as, asloggrd.tz_xyz, asloggrd.zrt, TYPDEF))
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "optramp for gzrf1asa.");
@@ -41271,7 +41635,7 @@ AScveval( void )
     /* availible time for rephaser */
     avail_pwgz1as  = _avail_pwgz1as.fixedflag ?  ((void)(1000000), avail_pwgz1as) : 1000000;
 
-    if ( FAILURE==amppwgz1(_a_gz1as.fixedflag ? (_temp933_a_gz1as=a_gz1as,&_temp933_a_gz1as) : &a_gz1as, _pw_gz1as.fixedflag ? (_temp934_pw_gz1as=pw_gz1as,&_temp934_pw_gz1as) : &pw_gz1as, _pw_gz1asa.fixedflag ? (_temp935_pw_gz1asa=pw_gz1asa,&_temp935_pw_gz1asa) : &pw_gz1asa, _pw_gz1asd.fixedflag ? (_temp936_pw_gz1asd=pw_gz1asd,&_temp936_pw_gz1asd) : &pw_gz1asd,
+    if ( FAILURE==amppwgz1(_a_gz1as.fixedflag ? (_temp932_a_gz1as=a_gz1as,&_temp932_a_gz1as) : &a_gz1as, _pw_gz1as.fixedflag ? (_temp933_pw_gz1as=pw_gz1as,&_temp933_pw_gz1as) : &pw_gz1as, _pw_gz1asa.fixedflag ? (_temp934_pw_gz1asa=pw_gz1asa,&_temp934_pw_gz1asa) : &pw_gz1asa, _pw_gz1asd.fixedflag ? (_temp935_pw_gz1asd=pw_gz1asd,&_temp935_pw_gz1asd) : &pw_gz1asd,
                            area_gz1as, avail_pwgz1as, MIN_PLATEAU_TIME,
                            asloggrd.zrt, asloggrd.tz_xyz) )
     {
@@ -41292,14 +41656,14 @@ AScveval( void )
         return FAILURE;
     }
 
-    if ( FAILURE==ampfov(_a_gxwas.fixedflag ? (_temp937_a_gxwas=a_gxwas,&_temp937_a_gxwas) : &a_gxwas, echo1as_filt.bw, asfov) )
+    if ( FAILURE==ampfov(_a_gxwas.fixedflag ? (_temp936_a_gxwas=a_gxwas,&_temp936_a_gxwas) : &a_gxwas, echo1as_filt.bw, asfov) )
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "ampfov for gxwas.");
         return FAILURE;
     }
 
-    if (FAILURE==optramp(_pw_gxwasa.fixedflag ? (_temp938_pw_gxwasa=pw_gxwasa,&_temp938_pw_gxwasa) : &pw_gxwasa, a_gxwas, asloggrd.tx_xyz, asloggrd.xrt, TYPDEF)) 
+    if (FAILURE==optramp(_pw_gxwasa.fixedflag ? (_temp937_pw_gxwasa=pw_gxwasa,&_temp937_pw_gxwasa) : &pw_gxwasa, a_gxwas, asloggrd.tx_xyz, asloggrd.xrt, TYPDEF)) 
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "optramp for pw_gxwasa.");
@@ -41314,7 +41678,7 @@ AScveval( void )
     area_readrampas  = _area_readrampas.fixedflag ?  ((void)(0.5*pw_gxwasa*a_gxwas), area_readrampas) : 0.5*pw_gxwasa*a_gxwas;
     area_gxwas  = _area_gxwas.fixedflag ?  ((void)(pw_gxwas*a_gxwas), area_gxwas) : pw_gxwas*a_gxwas;
 
-    if ( FAILURE==amppwgx1(_a_gx1as.fixedflag ? (_temp939_a_gx1as=a_gx1as,&_temp939_a_gx1as) : &a_gx1as, _pw_gx1as.fixedflag ? (_temp940_pw_gx1as=pw_gx1as,&_temp940_pw_gx1as) : &pw_gx1as, _pw_gx1asa.fixedflag ? (_temp941_pw_gx1asa=pw_gx1asa,&_temp941_pw_gx1asa) : &pw_gx1asa, _pw_gx1asd.fixedflag ? (_temp942_pw_gx1asd=pw_gx1asd,&_temp942_pw_gx1asd) : &pw_gx1asd,
+    if ( FAILURE==amppwgx1(_a_gx1as.fixedflag ? (_temp938_a_gx1as=a_gx1as,&_temp938_a_gx1as) : &a_gx1as, _pw_gx1as.fixedflag ? (_temp939_pw_gx1as=pw_gx1as,&_temp939_pw_gx1as) : &pw_gx1as, _pw_gx1asa.fixedflag ? (_temp940_pw_gx1asa=pw_gx1asa,&_temp940_pw_gx1asa) : &pw_gx1asa, _pw_gx1asd.fixedflag ? (_temp941_pw_gx1asd=pw_gx1asd,&_temp941_pw_gx1asd) : &pw_gx1asd,
                            (int)TYPGRAD, area_gxwas, area_readrampas,
                            avail_pwgx1as, 1.0, MIN_PLATEAU_TIME,
                            asloggrd.xrt, asloggrd.tx_xyz) )
@@ -41333,7 +41697,7 @@ AScveval( void )
 
     /* Scale the waveform amps for the phase encodes 
      * so each phase instruction jump is an integer step */
-    if ( FAILURE==endview((int)(asyres), _endview_iampas.fixedflag ? (_temp943_endview_iampas=endview_iampas,&_temp943_endview_iampas) : &endview_iampas) )
+    if ( FAILURE==endview((int)(asyres), _endview_iampas.fixedflag ? (_temp942_endview_iampas=endview_iampas,&_temp942_endview_iampas) : &endview_iampas) )
     {
         epic_error(use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "endview:autoshim");
@@ -41342,7 +41706,7 @@ AScveval( void )
   
     endview_scaleas  = _endview_scaleas.fixedflag ?   ((void)((float)max_pg_iamp/(float)endview_iampas), endview_scaleas) : (float)max_pg_iamp/(float)endview_iampas;
 
-    if ( FAILURE==amppwtpe(_a_gy1asa.fixedflag ? (_temp944_a_gy1asa=a_gy1asa,&_temp944_a_gy1asa) : &a_gy1asa, _a_gy1asb.fixedflag ? (_temp945_a_gy1asb=a_gy1asb,&_temp945_a_gy1asb) : &a_gy1asb, _pw_gy1as.fixedflag ? (_temp946_pw_gy1as=pw_gy1as,&_temp946_pw_gy1as) : &pw_gy1as, _pw_gy1asa.fixedflag ? (_temp947_pw_gy1asa=pw_gy1asa,&_temp947_pw_gy1asa) : &pw_gy1asa, _pw_gy1asd.fixedflag ? (_temp948_pw_gy1asd=pw_gy1asd,&_temp948_pw_gy1asd) : &pw_gy1asd,
+    if ( FAILURE==amppwtpe(_a_gy1asa.fixedflag ? (_temp943_a_gy1asa=a_gy1asa,&_temp943_a_gy1asa) : &a_gy1asa, _a_gy1asb.fixedflag ? (_temp944_a_gy1asb=a_gy1asb,&_temp944_a_gy1asb) : &a_gy1asb, _pw_gy1as.fixedflag ? (_temp945_pw_gy1as=pw_gy1as,&_temp945_pw_gy1as) : &pw_gy1as, _pw_gy1asa.fixedflag ? (_temp946_pw_gy1asa=pw_gy1asa,&_temp946_pw_gy1asa) : &pw_gy1asa, _pw_gy1asd.fixedflag ? (_temp947_pw_gy1asd=pw_gy1asd,&_temp947_pw_gy1asd) : &pw_gy1asd,
                            asloggrd.ty_xyz/endview_scaleas,asloggrd.yrt,
                            (0.5 * (FLOAT)(asyres-1))/(asfov * 0.1) * 1.0e6/ GAM) ) 
     {
@@ -41510,53 +41874,53 @@ CFHcveval( FLOAT opthickPS )
 
     /* Initialize some grad structures 
        so we can use the psdsupport routine amppwlcrsh */
-    psd_cfhleftcrush.attack = _pw_gzrf2lcfha.fixedflag ? (_temp949_pw_gzrf2lcfha=pw_gzrf2lcfha,&_temp949_pw_gzrf2lcfha) : &pw_gzrf2lcfha;
-    psd_cfhleftcrush.decay = _pw_gzrf2lcfhd.fixedflag ? (_temp950_pw_gzrf2lcfhd=pw_gzrf2lcfhd,&_temp950_pw_gzrf2lcfhd) : &pw_gzrf2lcfhd;
-    psd_cfhleftcrush.pw = _pw_gzrf2lcfh.fixedflag ? (_temp951_pw_gzrf2lcfh=pw_gzrf2lcfh,&_temp951_pw_gzrf2lcfh) : &pw_gzrf2lcfh;
-    psd_cfhleftcrush.amp = _a_gzrf2lcfh.fixedflag ? (_temp952_a_gzrf2lcfh=a_gzrf2lcfh,&_temp952_a_gzrf2lcfh) : &a_gzrf2lcfh;
+    psd_cfhleftcrush.attack = _pw_gzrf2lcfha.fixedflag ? (_temp948_pw_gzrf2lcfha=pw_gzrf2lcfha,&_temp948_pw_gzrf2lcfha) : &pw_gzrf2lcfha;
+    psd_cfhleftcrush.decay = _pw_gzrf2lcfhd.fixedflag ? (_temp949_pw_gzrf2lcfhd=pw_gzrf2lcfhd,&_temp949_pw_gzrf2lcfhd) : &pw_gzrf2lcfhd;
+    psd_cfhleftcrush.pw = _pw_gzrf2lcfh.fixedflag ? (_temp950_pw_gzrf2lcfh=pw_gzrf2lcfh,&_temp950_pw_gzrf2lcfh) : &pw_gzrf2lcfh;
+    psd_cfhleftcrush.amp = _a_gzrf2lcfh.fixedflag ? (_temp951_a_gzrf2lcfh=a_gzrf2lcfh,&_temp951_a_gzrf2lcfh) : &a_gzrf2lcfh;
  
-    psd_cfhrightcrush.attack = _pw_gzrf2rcfha.fixedflag ? (_temp953_pw_gzrf2rcfha=pw_gzrf2rcfha,&_temp953_pw_gzrf2rcfha) : &pw_gzrf2rcfha;
-    psd_cfhrightcrush.decay = _pw_gzrf2rcfhd.fixedflag ? (_temp954_pw_gzrf2rcfhd=pw_gzrf2rcfhd,&_temp954_pw_gzrf2rcfhd) : &pw_gzrf2rcfhd;
-    psd_cfhrightcrush.pw = _pw_gzrf2rcfh.fixedflag ? (_temp955_pw_gzrf2rcfh=pw_gzrf2rcfh,&_temp955_pw_gzrf2rcfh) : &pw_gzrf2rcfh;
-    psd_cfhrightcrush.amp = _a_gzrf2rcfh.fixedflag ? (_temp956_a_gzrf2rcfh=a_gzrf2rcfh,&_temp956_a_gzrf2rcfh) : &a_gzrf2rcfh;
+    psd_cfhrightcrush.attack = _pw_gzrf2rcfha.fixedflag ? (_temp952_pw_gzrf2rcfha=pw_gzrf2rcfha,&_temp952_pw_gzrf2rcfha) : &pw_gzrf2rcfha;
+    psd_cfhrightcrush.decay = _pw_gzrf2rcfhd.fixedflag ? (_temp953_pw_gzrf2rcfhd=pw_gzrf2rcfhd,&_temp953_pw_gzrf2rcfhd) : &pw_gzrf2rcfhd;
+    psd_cfhrightcrush.pw = _pw_gzrf2rcfh.fixedflag ? (_temp954_pw_gzrf2rcfh=pw_gzrf2rcfh,&_temp954_pw_gzrf2rcfh) : &pw_gzrf2rcfh;
+    psd_cfhrightcrush.amp = _a_gzrf2rcfh.fixedflag ? (_temp955_a_gzrf2rcfh=a_gzrf2rcfh,&_temp955_a_gzrf2rcfh) : &a_gzrf2rcfh;
 
     if( presscfh_ctrl != PRESSCFH_NONE && cfh_steam_flag == PSD_ON )
     {
-        psd_cfhrightcrush.attack = _pw_gzrf3rcfha.fixedflag ? (_temp957_pw_gzrf3rcfha=pw_gzrf3rcfha,&_temp957_pw_gzrf3rcfha) : &pw_gzrf3rcfha;
-        psd_cfhrightcrush.decay = _pw_gzrf3rcfhd.fixedflag ? (_temp958_pw_gzrf3rcfhd=pw_gzrf3rcfhd,&_temp958_pw_gzrf3rcfhd) : &pw_gzrf3rcfhd;
-        psd_cfhrightcrush.pw = _pw_gzrf3rcfh.fixedflag ? (_temp959_pw_gzrf3rcfh=pw_gzrf3rcfh,&_temp959_pw_gzrf3rcfh) : &pw_gzrf3rcfh;
-        psd_cfhrightcrush.amp = _a_gzrf3rcfh.fixedflag ? (_temp960_a_gzrf3rcfh=a_gzrf3rcfh,&_temp960_a_gzrf3rcfh) : &a_gzrf3rcfh;
+        psd_cfhrightcrush.attack = _pw_gzrf3rcfha.fixedflag ? (_temp956_pw_gzrf3rcfha=pw_gzrf3rcfha,&_temp956_pw_gzrf3rcfha) : &pw_gzrf3rcfha;
+        psd_cfhrightcrush.decay = _pw_gzrf3rcfhd.fixedflag ? (_temp957_pw_gzrf3rcfhd=pw_gzrf3rcfhd,&_temp957_pw_gzrf3rcfhd) : &pw_gzrf3rcfhd;
+        psd_cfhrightcrush.pw = _pw_gzrf3rcfh.fixedflag ? (_temp958_pw_gzrf3rcfh=pw_gzrf3rcfh,&_temp958_pw_gzrf3rcfh) : &pw_gzrf3rcfh;
+        psd_cfhrightcrush.amp = _a_gzrf3rcfh.fixedflag ? (_temp959_a_gzrf3rcfh=a_gzrf3rcfh,&_temp959_a_gzrf3rcfh) : &a_gzrf3rcfh;
     }
 
     if( presscfh_ctrl != PRESSCFH_NONE && cfh_steam_flag == PSD_ON )
     {
-        setuprfpulse(RF1_CFH_SLOT, _pw_rf1cfh.fixedflag ? (_temp961_pw_rf1cfh=pw_rf1cfh,&_temp961_pw_rf1cfh) : &pw_rf1cfh, _a_rf1cfh.fixedflag ? (_temp962_a_rf1cfh=a_rf1cfh,&_temp962_a_rf1cfh) : &a_rf1cfh, SAR_ABS_SINC3, SAR_PSINC3,
+        setuprfpulse(RF1_CFH_SLOT, _pw_rf1cfh.fixedflag ? (_temp960_pw_rf1cfh=pw_rf1cfh,&_temp960_pw_rf1cfh) : &pw_rf1cfh, _a_rf1cfh.fixedflag ? (_temp961_a_rf1cfh=a_rf1cfh,&_temp961_a_rf1cfh) : &a_rf1cfh, SAR_ABS_SINC3, SAR_PSINC3,
                      SAR_ASINC3, SAR_DTYCYC_SINC3, SAR_MAXPW_SINC3, 1,
                      MAX_B1_SINC3_90, MAX_INT_B1_SQ_SINC3_90,
-                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf1cfh.fixedflag ? (_temp963_flip_rf1cfh=flip_rf1cfh,&_temp963_flip_rf1cfh) : &flip_rf1cfh, 3200.0,
+                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf1cfh.fixedflag ? (_temp962_flip_rf1cfh=flip_rf1cfh,&_temp962_flip_rf1cfh) : &flip_rf1cfh, 3200.0,
                      3750, PSD_CFH_ON, 0,
-                     0, 0, _res_rf1cfh.fixedflag ? (_temp964_res_rf1cfh=res_rf1cfh,&_temp964_res_rf1cfh) : &res_rf1cfh, 0, _wg_rf1cfh.fixedflag ? (_temp965_wg_rf1cfh=wg_rf1cfh,&_temp965_wg_rf1cfh) : &wg_rf1cfh, 1, rfpulse);
+                     0, 0, _res_rf1cfh.fixedflag ? (_temp963_res_rf1cfh=res_rf1cfh,&_temp963_res_rf1cfh) : &res_rf1cfh, 0, _wg_rf1cfh.fixedflag ? (_temp964_wg_rf1cfh=wg_rf1cfh,&_temp964_wg_rf1cfh) : &wg_rf1cfh, 1, rfpulse);
 
-        setuprfpulse(RF2_CFH_SLOT, _pw_rf2cfh.fixedflag ? (_temp966_pw_rf2cfh=pw_rf2cfh,&_temp966_pw_rf2cfh) : &pw_rf2cfh, _a_rf2cfh.fixedflag ? (_temp967_a_rf2cfh=a_rf2cfh,&_temp967_a_rf2cfh) : &a_rf2cfh, SAR_ABS_SINC3, SAR_PSINC3,
+        setuprfpulse(RF2_CFH_SLOT, _pw_rf2cfh.fixedflag ? (_temp965_pw_rf2cfh=pw_rf2cfh,&_temp965_pw_rf2cfh) : &pw_rf2cfh, _a_rf2cfh.fixedflag ? (_temp966_a_rf2cfh=a_rf2cfh,&_temp966_a_rf2cfh) : &a_rf2cfh, SAR_ABS_SINC3, SAR_PSINC3,
                      SAR_ASINC3, SAR_DTYCYC_SINC3, SAR_MAXPW_SINC3, 1,
                      MAX_B1_SINC3_90, MAX_INT_B1_SQ_SINC3_90,
-                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf2cfh.fixedflag ? (_temp968_flip_rf2cfh=flip_rf2cfh,&_temp968_flip_rf2cfh) : &flip_rf2cfh, 3200.0,
+                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf2cfh.fixedflag ? (_temp967_flip_rf2cfh=flip_rf2cfh,&_temp967_flip_rf2cfh) : &flip_rf2cfh, 3200.0,
                      3750, PSD_CFH_ON, 0,
-                     0, 0, _res_rf2cfh.fixedflag ? (_temp969_res_rf2cfh=res_rf2cfh,&_temp969_res_rf2cfh) : &res_rf2cfh, 0, _wg_rf2cfh.fixedflag ? (_temp970_wg_rf2cfh=wg_rf2cfh,&_temp970_wg_rf2cfh) : &wg_rf2cfh, 1, rfpulse);
+                     0, 0, _res_rf2cfh.fixedflag ? (_temp968_res_rf2cfh=res_rf2cfh,&_temp968_res_rf2cfh) : &res_rf2cfh, 0, _wg_rf2cfh.fixedflag ? (_temp969_wg_rf2cfh=wg_rf2cfh,&_temp969_wg_rf2cfh) : &wg_rf2cfh, 1, rfpulse);
 
-        setuprfpulse(RF3_CFH_SLOT, _pw_rf3cfh.fixedflag ? (_temp971_pw_rf3cfh=pw_rf3cfh,&_temp971_pw_rf3cfh) : &pw_rf3cfh, _a_rf3cfh.fixedflag ? (_temp972_a_rf3cfh=a_rf3cfh,&_temp972_a_rf3cfh) : &a_rf3cfh, SAR_ABS_SINC3, SAR_PSINC3,
+        setuprfpulse(RF3_CFH_SLOT, _pw_rf3cfh.fixedflag ? (_temp970_pw_rf3cfh=pw_rf3cfh,&_temp970_pw_rf3cfh) : &pw_rf3cfh, _a_rf3cfh.fixedflag ? (_temp971_a_rf3cfh=a_rf3cfh,&_temp971_a_rf3cfh) : &a_rf3cfh, SAR_ABS_SINC3, SAR_PSINC3,
                      SAR_ASINC3, SAR_DTYCYC_SINC3, SAR_MAXPW_SINC3, 1,
                      MAX_B1_SINC3_90, MAX_INT_B1_SQ_SINC3_90,
-                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf3cfh.fixedflag ? (_temp973_flip_rf3cfh=flip_rf3cfh,&_temp973_flip_rf3cfh) : &flip_rf3cfh, 3200.0,
+                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf3cfh.fixedflag ? (_temp972_flip_rf3cfh=flip_rf3cfh,&_temp972_flip_rf3cfh) : &flip_rf3cfh, 3200.0,
                      3750, PSD_CFH_ON, 0,
-                     0, 0, _res_rf3cfh.fixedflag ? (_temp974_res_rf3cfh=res_rf3cfh,&_temp974_res_rf3cfh) : &res_rf3cfh, 0, _wg_rf3cfh.fixedflag ? (_temp975_wg_rf3cfh=wg_rf3cfh,&_temp975_wg_rf3cfh) : &wg_rf3cfh, 1, rfpulse);
+                     0, 0, _res_rf3cfh.fixedflag ? (_temp973_res_rf3cfh=res_rf3cfh,&_temp973_res_rf3cfh) : &res_rf3cfh, 0, _wg_rf3cfh.fixedflag ? (_temp974_wg_rf3cfh=wg_rf3cfh,&_temp974_wg_rf3cfh) : &wg_rf3cfh, 1, rfpulse);
 
-        setuprfpulse(RF4_CFH_SLOT, _pw_rf4cfh.fixedflag ? (_temp976_pw_rf4cfh=pw_rf4cfh,&_temp976_pw_rf4cfh) : &pw_rf4cfh, _a_rf4cfh.fixedflag ? (_temp977_a_rf4cfh=a_rf4cfh,&_temp977_a_rf4cfh) : &a_rf4cfh, SAR_ABS_SINC3, SAR_PSINC3,
+        setuprfpulse(RF4_CFH_SLOT, _pw_rf4cfh.fixedflag ? (_temp975_pw_rf4cfh=pw_rf4cfh,&_temp975_pw_rf4cfh) : &pw_rf4cfh, _a_rf4cfh.fixedflag ? (_temp976_a_rf4cfh=a_rf4cfh,&_temp976_a_rf4cfh) : &a_rf4cfh, SAR_ABS_SINC3, SAR_PSINC3,
                      SAR_ASINC3, SAR_DTYCYC_SINC3, SAR_MAXPW_SINC3, 1,
                      MAX_B1_SINC3_90, MAX_INT_B1_SQ_SINC3_90,
-                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf4cfh.fixedflag ? (_temp978_flip_rf4cfh=flip_rf4cfh,&_temp978_flip_rf4cfh) : &flip_rf4cfh, 3200.0,
+                     MAX_RMS_B1_SINC3_90, 90.0, _flip_rf4cfh.fixedflag ? (_temp977_flip_rf4cfh=flip_rf4cfh,&_temp977_flip_rf4cfh) : &flip_rf4cfh, 3200.0,
                      3750, PSD_CFH_ON, 0,
-                     0, 0, _res_rf4cfh.fixedflag ? (_temp979_res_rf4cfh=res_rf4cfh,&_temp979_res_rf4cfh) : &res_rf4cfh, 0, _wg_rf4cfh.fixedflag ? (_temp980_wg_rf4cfh=wg_rf4cfh,&_temp980_wg_rf4cfh) : &wg_rf4cfh, 1, rfpulse);
+                     0, 0, _res_rf4cfh.fixedflag ? (_temp978_res_rf4cfh=res_rf4cfh,&_temp978_res_rf4cfh) : &res_rf4cfh, 0, _wg_rf4cfh.fixedflag ? (_temp979_wg_rf4cfh=wg_rf4cfh,&_temp979_wg_rf4cfh) : &wg_rf4cfh, 1, rfpulse);
 
         a_rf0cfh  = _a_rf0cfh.fixedflag ?  ((void)(1), a_rf0cfh) : 1;
         a_rf1cfh  = _a_rf1cfh.fixedflag ?  ((void)(0.5464), a_rf1cfh) : 0.5464;
@@ -41576,33 +41940,33 @@ CFHcveval( FLOAT opthickPS )
     }
     else
     {
-        setuprfpulse(RF1_CFH_SLOT, _pw_rf1cfh.fixedflag ? (_temp981_pw_rf1cfh=pw_rf1cfh,&_temp981_pw_rf1cfh) : &pw_rf1cfh, _a_rf1cfh.fixedflag ? (_temp982_a_rf1cfh=a_rf1cfh,&_temp982_a_rf1cfh) : &a_rf1cfh, SAR_ABS_SINC1, SAR_PSINC1,
+        setuprfpulse(RF1_CFH_SLOT, _pw_rf1cfh.fixedflag ? (_temp980_pw_rf1cfh=pw_rf1cfh,&_temp980_pw_rf1cfh) : &pw_rf1cfh, _a_rf1cfh.fixedflag ? (_temp981_a_rf1cfh=a_rf1cfh,&_temp981_a_rf1cfh) : &a_rf1cfh, SAR_ABS_SINC1, SAR_PSINC1,
                      SAR_ASINC1, SAR_DTYCYC_SINC1, SAR_MAXPW_SINC1, 1,
                      MAX_B1_SINC1_90, MAX_INT_B1_SQ_SINC1_90,
-                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf1cfh.fixedflag ? (_temp983_flip_rf1cfh=flip_rf1cfh,&_temp983_flip_rf1cfh) : &flip_rf1cfh, 3200.0,
+                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf1cfh.fixedflag ? (_temp982_flip_rf1cfh=flip_rf1cfh,&_temp982_flip_rf1cfh) : &flip_rf1cfh, 3200.0,
                      1250, PSD_CFH_ON, 0,
-                     0, 0, _res_rf1cfh.fixedflag ? (_temp984_res_rf1cfh=res_rf1cfh,&_temp984_res_rf1cfh) : &res_rf1cfh, 0, _wg_rf1cfh.fixedflag ? (_temp985_wg_rf1cfh=wg_rf1cfh,&_temp985_wg_rf1cfh) : &wg_rf1cfh, 1, rfpulse);
+                     0, 0, _res_rf1cfh.fixedflag ? (_temp983_res_rf1cfh=res_rf1cfh,&_temp983_res_rf1cfh) : &res_rf1cfh, 0, _wg_rf1cfh.fixedflag ? (_temp984_wg_rf1cfh=wg_rf1cfh,&_temp984_wg_rf1cfh) : &wg_rf1cfh, 1, rfpulse);
 
-        setuprfpulse(RF2_CFH_SLOT, _pw_rf2cfh.fixedflag ? (_temp986_pw_rf2cfh=pw_rf2cfh,&_temp986_pw_rf2cfh) : &pw_rf2cfh, _a_rf2cfh.fixedflag ? (_temp987_a_rf2cfh=a_rf2cfh,&_temp987_a_rf2cfh) : &a_rf2cfh, SAR_ABS_SINC1, SAR_PSINC1,
+        setuprfpulse(RF2_CFH_SLOT, _pw_rf2cfh.fixedflag ? (_temp985_pw_rf2cfh=pw_rf2cfh,&_temp985_pw_rf2cfh) : &pw_rf2cfh, _a_rf2cfh.fixedflag ? (_temp986_a_rf2cfh=a_rf2cfh,&_temp986_a_rf2cfh) : &a_rf2cfh, SAR_ABS_SINC1, SAR_PSINC1,
                      SAR_ASINC1, SAR_DTYCYC_SINC1, SAR_MAXPW_SINC1, 1,
                      MAX_B1_SINC1_90, MAX_INT_B1_SQ_SINC1_90,
-                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf2cfh.fixedflag ? (_temp988_flip_rf2cfh=flip_rf2cfh,&_temp988_flip_rf2cfh) : &flip_rf2cfh, 3200.0,
+                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf2cfh.fixedflag ? (_temp987_flip_rf2cfh=flip_rf2cfh,&_temp987_flip_rf2cfh) : &flip_rf2cfh, 3200.0,
                      1250, PSD_CFH_ON, 0,
-                     0, 0, _res_rf2cfh.fixedflag ? (_temp989_res_rf2cfh=res_rf2cfh,&_temp989_res_rf2cfh) : &res_rf2cfh, 0, _wg_rf2cfh.fixedflag ? (_temp990_wg_rf2cfh=wg_rf2cfh,&_temp990_wg_rf2cfh) : &wg_rf2cfh, 1, rfpulse);
+                     0, 0, _res_rf2cfh.fixedflag ? (_temp988_res_rf2cfh=res_rf2cfh,&_temp988_res_rf2cfh) : &res_rf2cfh, 0, _wg_rf2cfh.fixedflag ? (_temp989_wg_rf2cfh=wg_rf2cfh,&_temp989_wg_rf2cfh) : &wg_rf2cfh, 1, rfpulse);
 
-        setuprfpulse(RF3_CFH_SLOT, _pw_rf3cfh.fixedflag ? (_temp991_pw_rf3cfh=pw_rf3cfh,&_temp991_pw_rf3cfh) : &pw_rf3cfh, _a_rf3cfh.fixedflag ? (_temp992_a_rf3cfh=a_rf3cfh,&_temp992_a_rf3cfh) : &a_rf3cfh, SAR_ABS_SINC1, SAR_PSINC1,
+        setuprfpulse(RF3_CFH_SLOT, _pw_rf3cfh.fixedflag ? (_temp990_pw_rf3cfh=pw_rf3cfh,&_temp990_pw_rf3cfh) : &pw_rf3cfh, _a_rf3cfh.fixedflag ? (_temp991_a_rf3cfh=a_rf3cfh,&_temp991_a_rf3cfh) : &a_rf3cfh, SAR_ABS_SINC1, SAR_PSINC1,
                      SAR_ASINC1, SAR_DTYCYC_SINC1, SAR_MAXPW_SINC1, 1,
                      MAX_B1_SINC1_90, MAX_INT_B1_SQ_SINC1_90,
-                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf3cfh.fixedflag ? (_temp993_flip_rf3cfh=flip_rf3cfh,&_temp993_flip_rf3cfh) : &flip_rf3cfh, 3200.0,
+                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf3cfh.fixedflag ? (_temp992_flip_rf3cfh=flip_rf3cfh,&_temp992_flip_rf3cfh) : &flip_rf3cfh, 3200.0,
                      1250, PSD_CFH_ON, 0,
-                     0, 0, _res_rf3cfh.fixedflag ? (_temp994_res_rf3cfh=res_rf3cfh,&_temp994_res_rf3cfh) : &res_rf3cfh, 0, _wg_rf3cfh.fixedflag ? (_temp995_wg_rf3cfh=wg_rf3cfh,&_temp995_wg_rf3cfh) : &wg_rf3cfh, 1, rfpulse);
+                     0, 0, _res_rf3cfh.fixedflag ? (_temp993_res_rf3cfh=res_rf3cfh,&_temp993_res_rf3cfh) : &res_rf3cfh, 0, _wg_rf3cfh.fixedflag ? (_temp994_wg_rf3cfh=wg_rf3cfh,&_temp994_wg_rf3cfh) : &wg_rf3cfh, 1, rfpulse);
 
-        setuprfpulse(RF4_CFH_SLOT, _pw_rf4cfh.fixedflag ? (_temp996_pw_rf4cfh=pw_rf4cfh,&_temp996_pw_rf4cfh) : &pw_rf4cfh, _a_rf4cfh.fixedflag ? (_temp997_a_rf4cfh=a_rf4cfh,&_temp997_a_rf4cfh) : &a_rf4cfh, SAR_ABS_SINC1, SAR_PSINC1,
+        setuprfpulse(RF4_CFH_SLOT, _pw_rf4cfh.fixedflag ? (_temp995_pw_rf4cfh=pw_rf4cfh,&_temp995_pw_rf4cfh) : &pw_rf4cfh, _a_rf4cfh.fixedflag ? (_temp996_a_rf4cfh=a_rf4cfh,&_temp996_a_rf4cfh) : &a_rf4cfh, SAR_ABS_SINC1, SAR_PSINC1,
                      SAR_ASINC1, SAR_DTYCYC_SINC1, SAR_MAXPW_SINC1, 1,
                      MAX_B1_SINC1_90, MAX_INT_B1_SQ_SINC1_90,
-                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf4cfh.fixedflag ? (_temp998_flip_rf4cfh=flip_rf4cfh,&_temp998_flip_rf4cfh) : &flip_rf4cfh, 3200.0,
+                     MAX_RMS_B1_SINC1_90, 90.0, _flip_rf4cfh.fixedflag ? (_temp997_flip_rf4cfh=flip_rf4cfh,&_temp997_flip_rf4cfh) : &flip_rf4cfh, 3200.0,
                      1250, PSD_CFH_ON, 0,
-                     0, 0, _res_rf4cfh.fixedflag ? (_temp999_res_rf4cfh=res_rf4cfh,&_temp999_res_rf4cfh) : &res_rf4cfh, 0, _wg_rf4cfh.fixedflag ? (_temp1000_wg_rf4cfh=wg_rf4cfh,&_temp1000_wg_rf4cfh) : &wg_rf4cfh, 1, rfpulse);
+                     0, 0, _res_rf4cfh.fixedflag ? (_temp998_res_rf4cfh=res_rf4cfh,&_temp998_res_rf4cfh) : &res_rf4cfh, 0, _wg_rf4cfh.fixedflag ? (_temp999_wg_rf4cfh=wg_rf4cfh,&_temp999_wg_rf4cfh) : &wg_rf4cfh, 1, rfpulse);
 
         a_rf0cfh  = _a_rf0cfh.fixedflag ?  ((void)(0.61), a_rf0cfh) : 0.61;
         a_rf1cfh  = _a_rf1cfh.fixedflag ?  ((void)(0.5), a_rf1cfh) : 0.5;
@@ -41891,7 +42255,7 @@ CFHcveval( FLOAT opthickPS )
 
         /* Y Killer CVs */ /* YMSmr09211  04/26/2006 YI */
         if(amppwgrad(cfhir_killer_area, cfhloggrd.ty_yz, 0.0, 0.0, cfhloggrd.yrt,
-                     MIN_PLATEAU_TIME, _a_gyrf0kcfh.fixedflag ? (_temp1001_a_gyrf0kcfh=a_gyrf0kcfh,&_temp1001_a_gyrf0kcfh) : &a_gyrf0kcfh, _pw_gyrf0kcfha.fixedflag ? (_temp1002_pw_gyrf0kcfha=pw_gyrf0kcfha,&_temp1002_pw_gyrf0kcfha) : &pw_gyrf0kcfha, _pw_gyrf0kcfh.fixedflag ? (_temp1003_pw_gyrf0kcfh=pw_gyrf0kcfh,&_temp1003_pw_gyrf0kcfh) : &pw_gyrf0kcfh, _pw_gyrf0kcfhd.fixedflag ? (_temp1004_pw_gyrf0kcfhd=pw_gyrf0kcfhd,&_temp1004_pw_gyrf0kcfhd) : &pw_gyrf0kcfhd) == FAILURE) 
+                     MIN_PLATEAU_TIME, _a_gyrf0kcfh.fixedflag ? (_temp1000_a_gyrf0kcfh=a_gyrf0kcfh,&_temp1000_a_gyrf0kcfh) : &a_gyrf0kcfh, _pw_gyrf0kcfha.fixedflag ? (_temp1001_pw_gyrf0kcfha=pw_gyrf0kcfha,&_temp1001_pw_gyrf0kcfha) : &pw_gyrf0kcfha, _pw_gyrf0kcfh.fixedflag ? (_temp1002_pw_gyrf0kcfh=pw_gyrf0kcfh,&_temp1002_pw_gyrf0kcfh) : &pw_gyrf0kcfh, _pw_gyrf0kcfhd.fixedflag ? (_temp1003_pw_gyrf0kcfhd=pw_gyrf0kcfhd,&_temp1003_pw_gyrf0kcfhd) : &pw_gyrf0kcfhd) == FAILURE) 
         {
             epic_error(use_ermes, "%s failed in PScveval.", EM_PSD_SUPPORT_FAILURE,
                        EE_ARGS(1), STRING_ARG, "amppwgrad:gyrf0kcfh"); 
@@ -41902,7 +42266,7 @@ CFHcveval( FLOAT opthickPS )
         rfpulse[RF0_CFH_SLOT].activity = PSD_CFH_ON;
         bw_rf0cfh = (LONG)(5.12*cyc_rf0cfh/((FLOAT)pw_rf0cfh/(FLOAT)1000000)); /* adiabatic pulse */
  
-        if(ampslice(_a_gzrf0cfh.fixedflag ? (_temp1005_a_gzrf0cfh=a_gzrf0cfh,&_temp1005_a_gzrf0cfh) : &a_gzrf0cfh, bw_rf0cfh, ((presscfh_ctrl == PRESSCFH_NONE) ? opthickPS : presscfh_ir_slthick),
+        if(ampslice(_a_gzrf0cfh.fixedflag ? (_temp1004_a_gzrf0cfh=a_gzrf0cfh,&_temp1004_a_gzrf0cfh) : &a_gzrf0cfh, bw_rf0cfh, ((presscfh_ctrl == PRESSCFH_NONE) ? opthickPS : presscfh_ir_slthick),
                     gscale_rf0cfh, TYPDEF) == FAILURE) 
         {
             epic_error(use_ermes, "%s failed for gzrf0cfh.",EM_PSD_SUPPORT_FAILURE, 
@@ -41915,7 +42279,7 @@ CFHcveval( FLOAT opthickPS )
             a_gzrf0cfh  = _a_gzrf0cfh.fixedflag ?  ((void)(0), a_gzrf0cfh) : 0;
         }
         /* YMSmr09211  04/26/2006 YI */
-        if(optramp(_pw_gzrf0cfha.fixedflag ? (_temp1006_pw_gzrf0cfha=pw_gzrf0cfha,&_temp1006_pw_gzrf0cfha) : &pw_gzrf0cfha,a_gzrf0cfh, cfhloggrd.tz, cfhloggrd.zrt, TYPDEF)==FAILURE) 
+        if(optramp(_pw_gzrf0cfha.fixedflag ? (_temp1005_pw_gzrf0cfha=pw_gzrf0cfha,&_temp1005_pw_gzrf0cfha) : &pw_gzrf0cfha,a_gzrf0cfh, cfhloggrd.tz, cfhloggrd.zrt, TYPDEF)==FAILURE) 
         {
             epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
                        STRING_ARG, "optramp for gzrf0cfha.");
@@ -41932,7 +42296,7 @@ CFHcveval( FLOAT opthickPS )
     pw_gzrf1cfh  = _pw_gzrf1cfh.fixedflag ?  ((void)(pw_rf1cfh), pw_gzrf1cfh) : pw_rf1cfh;
     bw_rf1cfh = (LONG)(rfpulse[RF1_CFH_SLOT].nom_bw*rfpulse[RF1_CFH_SLOT].nom_pw/(float)pw_rf1cfh);
        
-    if (ampslice(_a_gzrf1cfh.fixedflag ? (_temp1007_a_gzrf1cfh=a_gzrf1cfh,&_temp1007_a_gzrf1cfh) : &a_gzrf1cfh, bw_rf1cfh, ( (presscfh_ctrl == PRESSCFH_NONE) ? opthickPS : presscfh_slthick),
+    if (ampslice(_a_gzrf1cfh.fixedflag ? (_temp1006_a_gzrf1cfh=a_gzrf1cfh,&_temp1006_a_gzrf1cfh) : &a_gzrf1cfh, bw_rf1cfh, ( (presscfh_ctrl == PRESSCFH_NONE) ? opthickPS : presscfh_slthick),
                  gscale_rf1cfh, TYPDEF) == FAILURE) 
     {
         epic_error(use_ermes, "%s failed for gzrf1cfh.", EM_PSD_SUPPORT_FAILURE,
@@ -41941,7 +42305,7 @@ CFHcveval( FLOAT opthickPS )
     }
 
     /* YMSmr09211  04/26/2006 YI */
-    if (optramp(_pw_gzrf1cfha.fixedflag ? (_temp1008_pw_gzrf1cfha=pw_gzrf1cfha,&_temp1008_pw_gzrf1cfha) : &pw_gzrf1cfha, a_gzrf1cfh, cfhloggrd.tz, cfhloggrd.zrt, TYPDEF) == FAILURE) 
+    if (optramp(_pw_gzrf1cfha.fixedflag ? (_temp1007_pw_gzrf1cfha=pw_gzrf1cfha,&_temp1007_pw_gzrf1cfha) : &pw_gzrf1cfha, a_gzrf1cfh, cfhloggrd.tz, cfhloggrd.zrt, TYPDEF) == FAILURE) 
     {
         epic_error(use_ermes, "%s failed for gzrf1cfh.", 
                    EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "optramp");
@@ -41982,7 +42346,7 @@ CFHcveval( FLOAT opthickPS )
     {
         /* X FOV Selective */ /* YMSmr09211  04/26/2006 YI */
         a_gxrf2cfh  = _a_gxrf2cfh.fixedflag ?  ((void)(4*cyc_rf2cfh/(GAM*(float)pw_rf2cfh/(float)(1000000)*presscfh_fov/10.0)), a_gxrf2cfh) : 4*cyc_rf2cfh/(GAM*(float)pw_rf2cfh/(float)(1000000)*presscfh_fov/10.0);
-        if (optramp(_pw_gxrf2cfha.fixedflag ? (_temp1009_pw_gxrf2cfha=pw_gxrf2cfha,&_temp1009_pw_gxrf2cfha) : &pw_gxrf2cfha, a_gxrf2cfh, cfhloggrd.tx, cfhloggrd.xrt, TYPDEF) == FAILURE) 
+        if (optramp(_pw_gxrf2cfha.fixedflag ? (_temp1008_pw_gxrf2cfha=pw_gxrf2cfha,&_temp1008_pw_gxrf2cfha) : &pw_gxrf2cfha, a_gxrf2cfh, cfhloggrd.tx, cfhloggrd.xrt, TYPDEF) == FAILURE) 
         {
             epic_error(use_ermes, "%s failed for gxrf2cfh.", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
                        STRING_ARG, "optramp for gxrf2cfh"); 
@@ -41994,7 +42358,7 @@ CFHcveval( FLOAT opthickPS )
 
         /* Y FOV Selective */ /* YMSmr09211  04/26/2006 YI */
         a_gyrf3cfh  = _a_gyrf3cfh.fixedflag ?  ((void)(4*cyc_rf3cfh/(GAM*(float)pw_rf3cfh/(float)(1000000)*presscfh_pfov/10.0)), a_gyrf3cfh) : 4*cyc_rf3cfh/(GAM*(float)pw_rf3cfh/(float)(1000000)*presscfh_pfov/10.0);
-        if (optramp(_pw_gyrf3cfha.fixedflag ? (_temp1010_pw_gyrf3cfha=pw_gyrf3cfha,&_temp1010_pw_gyrf3cfha) : &pw_gyrf3cfha, a_gyrf3cfh, cfhloggrd.ty, cfhloggrd.yrt, TYPDEF) == FAILURE) 
+        if (optramp(_pw_gyrf3cfha.fixedflag ? (_temp1009_pw_gyrf3cfha=pw_gyrf3cfha,&_temp1009_pw_gyrf3cfha) : &pw_gyrf3cfha, a_gyrf3cfh, cfhloggrd.ty, cfhloggrd.yrt, TYPDEF) == FAILURE) 
         {
             epic_error(use_ermes, "%s failed for gyrf3cfh.", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
                        STRING_ARG, "optramp for gyrf3cfh");
@@ -42008,7 +42372,7 @@ CFHcveval( FLOAT opthickPS )
         {
             /* Z SLICE Selective */
             a_gzrf4cfh  = _a_gzrf4cfh.fixedflag ?  ((void)(4*cyc_rf4cfh/(GAM*(float)pw_rf4cfh/(float)(1000000)*presscfh_slice/10.0)), a_gzrf4cfh) : 4*cyc_rf4cfh/(GAM*(float)pw_rf4cfh/(float)(1000000)*presscfh_slice/10.0);
-            if (optramp(_pw_gzrf4cfha.fixedflag ? (_temp1011_pw_gzrf4cfha=pw_gzrf4cfha,&_temp1011_pw_gzrf4cfha) : &pw_gzrf4cfha, a_gzrf4cfh, loggrd.tz, loggrd.zrt, TYPDEF) == FAILURE) 
+            if (optramp(_pw_gzrf4cfha.fixedflag ? (_temp1010_pw_gzrf4cfha=pw_gzrf4cfha,&_temp1010_pw_gzrf4cfha) : &pw_gzrf4cfha, a_gzrf4cfh, loggrd.tz, loggrd.zrt, TYPDEF) == FAILURE) 
             {
                 epic_error(use_ermes, "%s failed for gzrf4cfh.", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
                            STRING_ARG, "optramp for gzrf4cfh");
@@ -42022,8 +42386,8 @@ CFHcveval( FLOAT opthickPS )
         {
             /* Z CRUSHER CVs */ /* YMSmr09211  04/26/2006 YI */
             if (amppwgrad(cfh_crusher_area, target_cfh_crusher, 0.0, 0.0, cfhloggrd.zrt,
-                          MIN_PLATEAU_TIME, _a_gzrf2rcfh.fixedflag ? (_temp1012_a_gzrf2rcfh=a_gzrf2rcfh,&_temp1012_a_gzrf2rcfh) : &a_gzrf2rcfh, _pw_gzrf2rcfha.fixedflag ? (_temp1013_pw_gzrf2rcfha=pw_gzrf2rcfha,&_temp1013_pw_gzrf2rcfha) : &pw_gzrf2rcfha,
-                          _pw_gzrf2rcfh.fixedflag ? (_temp1014_pw_gzrf2rcfh=pw_gzrf2rcfh,&_temp1014_pw_gzrf2rcfh) : &pw_gzrf2rcfh, _pw_gzrf2rcfhd.fixedflag ? (_temp1015_pw_gzrf2rcfhd=pw_gzrf2rcfhd,&_temp1015_pw_gzrf2rcfhd) : &pw_gzrf2rcfhd) == FAILURE) 
+                          MIN_PLATEAU_TIME, _a_gzrf2rcfh.fixedflag ? (_temp1011_a_gzrf2rcfh=a_gzrf2rcfh,&_temp1011_a_gzrf2rcfh) : &a_gzrf2rcfh, _pw_gzrf2rcfha.fixedflag ? (_temp1012_pw_gzrf2rcfha=pw_gzrf2rcfha,&_temp1012_pw_gzrf2rcfha) : &pw_gzrf2rcfha,
+                          _pw_gzrf2rcfh.fixedflag ? (_temp1013_pw_gzrf2rcfh=pw_gzrf2rcfh,&_temp1013_pw_gzrf2rcfh) : &pw_gzrf2rcfh, _pw_gzrf2rcfhd.fixedflag ? (_temp1014_pw_gzrf2rcfhd=pw_gzrf2rcfhd,&_temp1014_pw_gzrf2rcfhd) : &pw_gzrf2rcfhd) == FAILURE) 
             {
                 epic_error(use_ermes, "%s failed in PScveval.",
                            EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
@@ -42036,8 +42400,8 @@ CFHcveval( FLOAT opthickPS )
         else
         {
             if (amppwgrad(cfh_crusher_area, target_cfh_crusher2, 0.0, 0.0, cfhloggrd.zrt,
-                          MIN_PLATEAU_TIME, _a_gzrf3rcfh.fixedflag ? (_temp1016_a_gzrf3rcfh=a_gzrf3rcfh,&_temp1016_a_gzrf3rcfh) : &a_gzrf3rcfh, _pw_gzrf3rcfha.fixedflag ? (_temp1017_pw_gzrf3rcfha=pw_gzrf3rcfha,&_temp1017_pw_gzrf3rcfha) : &pw_gzrf3rcfha,
-                          _pw_gzrf3rcfh.fixedflag ? (_temp1018_pw_gzrf3rcfh=pw_gzrf3rcfh,&_temp1018_pw_gzrf3rcfh) : &pw_gzrf3rcfh, _pw_gzrf3rcfhd.fixedflag ? (_temp1019_pw_gzrf3rcfhd=pw_gzrf3rcfhd,&_temp1019_pw_gzrf3rcfhd) : &pw_gzrf3rcfhd) == FAILURE) 
+                          MIN_PLATEAU_TIME, _a_gzrf3rcfh.fixedflag ? (_temp1015_a_gzrf3rcfh=a_gzrf3rcfh,&_temp1015_a_gzrf3rcfh) : &a_gzrf3rcfh, _pw_gzrf3rcfha.fixedflag ? (_temp1016_pw_gzrf3rcfha=pw_gzrf3rcfha,&_temp1016_pw_gzrf3rcfha) : &pw_gzrf3rcfha,
+                          _pw_gzrf3rcfh.fixedflag ? (_temp1017_pw_gzrf3rcfh=pw_gzrf3rcfh,&_temp1017_pw_gzrf3rcfh) : &pw_gzrf3rcfh, _pw_gzrf3rcfhd.fixedflag ? (_temp1018_pw_gzrf3rcfhd=pw_gzrf3rcfhd,&_temp1018_pw_gzrf3rcfhd) : &pw_gzrf3rcfhd) == FAILURE) 
             {
                 epic_error(use_ermes, "%s failed in PScveval.",
                            EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
@@ -42052,8 +42416,8 @@ CFHcveval( FLOAT opthickPS )
         {
             /* Z CRUSHER CVs */ /* YMSmr09211  04/26/2006 YI */
             if (amppwgrad(cfh_crusher_area, target_cfh_crusher2, 0.0, 0.0, cfhloggrd.zrt,
-                          MIN_PLATEAU_TIME, _a_gzrf3rcfh.fixedflag ? (_temp1020_a_gzrf3rcfh=a_gzrf3rcfh,&_temp1020_a_gzrf3rcfh) : &a_gzrf3rcfh, _pw_gzrf3rcfha.fixedflag ? (_temp1021_pw_gzrf3rcfha=pw_gzrf3rcfha,&_temp1021_pw_gzrf3rcfha) : &pw_gzrf3rcfha,
-                          _pw_gzrf3rcfh.fixedflag ? (_temp1022_pw_gzrf3rcfh=pw_gzrf3rcfh,&_temp1022_pw_gzrf3rcfh) : &pw_gzrf3rcfh, _pw_gzrf3rcfhd.fixedflag ? (_temp1023_pw_gzrf3rcfhd=pw_gzrf3rcfhd,&_temp1023_pw_gzrf3rcfhd) : &pw_gzrf3rcfhd) == FAILURE) 
+                          MIN_PLATEAU_TIME, _a_gzrf3rcfh.fixedflag ? (_temp1019_a_gzrf3rcfh=a_gzrf3rcfh,&_temp1019_a_gzrf3rcfh) : &a_gzrf3rcfh, _pw_gzrf3rcfha.fixedflag ? (_temp1020_pw_gzrf3rcfha=pw_gzrf3rcfha,&_temp1020_pw_gzrf3rcfha) : &pw_gzrf3rcfha,
+                          _pw_gzrf3rcfh.fixedflag ? (_temp1021_pw_gzrf3rcfh=pw_gzrf3rcfh,&_temp1021_pw_gzrf3rcfh) : &pw_gzrf3rcfh, _pw_gzrf3rcfhd.fixedflag ? (_temp1022_pw_gzrf3rcfhd=pw_gzrf3rcfhd,&_temp1022_pw_gzrf3rcfhd) : &pw_gzrf3rcfhd) == FAILURE) 
             {
                 epic_error(use_ermes, "%s failed in PScveval.", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
                            STRING_ARG, "amppwgrad:gzrf3rcfh"); 
@@ -42062,8 +42426,8 @@ CFHcveval( FLOAT opthickPS )
 
             /* Z CRUSHER CVs */ /* YMSmr09211  04/26/2006 YI */
             if (amppwgrad(cfh_crusher_area, target_cfh_crusher2, 0.0, 0.0, cfhloggrd.zrt,
-                          MIN_PLATEAU_TIME, _a_gzrf3lcfh.fixedflag ? (_temp1024_a_gzrf3lcfh=a_gzrf3lcfh,&_temp1024_a_gzrf3lcfh) : &a_gzrf3lcfh, _pw_gzrf3lcfha.fixedflag ? (_temp1025_pw_gzrf3lcfha=pw_gzrf3lcfha,&_temp1025_pw_gzrf3lcfha) : &pw_gzrf3lcfha,
-                          _pw_gzrf3lcfh.fixedflag ? (_temp1026_pw_gzrf3lcfh=pw_gzrf3lcfh,&_temp1026_pw_gzrf3lcfh) : &pw_gzrf3lcfh, _pw_gzrf3lcfhd.fixedflag ? (_temp1027_pw_gzrf3lcfhd=pw_gzrf3lcfhd,&_temp1027_pw_gzrf3lcfhd) : &pw_gzrf3lcfhd) == FAILURE) 
+                          MIN_PLATEAU_TIME, _a_gzrf3lcfh.fixedflag ? (_temp1023_a_gzrf3lcfh=a_gzrf3lcfh,&_temp1023_a_gzrf3lcfh) : &a_gzrf3lcfh, _pw_gzrf3lcfha.fixedflag ? (_temp1024_pw_gzrf3lcfha=pw_gzrf3lcfha,&_temp1024_pw_gzrf3lcfha) : &pw_gzrf3lcfha,
+                          _pw_gzrf3lcfh.fixedflag ? (_temp1025_pw_gzrf3lcfh=pw_gzrf3lcfh,&_temp1025_pw_gzrf3lcfh) : &pw_gzrf3lcfh, _pw_gzrf3lcfhd.fixedflag ? (_temp1026_pw_gzrf3lcfhd=pw_gzrf3lcfhd,&_temp1026_pw_gzrf3lcfhd) : &pw_gzrf3lcfhd) == FAILURE) 
             {
                 epic_error(use_ermes, "%s failed in PScveval.", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
                            STRING_ARG, "amppwgrad:gzrf3lcfh"); 
@@ -42074,8 +42438,8 @@ CFHcveval( FLOAT opthickPS )
             {
                 /* Z CRUSHER CVs */ /* YMSmr09211  04/26/2006 YI */
                 if (amppwgrad(cfh_crusher_area, target_cfh_crusher2, 0.0, 0.0, cfhloggrd.zrt,
-                              MIN_PLATEAU_TIME, _a_gzrf4rcfh.fixedflag ? (_temp1028_a_gzrf4rcfh=a_gzrf4rcfh,&_temp1028_a_gzrf4rcfh) : &a_gzrf4rcfh, _pw_gzrf4rcfha.fixedflag ? (_temp1029_pw_gzrf4rcfha=pw_gzrf4rcfha,&_temp1029_pw_gzrf4rcfha) : &pw_gzrf4rcfha,
-                              _pw_gzrf4rcfh.fixedflag ? (_temp1030_pw_gzrf4rcfh=pw_gzrf4rcfh,&_temp1030_pw_gzrf4rcfh) : &pw_gzrf4rcfh, _pw_gzrf4rcfhd.fixedflag ? (_temp1031_pw_gzrf4rcfhd=pw_gzrf4rcfhd,&_temp1031_pw_gzrf4rcfhd) : &pw_gzrf4rcfhd) == FAILURE) 
+                              MIN_PLATEAU_TIME, _a_gzrf4rcfh.fixedflag ? (_temp1027_a_gzrf4rcfh=a_gzrf4rcfh,&_temp1027_a_gzrf4rcfh) : &a_gzrf4rcfh, _pw_gzrf4rcfha.fixedflag ? (_temp1028_pw_gzrf4rcfha=pw_gzrf4rcfha,&_temp1028_pw_gzrf4rcfha) : &pw_gzrf4rcfha,
+                              _pw_gzrf4rcfh.fixedflag ? (_temp1029_pw_gzrf4rcfh=pw_gzrf4rcfh,&_temp1029_pw_gzrf4rcfh) : &pw_gzrf4rcfh, _pw_gzrf4rcfhd.fixedflag ? (_temp1030_pw_gzrf4rcfhd=pw_gzrf4rcfhd,&_temp1030_pw_gzrf4rcfhd) : &pw_gzrf4rcfhd) == FAILURE) 
                 {
                     epic_error(use_ermes, "%s failed in PScveval.", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
                               STRING_ARG, "amppwgrad:gzrf4rcfh"); 
@@ -42084,8 +42448,8 @@ CFHcveval( FLOAT opthickPS )
 
                 /* Z CRUSHER CVs */ /* YMSmr09211  04/26/2006 YI */
                 if (amppwgrad(cfh_crusher_area, target_cfh_crusher2, 0.0, 0.0, cfhloggrd.zrt,
-                              MIN_PLATEAU_TIME, _a_gzrf4lcfh.fixedflag ? (_temp1032_a_gzrf4lcfh=a_gzrf4lcfh,&_temp1032_a_gzrf4lcfh) : &a_gzrf4lcfh, _pw_gzrf4lcfha.fixedflag ? (_temp1033_pw_gzrf4lcfha=pw_gzrf4lcfha,&_temp1033_pw_gzrf4lcfha) : &pw_gzrf4lcfha,
-                              _pw_gzrf4lcfh.fixedflag ? (_temp1034_pw_gzrf4lcfh=pw_gzrf4lcfh,&_temp1034_pw_gzrf4lcfh) : &pw_gzrf4lcfh, _pw_gzrf4lcfhd.fixedflag ? (_temp1035_pw_gzrf4lcfhd=pw_gzrf4lcfhd,&_temp1035_pw_gzrf4lcfhd) : &pw_gzrf4lcfhd) == FAILURE) 
+                              MIN_PLATEAU_TIME, _a_gzrf4lcfh.fixedflag ? (_temp1031_a_gzrf4lcfh=a_gzrf4lcfh,&_temp1031_a_gzrf4lcfh) : &a_gzrf4lcfh, _pw_gzrf4lcfha.fixedflag ? (_temp1032_pw_gzrf4lcfha=pw_gzrf4lcfha,&_temp1032_pw_gzrf4lcfha) : &pw_gzrf4lcfha,
+                              _pw_gzrf4lcfh.fixedflag ? (_temp1033_pw_gzrf4lcfh=pw_gzrf4lcfh,&_temp1033_pw_gzrf4lcfh) : &pw_gzrf4lcfh, _pw_gzrf4lcfhd.fixedflag ? (_temp1034_pw_gzrf4lcfhd=pw_gzrf4lcfhd,&_temp1034_pw_gzrf4lcfhd) : &pw_gzrf4lcfhd) == FAILURE) 
                 {
                     epic_error(use_ermes, "%s failed in PScveval.", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
                                STRING_ARG, "amppwgrad:gzrf4lcfh"); 
@@ -42096,8 +42460,8 @@ CFHcveval( FLOAT opthickPS )
         else
         {
             if (amppwgrad(cfh_crusher_area, target_cfh_crusher, 0.0, 0.0, cfhloggrd.zrt,
-                          MIN_PLATEAU_TIME, _a_gzrf2rcfh.fixedflag ? (_temp1036_a_gzrf2rcfh=a_gzrf2rcfh,&_temp1036_a_gzrf2rcfh) : &a_gzrf2rcfh, _pw_gzrf2rcfha.fixedflag ? (_temp1037_pw_gzrf2rcfha=pw_gzrf2rcfha,&_temp1037_pw_gzrf2rcfha) : &pw_gzrf2rcfha,
-                          _pw_gzrf2rcfh.fixedflag ? (_temp1038_pw_gzrf2rcfh=pw_gzrf2rcfh,&_temp1038_pw_gzrf2rcfh) : &pw_gzrf2rcfh, _pw_gzrf2rcfhd.fixedflag ? (_temp1039_pw_gzrf2rcfhd=pw_gzrf2rcfhd,&_temp1039_pw_gzrf2rcfhd) : &pw_gzrf2rcfhd) == FAILURE) 
+                          MIN_PLATEAU_TIME, _a_gzrf2rcfh.fixedflag ? (_temp1035_a_gzrf2rcfh=a_gzrf2rcfh,&_temp1035_a_gzrf2rcfh) : &a_gzrf2rcfh, _pw_gzrf2rcfha.fixedflag ? (_temp1036_pw_gzrf2rcfha=pw_gzrf2rcfha,&_temp1036_pw_gzrf2rcfha) : &pw_gzrf2rcfha,
+                          _pw_gzrf2rcfh.fixedflag ? (_temp1037_pw_gzrf2rcfh=pw_gzrf2rcfh,&_temp1037_pw_gzrf2rcfh) : &pw_gzrf2rcfh, _pw_gzrf2rcfhd.fixedflag ? (_temp1038_pw_gzrf2rcfhd=pw_gzrf2rcfhd,&_temp1038_pw_gzrf2rcfhd) : &pw_gzrf2rcfhd) == FAILURE) 
             {
                 epic_error(use_ermes, "%s failed in PScveval.", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
                            STRING_ARG, "amppwgrad:gzrf2rcfh"); 
@@ -42105,8 +42469,8 @@ CFHcveval( FLOAT opthickPS )
             }
 
             if (amppwgrad(cfh_crusher_area, target_cfh_crusher2, 0.0, 0.0, cfhloggrd.zrt,
-                          MIN_PLATEAU_TIME, _a_gzrf3lcfh.fixedflag ? (_temp1040_a_gzrf3lcfh=a_gzrf3lcfh,&_temp1040_a_gzrf3lcfh) : &a_gzrf3lcfh, _pw_gzrf3lcfha.fixedflag ? (_temp1041_pw_gzrf3lcfha=pw_gzrf3lcfha,&_temp1041_pw_gzrf3lcfha) : &pw_gzrf3lcfha,
-                          _pw_gzrf3lcfh.fixedflag ? (_temp1042_pw_gzrf3lcfh=pw_gzrf3lcfh,&_temp1042_pw_gzrf3lcfh) : &pw_gzrf3lcfh, _pw_gzrf3lcfhd.fixedflag ? (_temp1043_pw_gzrf3lcfhd=pw_gzrf3lcfhd,&_temp1043_pw_gzrf3lcfhd) : &pw_gzrf3lcfhd) == FAILURE) 
+                          MIN_PLATEAU_TIME, _a_gzrf3lcfh.fixedflag ? (_temp1039_a_gzrf3lcfh=a_gzrf3lcfh,&_temp1039_a_gzrf3lcfh) : &a_gzrf3lcfh, _pw_gzrf3lcfha.fixedflag ? (_temp1040_pw_gzrf3lcfha=pw_gzrf3lcfha,&_temp1040_pw_gzrf3lcfha) : &pw_gzrf3lcfha,
+                          _pw_gzrf3lcfh.fixedflag ? (_temp1041_pw_gzrf3lcfh=pw_gzrf3lcfh,&_temp1041_pw_gzrf3lcfh) : &pw_gzrf3lcfh, _pw_gzrf3lcfhd.fixedflag ? (_temp1042_pw_gzrf3lcfhd=pw_gzrf3lcfhd,&_temp1042_pw_gzrf3lcfhd) : &pw_gzrf3lcfhd) == FAILURE) 
             {
                 epic_error(use_ermes, "%s failed in PScveval.", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
                            STRING_ARG, "amppwgrad:gzrf3lcfh"); 
@@ -42118,7 +42482,7 @@ CFHcveval( FLOAT opthickPS )
         {
             /* X FOV Selective */ /* YMSmr09211  04/26/2006 YI */
             a_gxrf2cfh  = _a_gxrf2cfh.fixedflag ?  ((void)(4*cyc_rf2cfh/(GAM*(float)pw_rf2cfh/(float)(1000000)*cfh_fov)), a_gxrf2cfh) : 4*cyc_rf2cfh/(GAM*(float)pw_rf2cfh/(float)(1000000)*cfh_fov);
-            if (optramp(_pw_gxrf2cfha.fixedflag ? (_temp1044_pw_gxrf2cfha=pw_gxrf2cfha,&_temp1044_pw_gxrf2cfha) : &pw_gxrf2cfha, a_gxrf2cfh, cfhloggrd.tx, cfhloggrd.xrt, TYPDEF) == FAILURE) 
+            if (optramp(_pw_gxrf2cfha.fixedflag ? (_temp1043_pw_gxrf2cfha=pw_gxrf2cfha,&_temp1043_pw_gxrf2cfha) : &pw_gxrf2cfha, a_gxrf2cfh, cfhloggrd.tx, cfhloggrd.xrt, TYPDEF) == FAILURE) 
             {
                 epic_error(use_ermes, "%s failed for gxrf2cfh.", 
                            EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
@@ -42133,7 +42497,7 @@ CFHcveval( FLOAT opthickPS )
         {
             /* Y FOV Selective */ /* YMSmr09211  04/26/2006 YI */
             a_gyrf2cfh  = _a_gyrf2cfh.fixedflag ?  ((void)(4*cyc_rf2cfh/(GAM*(float)pw_rf2cfh/(float)(1000000)*cfh_fov)), a_gyrf2cfh) : 4*cyc_rf2cfh/(GAM*(float)pw_rf2cfh/(float)(1000000)*cfh_fov);
-            if (optramp(_pw_gyrf2cfha.fixedflag ? (_temp1045_pw_gyrf2cfha=pw_gyrf2cfha,&_temp1045_pw_gyrf2cfha) : &pw_gyrf2cfha, a_gyrf2cfh, cfhloggrd.ty, cfhloggrd.yrt, TYPDEF) == FAILURE) 
+            if (optramp(_pw_gyrf2cfha.fixedflag ? (_temp1044_pw_gyrf2cfha=pw_gyrf2cfha,&_temp1044_pw_gyrf2cfha) : &pw_gyrf2cfha, a_gyrf2cfh, cfhloggrd.ty, cfhloggrd.yrt, TYPDEF) == FAILURE) 
             {
                 epic_error(use_ermes, "%s failed for gyrf2cfh.", EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
                            STRING_ARG, "optramp for gyrf2cfh");
@@ -42146,8 +42510,8 @@ CFHcveval( FLOAT opthickPS )
 
         /* Z CRUSHER CVs */ /* YMSmr09211  04/26/2006 YI */
         if (amppwgrad(cfh_crusher_area, target_cfh_crusher, 0.0, 0.0, cfhloggrd.zrt,
-                      MIN_PLATEAU_TIME, _a_gzrf2rcfh.fixedflag ? (_temp1046_a_gzrf2rcfh=a_gzrf2rcfh,&_temp1046_a_gzrf2rcfh) : &a_gzrf2rcfh, _pw_gzrf2rcfha.fixedflag ? (_temp1047_pw_gzrf2rcfha=pw_gzrf2rcfha,&_temp1047_pw_gzrf2rcfha) : &pw_gzrf2rcfha,
-                      _pw_gzrf2rcfh.fixedflag ? (_temp1048_pw_gzrf2rcfh=pw_gzrf2rcfh,&_temp1048_pw_gzrf2rcfh) : &pw_gzrf2rcfh, _pw_gzrf2rcfhd.fixedflag ? (_temp1049_pw_gzrf2rcfhd=pw_gzrf2rcfhd,&_temp1049_pw_gzrf2rcfhd) : &pw_gzrf2rcfhd) == FAILURE) 
+                      MIN_PLATEAU_TIME, _a_gzrf2rcfh.fixedflag ? (_temp1045_a_gzrf2rcfh=a_gzrf2rcfh,&_temp1045_a_gzrf2rcfh) : &a_gzrf2rcfh, _pw_gzrf2rcfha.fixedflag ? (_temp1046_pw_gzrf2rcfha=pw_gzrf2rcfha,&_temp1046_pw_gzrf2rcfha) : &pw_gzrf2rcfha,
+                      _pw_gzrf2rcfh.fixedflag ? (_temp1047_pw_gzrf2rcfh=pw_gzrf2rcfh,&_temp1047_pw_gzrf2rcfh) : &pw_gzrf2rcfh, _pw_gzrf2rcfhd.fixedflag ? (_temp1048_pw_gzrf2rcfhd=pw_gzrf2rcfhd,&_temp1048_pw_gzrf2rcfhd) : &pw_gzrf2rcfhd) == FAILURE) 
         {
             epic_error(use_ermes, "%s failed in PScveval.",
                        EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
@@ -42163,7 +42527,7 @@ CFHcveval( FLOAT opthickPS )
     /* YMSmr09211  04/26/2006 YI */
     if (amppwlcrsh(&psd_cfhleftcrush, &psd_cfhrightcrush,
                    area_gz1cfh, (float)0, cfhloggrd.tz_xz, 
-                   MIN_PLATEAU_TIME, cfhloggrd.zrt, _dummy_pw.fixedflag ? (_temp1050_dummy_pw=dummy_pw,&_temp1050_dummy_pw) : &dummy_pw) == FAILURE) 
+                   MIN_PLATEAU_TIME, cfhloggrd.zrt, _dummy_pw.fixedflag ? (_temp1049_dummy_pw=dummy_pw,&_temp1049_dummy_pw) : &dummy_pw) == FAILURE) 
     {
         epic_error(use_ermes, "%s failed in cfh.", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "amppwlcrsh for gzrf2lcfh");
@@ -42174,8 +42538,8 @@ CFHcveval( FLOAT opthickPS )
     {
         FLOAT area_g1 = (pw_gxrf2cfh + pw_gxrf2cfha)*a_gxrf2cfh/2.0; 
         if (amppwgrad(area_g1, cfhloggrd.tx, 0.0, 0.0, cfhloggrd.xrt,
-                      MIN_PLATEAU_TIME, _a_gx1cfh.fixedflag ? (_temp1051_a_gx1cfh=a_gx1cfh,&_temp1051_a_gx1cfh) : &a_gx1cfh, _pw_gx1cfha.fixedflag ? (_temp1052_pw_gx1cfha=pw_gx1cfha,&_temp1052_pw_gx1cfha) : &pw_gx1cfha,
-                      _pw_gx1cfh.fixedflag ? (_temp1053_pw_gx1cfh=pw_gx1cfh,&_temp1053_pw_gx1cfh) : &pw_gx1cfh, _pw_gx1cfhd.fixedflag ? (_temp1054_pw_gx1cfhd=pw_gx1cfhd,&_temp1054_pw_gx1cfhd) : &pw_gx1cfhd) == FAILURE) 
+                      MIN_PLATEAU_TIME, _a_gx1cfh.fixedflag ? (_temp1050_a_gx1cfh=a_gx1cfh,&_temp1050_a_gx1cfh) : &a_gx1cfh, _pw_gx1cfha.fixedflag ? (_temp1051_pw_gx1cfha=pw_gx1cfha,&_temp1051_pw_gx1cfha) : &pw_gx1cfha,
+                      _pw_gx1cfh.fixedflag ? (_temp1052_pw_gx1cfh=pw_gx1cfh,&_temp1052_pw_gx1cfh) : &pw_gx1cfh, _pw_gx1cfhd.fixedflag ? (_temp1053_pw_gx1cfhd=pw_gx1cfhd,&_temp1053_pw_gx1cfhd) : &pw_gx1cfhd) == FAILURE) 
         {
             epic_error(use_ermes, "%s failed in PScveval.",
                        EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
@@ -42185,8 +42549,8 @@ CFHcveval( FLOAT opthickPS )
 
         area_g1 = (pw_gyrf3cfh + pw_gyrf3cfhd)*a_gyrf3cfh/2.0; 
         if (amppwgrad(area_g1, cfhloggrd.ty, 0.0, 0.0, cfhloggrd.yrt,
-                      MIN_PLATEAU_TIME, _a_gy1cfh.fixedflag ? (_temp1055_a_gy1cfh=a_gy1cfh,&_temp1055_a_gy1cfh) : &a_gy1cfh, _pw_gy1cfha.fixedflag ? (_temp1056_pw_gy1cfha=pw_gy1cfha,&_temp1056_pw_gy1cfha) : &pw_gy1cfha,
-                      _pw_gy1cfh.fixedflag ? (_temp1057_pw_gy1cfh=pw_gy1cfh,&_temp1057_pw_gy1cfh) : &pw_gy1cfh, _pw_gy1cfhd.fixedflag ? (_temp1058_pw_gy1cfhd=pw_gy1cfhd,&_temp1058_pw_gy1cfhd) : &pw_gy1cfhd) == FAILURE) 
+                      MIN_PLATEAU_TIME, _a_gy1cfh.fixedflag ? (_temp1054_a_gy1cfh=a_gy1cfh,&_temp1054_a_gy1cfh) : &a_gy1cfh, _pw_gy1cfha.fixedflag ? (_temp1055_pw_gy1cfha=pw_gy1cfha,&_temp1055_pw_gy1cfha) : &pw_gy1cfha,
+                      _pw_gy1cfh.fixedflag ? (_temp1056_pw_gy1cfh=pw_gy1cfh,&_temp1056_pw_gy1cfh) : &pw_gy1cfh, _pw_gy1cfhd.fixedflag ? (_temp1057_pw_gy1cfhd=pw_gy1cfhd,&_temp1057_pw_gy1cfhd) : &pw_gy1cfhd) == FAILURE) 
         {
             epic_error(use_ermes, "%s failed in PScveval.",
                        EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
@@ -42198,8 +42562,8 @@ CFHcveval( FLOAT opthickPS )
     /* Find Params for killer pulse */ /* YMSmr09211  04/26/2006 YI */
     area_gykcfh  = _area_gykcfh.fixedflag ?  ((void)(amp_killer*pw_killer), area_gykcfh) : amp_killer*pw_killer;
     if (amppwgrad(area_gykcfh, cfhloggrd.ty, 0.0, 0.0, cfhloggrd.yrt,
-                  MIN_PLATEAU_TIME, _a_gykcfh.fixedflag ? (_temp1059_a_gykcfh=a_gykcfh,&_temp1059_a_gykcfh) : &a_gykcfh, _pw_gykcfha.fixedflag ? (_temp1060_pw_gykcfha=pw_gykcfha,&_temp1060_pw_gykcfha) : &pw_gykcfha,
-                  _pw_gykcfh.fixedflag ? (_temp1061_pw_gykcfh=pw_gykcfh,&_temp1061_pw_gykcfh) : &pw_gykcfh, _pw_gykcfhd.fixedflag ? (_temp1062_pw_gykcfhd=pw_gykcfhd,&_temp1062_pw_gykcfhd) : &pw_gykcfhd) == FAILURE) 
+                  MIN_PLATEAU_TIME, _a_gykcfh.fixedflag ? (_temp1058_a_gykcfh=a_gykcfh,&_temp1058_a_gykcfh) : &a_gykcfh, _pw_gykcfha.fixedflag ? (_temp1059_pw_gykcfha=pw_gykcfha,&_temp1059_pw_gykcfha) : &pw_gykcfha,
+                  _pw_gykcfh.fixedflag ? (_temp1060_pw_gykcfh=pw_gykcfh,&_temp1060_pw_gykcfh) : &pw_gykcfh, _pw_gykcfhd.fixedflag ? (_temp1061_pw_gykcfhd=pw_gykcfhd,&_temp1061_pw_gykcfhd) : &pw_gykcfhd) == FAILURE) 
     {
         epic_error(use_ermes, "%s failed in cfh.", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "amppwgrad:gykcfh");
@@ -42257,7 +42621,7 @@ PScveval( void )
 
     cfh_newgeo  = _cfh_newgeo.fixedflag ?  ((void)(1), cfh_newgeo) : 1;
     if (obloptimize(&cfhloggrd, &phygrd, cfh_info, num_cfhlocs,
-                    PSD_OBL, 0, obl_method, cfhobl_debug, _cfh_newgeo.fixedflag ? (_temp1063_cfh_newgeo=cfh_newgeo,&_temp1063_cfh_newgeo) : &cfh_newgeo, cfsrmode)==FAILURE)
+                    PSD_OBL, 0, obl_method, cfhobl_debug, _cfh_newgeo.fixedflag ? (_temp1062_cfh_newgeo=cfh_newgeo,&_temp1062_cfh_newgeo) : &cfh_newgeo, cfsrmode)==FAILURE)
     {
         epic_error(use_ermes,"%s failed in %s",
                    EM_PSD_FUNCTION_FAILURE,EE_ARGS(2),STRING_ARG,"obloptimize",STRING_ARG,"PScveval()");
@@ -42424,7 +42788,7 @@ FTGcveval( void )
         FTGtau2  = _FTGtau2.fixedflag ?  ((void)((int)(exist(FTGtau1)*exist(FTGau))), FTGtau2) : (int)(exist(FTGtau1)*exist(FTGau));
     }
 
-    if( ampslice(_a_gzrf1ftg.fixedflag ? (_temp1064_a_gzrf1ftg=a_gzrf1ftg,&_temp1064_a_gzrf1ftg) : &a_gzrf1ftg, bw_rf1ftg, FTGopslthickz1, gscale_rf1ftg, TYPDEF)
+    if( ampslice(_a_gzrf1ftg.fixedflag ? (_temp1063_a_gzrf1ftg=a_gzrf1ftg,&_temp1063_a_gzrf1ftg) : &a_gzrf1ftg, bw_rf1ftg, FTGopslthickz1, gscale_rf1ftg, TYPDEF)
         == FAILURE )
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -42434,7 +42798,7 @@ FTGcveval( void )
     
     bw_rf2ftg = (LONG)(4 * cyc_rf2ftg/ ((FLOAT)pw_rf2ftg/ (FLOAT)1000000));
  
-    if( ampslice(_a_gzrf2ftg.fixedflag ? (_temp1065_a_gzrf2ftg=a_gzrf2ftg,&_temp1065_a_gzrf2ftg) : &a_gzrf2ftg, bw_rf2ftg, FTGopslthickz2, gscale_rf2ftg, TYPDEF)
+    if( ampslice(_a_gzrf2ftg.fixedflag ? (_temp1064_a_gzrf2ftg=a_gzrf2ftg,&_temp1064_a_gzrf2ftg) : &a_gzrf2ftg, bw_rf2ftg, FTGopslthickz2, gscale_rf2ftg, TYPDEF)
         == FAILURE )
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -42445,13 +42809,13 @@ FTGcveval( void )
  
     bw_rf3ftg = (LONG)(4 * cyc_rf3ftg/ ((FLOAT)pw_rf3ftg/ (FLOAT)1000000));
  
-    if( ampslice(_a_gzrf3ftg.fixedflag ? (_temp1066_a_gzrf3ftg=a_gzrf3ftg,&_temp1066_a_gzrf3ftg) : &a_gzrf3ftg, bw_rf3ftg, FTGopslthickz3, gscale_rf3ftg, TYPDEF)
+    if( ampslice(_a_gzrf3ftg.fixedflag ? (_temp1065_a_gzrf3ftg=a_gzrf3ftg,&_temp1065_a_gzrf3ftg) : &a_gzrf3ftg, bw_rf3ftg, FTGopslthickz3, gscale_rf3ftg, TYPDEF)
         == FAILURE ) {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "ampslice for gzrf3ftg.");
         return FAILURE;
     }
-    if( optramp(_pw_gzrf1ftga.fixedflag ? (_temp1067_pw_gzrf1ftga=pw_gzrf1ftga,&_temp1067_pw_gzrf1ftga) : &pw_gzrf1ftga, a_gzrf1ftg, ps1loggrd.tz, ps1loggrd.zrt, TYPDEF)
+    if( optramp(_pw_gzrf1ftga.fixedflag ? (_temp1066_pw_gzrf1ftga=pw_gzrf1ftga,&_temp1066_pw_gzrf1ftga) : &pw_gzrf1ftga, a_gzrf1ftg, ps1loggrd.tz, ps1loggrd.zrt, TYPDEF)
         == FAILURE ) {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "optramp for gzrf1ftga.");
@@ -42460,7 +42824,7 @@ FTGcveval( void )
     
     pw_gzrf1ftgd  = _pw_gzrf1ftgd.fixedflag ?  ((void)(pw_gzrf1ftga), pw_gzrf1ftgd) : pw_gzrf1ftga;
 
-    if (optramp(_pw_gzrf2ftga.fixedflag ? (_temp1068_pw_gzrf2ftga=pw_gzrf2ftga,&_temp1068_pw_gzrf2ftga) : &pw_gzrf2ftga, a_gzrf2ftg, ps1loggrd.tz, ps1loggrd.zrt, TYPDEF)
+    if (optramp(_pw_gzrf2ftga.fixedflag ? (_temp1067_pw_gzrf2ftga=pw_gzrf2ftga,&_temp1067_pw_gzrf2ftga) : &pw_gzrf2ftga, a_gzrf2ftg, ps1loggrd.tz, ps1loggrd.zrt, TYPDEF)
         == FAILURE) {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "optramp for gzrf2ftga.");
@@ -42473,7 +42837,7 @@ FTGcveval( void )
     /* Find Params for first zgrad refocusing pulse */
     area_g1ftg = ( a_gzrf1ftg *.5* ( pw_gzrf1ftg + pw_gzrf1ftgd)
                    + a_gzrf2ftg *.5 * (pw_gzrf2ftga + pw_gzrf2ftg) );
-    if( amppwgz1(_a_gz1ftg.fixedflag ? (_temp1069_a_gz1ftg=a_gz1ftg,&_temp1069_a_gz1ftg) : &a_gz1ftg, _pw_gz1ftg.fixedflag ? (_temp1070_pw_gz1ftg=pw_gz1ftg,&_temp1070_pw_gz1ftg) : &pw_gz1ftg, _pw_gz1ftga.fixedflag ? (_temp1071_pw_gz1ftga=pw_gz1ftga,&_temp1071_pw_gz1ftga) : &pw_gz1ftga, _pw_gz1ftgd.fixedflag ? (_temp1072_pw_gz1ftgd=pw_gz1ftgd,&_temp1072_pw_gz1ftgd) : &pw_gz1ftgd,
+    if( amppwgz1(_a_gz1ftg.fixedflag ? (_temp1068_a_gz1ftg=a_gz1ftg,&_temp1068_a_gz1ftg) : &a_gz1ftg, _pw_gz1ftg.fixedflag ? (_temp1069_pw_gz1ftg=pw_gz1ftg,&_temp1069_pw_gz1ftg) : &pw_gz1ftg, _pw_gz1ftga.fixedflag ? (_temp1070_pw_gz1ftga=pw_gz1ftga,&_temp1070_pw_gz1ftga) : &pw_gz1ftga, _pw_gz1ftgd.fixedflag ? (_temp1071_pw_gz1ftgd=pw_gz1ftgd,&_temp1071_pw_gz1ftgd) : &pw_gz1ftgd,
                  area_g1ftg, (INT)1000000, MIN_PLATEAU_TIME,
                  ps1loggrd.zrt, ps1loggrd.tz) == FAILURE ) {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -42484,7 +42848,7 @@ FTGcveval( void )
 
     /* Find Params for refocusing pulse gz2ftg */
     area_g2ftg =  a_gzrf2ftg *.5* ( pw_gzrf2ftg + pw_gzrf2ftgd);
-    if( amppwgz1(_a_gz2ftg.fixedflag ? (_temp1073_a_gz2ftg=a_gz2ftg,&_temp1073_a_gz2ftg) : &a_gz2ftg, _pw_gz2ftg.fixedflag ? (_temp1074_pw_gz2ftg=pw_gz2ftg,&_temp1074_pw_gz2ftg) : &pw_gz2ftg, _pw_gz2ftga.fixedflag ? (_temp1075_pw_gz2ftga=pw_gz2ftga,&_temp1075_pw_gz2ftga) : &pw_gz2ftga, _pw_gz2ftgd.fixedflag ? (_temp1076_pw_gz2ftgd=pw_gz2ftgd,&_temp1076_pw_gz2ftgd) : &pw_gz2ftgd,
+    if( amppwgz1(_a_gz2ftg.fixedflag ? (_temp1072_a_gz2ftg=a_gz2ftg,&_temp1072_a_gz2ftg) : &a_gz2ftg, _pw_gz2ftg.fixedflag ? (_temp1073_pw_gz2ftg=pw_gz2ftg,&_temp1073_pw_gz2ftg) : &pw_gz2ftg, _pw_gz2ftga.fixedflag ? (_temp1074_pw_gz2ftga=pw_gz2ftga,&_temp1074_pw_gz2ftga) : &pw_gz2ftga, _pw_gz2ftgd.fixedflag ? (_temp1075_pw_gz2ftgd=pw_gz2ftgd,&_temp1075_pw_gz2ftgd) : &pw_gz2ftgd,
                  area_g2ftg, (INT)1000000, MIN_PLATEAU_TIME,
                  ps1loggrd.zrt, ftg_tz_xz) == FAILURE ) {
 	epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -42495,7 +42859,7 @@ FTGcveval( void )
     /* Find Params for refocusing pulse gz2btg */
 
     /* MRIge56170  AF  10/13/99 */
-    if( optramp(_pw_gzrf3ftga.fixedflag ? (_temp1077_pw_gzrf3ftga=pw_gzrf3ftga,&_temp1077_pw_gzrf3ftga) : &pw_gzrf3ftga, a_gzrf3ftg, ps1loggrd.tz, ps1loggrd.zrt, TYPDEF)
+    if( optramp(_pw_gzrf3ftga.fixedflag ? (_temp1076_pw_gzrf3ftga=pw_gzrf3ftga,&_temp1076_pw_gzrf3ftga) : &pw_gzrf3ftga, a_gzrf3ftg, ps1loggrd.tz, ps1loggrd.zrt, TYPDEF)
         == FAILURE ) {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "optramp for gzrf3ftga.");
@@ -42503,7 +42867,7 @@ FTGcveval( void )
     }
 
     area_g2bftg =  a_gzrf3ftg * .5 *(pw_gzrf3ftga + pw_gzrf3ftg);
-    if( amppwgz1(_a_gz2bftg.fixedflag ? (_temp1078_a_gz2bftg=a_gz2bftg,&_temp1078_a_gz2bftg) : &a_gz2bftg, _pw_gz2bftg.fixedflag ? (_temp1079_pw_gz2bftg=pw_gz2bftg,&_temp1079_pw_gz2bftg) : &pw_gz2bftg, _pw_gz2bftga.fixedflag ? (_temp1080_pw_gz2bftga=pw_gz2bftga,&_temp1080_pw_gz2bftga) : &pw_gz2bftga, _pw_gz2bftgd.fixedflag ? (_temp1081_pw_gz2bftgd=pw_gz2bftgd,&_temp1081_pw_gz2bftgd) : &pw_gz2bftgd,
+    if( amppwgz1(_a_gz2bftg.fixedflag ? (_temp1077_a_gz2bftg=a_gz2bftg,&_temp1077_a_gz2bftg) : &a_gz2bftg, _pw_gz2bftg.fixedflag ? (_temp1078_pw_gz2bftg=pw_gz2bftg,&_temp1078_pw_gz2bftg) : &pw_gz2bftg, _pw_gz2bftga.fixedflag ? (_temp1079_pw_gz2bftga=pw_gz2bftga,&_temp1079_pw_gz2bftga) : &pw_gz2bftga, _pw_gz2bftgd.fixedflag ? (_temp1080_pw_gz2bftgd=pw_gz2bftgd,&_temp1080_pw_gz2bftgd) : &pw_gz2bftgd,
                  area_g2bftg, (INT)1000000, MIN_PLATEAU_TIME,
                  ps1loggrd.zrt, ps1loggrd.tz) == FAILURE ) {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -42515,7 +42879,7 @@ FTGcveval( void )
  
     /* Find Params for refocusing pulse */
     area_g3ftg =  a_gzrf3ftg *.5* ( pw_gzrf3ftg + pw_gzrf3ftgd);
-    if( amppwgz1(_a_gz3ftg.fixedflag ? (_temp1082_a_gz3ftg=a_gz3ftg,&_temp1082_a_gz3ftg) : &a_gz3ftg, _pw_gz3ftg.fixedflag ? (_temp1083_pw_gz3ftg=pw_gz3ftg,&_temp1083_pw_gz3ftg) : &pw_gz3ftg, _pw_gz3ftga.fixedflag ? (_temp1084_pw_gz3ftga=pw_gz3ftga,&_temp1084_pw_gz3ftga) : &pw_gz3ftga, _pw_gz3ftgd.fixedflag ? (_temp1085_pw_gz3ftgd=pw_gz3ftgd,&_temp1085_pw_gz3ftgd) : &pw_gz3ftgd,
+    if( amppwgz1(_a_gz3ftg.fixedflag ? (_temp1081_a_gz3ftg=a_gz3ftg,&_temp1081_a_gz3ftg) : &a_gz3ftg, _pw_gz3ftg.fixedflag ? (_temp1082_pw_gz3ftg=pw_gz3ftg,&_temp1082_pw_gz3ftg) : &pw_gz3ftg, _pw_gz3ftga.fixedflag ? (_temp1083_pw_gz3ftga=pw_gz3ftga,&_temp1083_pw_gz3ftga) : &pw_gz3ftga, _pw_gz3ftgd.fixedflag ? (_temp1084_pw_gz3ftgd=pw_gz3ftgd,&_temp1084_pw_gz3ftgd) : &pw_gz3ftgd,
                  area_g3ftg, (INT)1000000, MIN_PLATEAU_TIME,
                  ps1loggrd.zrt, ftg_tz_xz) == FAILURE )
     {
@@ -42532,7 +42896,7 @@ FTGcveval( void )
         return FAILURE;
     }
 
-    if( ampfov(_a_gxw1ftg.fixedflag ? (_temp1086_a_gxw1ftg=a_gxw1ftg,&_temp1086_a_gxw1ftg) : &a_gxw1ftg, echo1ftg_filt.bw, FTGfov) == FAILURE )
+    if( ampfov(_a_gxw1ftg.fixedflag ? (_temp1085_a_gxw1ftg=a_gxw1ftg,&_temp1085_a_gxw1ftg) : &a_gxw1ftg, echo1ftg_filt.bw, FTGfov) == FAILURE )
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "ampfov for gxw1ftg.");
@@ -42544,7 +42908,7 @@ FTGcveval( void )
 
     area_gxw1ftg = 2.0*a_gxw1ftg*(float)(pw_gxw1ftg);
  
-    if( amppwgx1(_a_gx1ftg.fixedflag ? (_temp1087_a_gx1ftg=a_gx1ftg,&_temp1087_a_gx1ftg) : &a_gx1ftg, _pw_gx1ftg.fixedflag ? (_temp1088_pw_gx1ftg=pw_gx1ftg,&_temp1088_pw_gx1ftg) : &pw_gx1ftg, _pw_gx1ftga.fixedflag ? (_temp1089_pw_gx1ftga=pw_gx1ftga,&_temp1089_pw_gx1ftga) : &pw_gx1ftga, _pw_gx1ftgd.fixedflag ? (_temp1090_pw_gx1ftgd=pw_gx1ftgd,&_temp1090_pw_gx1ftgd) : &pw_gx1ftgd,
+    if( amppwgx1(_a_gx1ftg.fixedflag ? (_temp1086_a_gx1ftg=a_gx1ftg,&_temp1086_a_gx1ftg) : &a_gx1ftg, _pw_gx1ftg.fixedflag ? (_temp1087_pw_gx1ftg=pw_gx1ftg,&_temp1087_pw_gx1ftg) : &pw_gx1ftg, _pw_gx1ftga.fixedflag ? (_temp1088_pw_gx1ftga=pw_gx1ftga,&_temp1088_pw_gx1ftga) : &pw_gx1ftga, _pw_gx1ftgd.fixedflag ? (_temp1089_pw_gx1ftgd=pw_gx1ftgd,&_temp1089_pw_gx1ftgd) : &pw_gx1ftgd,
                  TYPSPIN, area_gxw1ftg, .0,
                  (int)1000000, 1.0, MIN_PLATEAU_TIME,
                  ftg_xrt, ftg_tx_xz) == FAILURE )
@@ -42554,7 +42918,7 @@ FTGcveval( void )
         return FAILURE;
     }
     
-    if( amppwgx1(_a_gx2test.fixedflag ? (_temp1091_a_gx2test=a_gx2test,&_temp1091_a_gx2test) : &a_gx2test, _pw_gx2test.fixedflag ? (_temp1092_pw_gx2test=pw_gx2test,&_temp1092_pw_gx2test) : &pw_gx2test, _pw_gx2testa.fixedflag ? (_temp1093_pw_gx2testa=pw_gx2testa,&_temp1093_pw_gx2testa) : &pw_gx2testa, _pw_gx2testd.fixedflag ? (_temp1094_pw_gx2testd=pw_gx2testd,&_temp1094_pw_gx2testd) : &pw_gx2testd,
+    if( amppwgx1(_a_gx2test.fixedflag ? (_temp1090_a_gx2test=a_gx2test,&_temp1090_a_gx2test) : &a_gx2test, _pw_gx2test.fixedflag ? (_temp1091_pw_gx2test=pw_gx2test,&_temp1091_pw_gx2test) : &pw_gx2test, _pw_gx2testa.fixedflag ? (_temp1092_pw_gx2testa=pw_gx2testa,&_temp1092_pw_gx2testa) : &pw_gx2testa, _pw_gx2testd.fixedflag ? (_temp1093_pw_gx2testd=pw_gx2testd,&_temp1093_pw_gx2testd) : &pw_gx2testd,
                  TYPSPIN, area_gxw1ftg, .0,
                  (int)1000000, 1.0, MIN_PLATEAU_TIME,
                  ftg_xrt, ftg_tx_xz) == FAILURE )
@@ -42567,7 +42931,7 @@ FTGcveval( void )
     
  
     area_gxw1ftg = a_gxw1ftg*(float)(pw_gxw1ftg);
-    if( amppwgx1(_a_gx1bftg.fixedflag ? (_temp1095_a_gx1bftg=a_gx1bftg,&_temp1095_a_gx1bftg) : &a_gx1bftg, _pw_gx1bftg.fixedflag ? (_temp1096_pw_gx1bftg=pw_gx1bftg,&_temp1096_pw_gx1bftg) : &pw_gx1bftg, _pw_gx1bftga.fixedflag ? (_temp1097_pw_gx1bftga=pw_gx1bftga,&_temp1097_pw_gx1bftga) : &pw_gx1bftga, _pw_gx1bftgd.fixedflag ? (_temp1098_pw_gx1bftgd=pw_gx1bftgd,&_temp1098_pw_gx1bftgd) : &pw_gx1bftgd,
+    if( amppwgx1(_a_gx1bftg.fixedflag ? (_temp1094_a_gx1bftg=a_gx1bftg,&_temp1094_a_gx1bftg) : &a_gx1bftg, _pw_gx1bftg.fixedflag ? (_temp1095_pw_gx1bftg=pw_gx1bftg,&_temp1095_pw_gx1bftg) : &pw_gx1bftg, _pw_gx1bftga.fixedflag ? (_temp1096_pw_gx1bftga=pw_gx1bftga,&_temp1096_pw_gx1bftga) : &pw_gx1bftga, _pw_gx1bftgd.fixedflag ? (_temp1097_pw_gx1bftgd=pw_gx1bftgd,&_temp1097_pw_gx1bftgd) : &pw_gx1bftgd,
                  TYPSPIN, area_gxw1ftg, .0,
                  (int)1000000, 1.0, MIN_PLATEAU_TIME,
                  ftg_xrt, ftg_tx_xyz) == FAILURE )
@@ -42576,7 +42940,7 @@ FTGcveval( void )
                    EE_ARGS(1), STRING_ARG, "amppwgx1:gx1btg");
     }
 
-    if( optramp(_pw_gxw1ftga.fixedflag ? (_temp1099_pw_gxw1ftga=pw_gxw1ftga,&_temp1099_pw_gxw1ftga) : &pw_gxw1ftga, a_gxw1ftg, ftg_tx,
+    if( optramp(_pw_gxw1ftga.fixedflag ? (_temp1098_pw_gxw1ftga=pw_gxw1ftga,&_temp1098_pw_gxw1ftga) : &pw_gxw1ftga, a_gxw1ftg, ftg_tx,
                 ftg_xrt, TYPDEF) == FAILURE )
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -42588,8 +42952,8 @@ FTGcveval( void )
  
     area_postgxw1ftg = ( 3.0 * a_gxw1ftg * (float)(pw_gxw1ftg)
                          - 0.5 * a_gxw1ftg * (pw_gxw1ftga + pw_gxw1ftgd) );
-    if( amppwgx1(_a_postgxw1ftg.fixedflag ? (_temp1100_a_postgxw1ftg=a_postgxw1ftg,&_temp1100_a_postgxw1ftg) : &a_postgxw1ftg, _pw_postgxw1ftg.fixedflag ? (_temp1101_pw_postgxw1ftg=pw_postgxw1ftg,&_temp1101_pw_postgxw1ftg) : &pw_postgxw1ftg, _pw_postgxw1ftga.fixedflag ? (_temp1102_pw_postgxw1ftga=pw_postgxw1ftga,&_temp1102_pw_postgxw1ftga) : &pw_postgxw1ftga,
-                 _pw_postgxw1ftgd.fixedflag ? (_temp1103_pw_postgxw1ftgd=pw_postgxw1ftgd,&_temp1103_pw_postgxw1ftgd) : &pw_postgxw1ftgd, TYPSPIN, area_postgxw1ftg, .0,
+    if( amppwgx1(_a_postgxw1ftg.fixedflag ? (_temp1099_a_postgxw1ftg=a_postgxw1ftg,&_temp1099_a_postgxw1ftg) : &a_postgxw1ftg, _pw_postgxw1ftg.fixedflag ? (_temp1100_pw_postgxw1ftg=pw_postgxw1ftg,&_temp1100_pw_postgxw1ftg) : &pw_postgxw1ftg, _pw_postgxw1ftga.fixedflag ? (_temp1101_pw_postgxw1ftga=pw_postgxw1ftga,&_temp1101_pw_postgxw1ftga) : &pw_postgxw1ftga,
+                 _pw_postgxw1ftgd.fixedflag ? (_temp1102_pw_postgxw1ftgd=pw_postgxw1ftgd,&_temp1102_pw_postgxw1ftgd) : &pw_postgxw1ftgd, TYPSPIN, area_postgxw1ftg, .0,
                  (int)1000000, 1.0, MIN_PLATEAU_TIME,
                  ftg_xrt, ftg_tx) == FAILURE )
     {
@@ -42598,7 +42962,7 @@ FTGcveval( void )
         return FAILURE;
     }
     
-    if( ampfov(_a_gxw2ftg.fixedflag ? (_temp1104_a_gxw2ftg=a_gxw2ftg,&_temp1104_a_gxw2ftg) : &a_gxw2ftg, echo1ftg_filt.bw, FTGfov) == FAILURE )
+    if( ampfov(_a_gxw2ftg.fixedflag ? (_temp1103_a_gxw2ftg=a_gxw2ftg,&_temp1103_a_gxw2ftg) : &a_gxw2ftg, echo1ftg_filt.bw, FTGfov) == FAILURE )
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "ampfov for gxw2ftg.");
@@ -42606,7 +42970,7 @@ FTGcveval( void )
     }
     
     pw_gxw2ftg  = _pw_gxw2ftg.fixedflag ?  ((void)(RUP_GRD((int)(4.0*(float)pw_gxw1ftg))), pw_gxw2ftg) : RUP_GRD((int)(4.0*(float)pw_gxw1ftg));
-    if( optramp(_pw_gxw2ftga.fixedflag ? (_temp1105_pw_gxw2ftga=pw_gxw2ftga,&_temp1105_pw_gxw2ftga) : &pw_gxw2ftga, a_gxw2ftg, ftg_tx,
+    if( optramp(_pw_gxw2ftga.fixedflag ? (_temp1104_pw_gxw2ftga=pw_gxw2ftga,&_temp1104_pw_gxw2ftga) : &pw_gxw2ftga, a_gxw2ftg, ftg_tx,
                 ftg_xrt, TYPDEF) == FAILURE )
     { 
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -42633,8 +42997,8 @@ FTGcveval( void )
  
     if( amppwgrad(area_gx2ftg, ftg_tx_xz,
                   0.0, 0.0, ftg_xrt,
-                  MIN_PLATEAU_TIME, _a_gx2ftg.fixedflag ? (_temp1106_a_gx2ftg=a_gx2ftg,&_temp1106_a_gx2ftg) : &a_gx2ftg, _pw_gx2ftga.fixedflag ? (_temp1107_pw_gx2ftga=pw_gx2ftga,&_temp1107_pw_gx2ftga) : &pw_gx2ftga,
-                  _pw_gx2ftg.fixedflag ? (_temp1108_pw_gx2ftg=pw_gx2ftg,&_temp1108_pw_gx2ftg) : &pw_gx2ftg, _pw_gx2ftgd.fixedflag ? (_temp1109_pw_gx2ftgd=pw_gx2ftgd,&_temp1109_pw_gx2ftgd) : &pw_gx2ftgd) == FAILURE ) {
+                  MIN_PLATEAU_TIME, _a_gx2ftg.fixedflag ? (_temp1105_a_gx2ftg=a_gx2ftg,&_temp1105_a_gx2ftg) : &a_gx2ftg, _pw_gx2ftga.fixedflag ? (_temp1106_pw_gx2ftga=pw_gx2ftga,&_temp1106_pw_gx2ftga) : &pw_gx2ftga,
+                  _pw_gx2ftg.fixedflag ? (_temp1107_pw_gx2ftg=pw_gx2ftg,&_temp1107_pw_gx2ftg) : &pw_gx2ftg, _pw_gx2ftgd.fixedflag ? (_temp1108_pw_gx2ftgd=pw_gx2ftgd,&_temp1108_pw_gx2ftgd) : &pw_gx2ftgd) == FAILURE ) {
         epic_error(use_ermes, "%s failed in fasttg.", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "amppwgrad:gx2ftg");
         return FAILURE;
@@ -42731,7 +43095,7 @@ XTGcveval( void )
         pw_gyrf1xtg  = _pw_gyrf1xtg.fixedflag ?  ((void)(pw_rf1xtg), pw_gyrf1xtg) : pw_rf1xtg;
         XTGfov  = _XTGfov.fixedflag ?  ((void)(TGopslthickx), XTGfov) : TGopslthickx;
 
-        if( ampslice(_a_gyrf1xtg.fixedflag ? (_temp1110_a_gyrf1xtg=a_gyrf1xtg,&_temp1110_a_gyrf1xtg) : &a_gyrf1xtg, bw_rf1xtg, TGopslthicky, gscale_rf1xtg, TYPDEF)
+        if( ampslice(_a_gyrf1xtg.fixedflag ? (_temp1109_a_gyrf1xtg=a_gyrf1xtg,&_temp1109_a_gyrf1xtg) : &a_gyrf1xtg, bw_rf1xtg, TGopslthicky, gscale_rf1xtg, TYPDEF)
             == FAILURE )
         {
             epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -42739,7 +43103,7 @@ XTGcveval( void )
             return FAILURE;
         }
 
-        if( optramp(_pw_gyrf1xtga.fixedflag ? (_temp1111_pw_gyrf1xtga=pw_gyrf1xtga,&_temp1111_pw_gyrf1xtga) : &pw_gyrf1xtga, a_gyrf1xtg, ps1loggrd.ty, ps1loggrd.yrt, TYPDEF)
+        if( optramp(_pw_gyrf1xtga.fixedflag ? (_temp1110_pw_gyrf1xtga=pw_gyrf1xtga,&_temp1110_pw_gyrf1xtga) : &pw_gyrf1xtga, a_gyrf1xtg, ps1loggrd.ty, ps1loggrd.yrt, TYPDEF)
             == FAILURE )
         {
             epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -42754,7 +43118,7 @@ XTGcveval( void )
     {
         pw_gzrf1xtg  = _pw_gzrf1xtg.fixedflag ?  ((void)(pw_rf1xtg), pw_gzrf1xtg) : pw_rf1xtg;
 
-        if( ampslice(_a_gzrf1xtg.fixedflag ? (_temp1112_a_gzrf1xtg=a_gzrf1xtg,&_temp1112_a_gzrf1xtg) : &a_gzrf1xtg, bw_rf1xtg, TGopslthick, gscale_rf1xtg, TYPDEF)
+        if( ampslice(_a_gzrf1xtg.fixedflag ? (_temp1111_a_gzrf1xtg=a_gzrf1xtg,&_temp1111_a_gzrf1xtg) : &a_gzrf1xtg, bw_rf1xtg, TGopslthick, gscale_rf1xtg, TYPDEF)
         == FAILURE )
         {
             epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -42762,7 +43126,7 @@ XTGcveval( void )
             return FAILURE;
         }
 
-        if( optramp(_pw_gzrf1xtga.fixedflag ? (_temp1113_pw_gzrf1xtga=pw_gzrf1xtga,&_temp1113_pw_gzrf1xtga) : &pw_gzrf1xtga, a_gzrf1xtg, ps1loggrd.tz, ps1loggrd.zrt, TYPDEF)
+        if( optramp(_pw_gzrf1xtga.fixedflag ? (_temp1112_pw_gzrf1xtga=pw_gzrf1xtga,&_temp1112_pw_gzrf1xtga) : &pw_gzrf1xtga, a_gzrf1xtg, ps1loggrd.tz, ps1loggrd.zrt, TYPDEF)
             == FAILURE )
         {
             epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -42776,7 +43140,7 @@ XTGcveval( void )
 
     bw_rf2xtg = (LONG)(4 * cyc_rf2xtg/ ((FLOAT)pw_rf2xtg/ (FLOAT)1000000));
 
-    if( ampslice(_a_gzrf2xtg.fixedflag ? (_temp1114_a_gzrf2xtg=a_gzrf2xtg,&_temp1114_a_gzrf2xtg) : &a_gzrf2xtg, bw_rf2xtg, TGopslthick, gscale_rf2xtg, TYPDEF)
+    if( ampslice(_a_gzrf2xtg.fixedflag ? (_temp1113_a_gzrf2xtg=a_gzrf2xtg,&_temp1113_a_gzrf2xtg) : &a_gzrf2xtg, bw_rf2xtg, TGopslthick, gscale_rf2xtg, TYPDEF)
         == FAILURE )
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -42784,7 +43148,7 @@ XTGcveval( void )
         return FAILURE;
     }
 
-    if (optramp(_pw_gzrf2xtga.fixedflag ? (_temp1115_pw_gzrf2xtga=pw_gzrf2xtga,&_temp1115_pw_gzrf2xtga) : &pw_gzrf2xtga, a_gzrf2xtg, ps1loggrd.tz, ps1loggrd.zrt, TYPDEF)
+    if (optramp(_pw_gzrf2xtga.fixedflag ? (_temp1114_pw_gzrf2xtga=pw_gzrf2xtga,&_temp1114_pw_gzrf2xtga) : &pw_gzrf2xtga, a_gzrf2xtg, ps1loggrd.tz, ps1loggrd.zrt, TYPDEF)
         == FAILURE)
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -42805,8 +43169,8 @@ XTGcveval( void )
     }
     area_xtgzkiller  = _area_xtgzkiller.fixedflag ?  ((void)(amp_killer*pw_killer+area_g1xtg), area_xtgzkiller) : amp_killer*pw_killer+area_g1xtg;
     if (amppwgrad(area_xtgzkiller, xtg_tz_xyz, 0.0, 0.0, ps1loggrd.zrt,
-                  MIN_PLATEAU_TIME, _a_gz2xtg.fixedflag ? (_temp1116_a_gz2xtg=a_gz2xtg,&_temp1116_a_gz2xtg) : &a_gz2xtg, _pw_gz2xtga.fixedflag ? (_temp1117_pw_gz2xtga=pw_gz2xtga,&_temp1117_pw_gz2xtga) : &pw_gz2xtga,
-                  _pw_gz2xtg.fixedflag ? (_temp1118_pw_gz2xtg=pw_gz2xtg,&_temp1118_pw_gz2xtg) : &pw_gz2xtg, _pw_gz2xtgd.fixedflag ? (_temp1119_pw_gz2xtgd=pw_gz2xtgd,&_temp1119_pw_gz2xtgd) : &pw_gz2xtgd) == FAILURE)
+                  MIN_PLATEAU_TIME, _a_gz2xtg.fixedflag ? (_temp1115_a_gz2xtg=a_gz2xtg,&_temp1115_a_gz2xtg) : &a_gz2xtg, _pw_gz2xtga.fixedflag ? (_temp1116_pw_gz2xtga=pw_gz2xtga,&_temp1116_pw_gz2xtga) : &pw_gz2xtga,
+                  _pw_gz2xtg.fixedflag ? (_temp1117_pw_gz2xtg=pw_gz2xtg,&_temp1117_pw_gz2xtg) : &pw_gz2xtg, _pw_gz2xtgd.fixedflag ? (_temp1118_pw_gz2xtgd=pw_gz2xtgd,&_temp1118_pw_gz2xtgd) : &pw_gz2xtgd) == FAILURE)
     {
         epic_error(use_ermes, "%s failed in XTGcveval.",
                    EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
@@ -42815,8 +43179,8 @@ XTGcveval( void )
     }
 
     if (amppwgrad((area_xtgzkiller-area_g1xtg), xtg_tz_xyz, 0.0, 0.0, ps1loggrd.zrt,
-                  MIN_PLATEAU_TIME, _a_gz1xtg.fixedflag ? (_temp1120_a_gz1xtg=a_gz1xtg,&_temp1120_a_gz1xtg) : &a_gz1xtg, _pw_gz1xtga.fixedflag ? (_temp1121_pw_gz1xtga=pw_gz1xtga,&_temp1121_pw_gz1xtga) : &pw_gz1xtga,
-                  _pw_gz1xtg.fixedflag ? (_temp1122_pw_gz1xtg=pw_gz1xtg,&_temp1122_pw_gz1xtg) : &pw_gz1xtg, _pw_gz1xtgd.fixedflag ? (_temp1123_pw_gz1xtgd=pw_gz1xtgd,&_temp1123_pw_gz1xtgd) : &pw_gz1xtgd) == FAILURE) 
+                  MIN_PLATEAU_TIME, _a_gz1xtg.fixedflag ? (_temp1119_a_gz1xtg=a_gz1xtg,&_temp1119_a_gz1xtg) : &a_gz1xtg, _pw_gz1xtga.fixedflag ? (_temp1120_pw_gz1xtga=pw_gz1xtga,&_temp1120_pw_gz1xtga) : &pw_gz1xtga,
+                  _pw_gz1xtg.fixedflag ? (_temp1121_pw_gz1xtg=pw_gz1xtg,&_temp1121_pw_gz1xtg) : &pw_gz1xtg, _pw_gz1xtgd.fixedflag ? (_temp1122_pw_gz1xtgd=pw_gz1xtgd,&_temp1122_pw_gz1xtgd) : &pw_gz1xtgd) == FAILURE) 
     {
         epic_error(use_ermes, "%s failed in XTGcveval.",
                    EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
@@ -42846,14 +43210,14 @@ XTGcveval( void )
         XTGfov  = _XTGfov.fixedflag ?  ((void)(xtg_temp_float), XTGfov) : xtg_temp_float;
     }
 
-    if( ampfov(_a_gxw1xtg.fixedflag ? (_temp1124_a_gxw1xtg=a_gxw1xtg,&_temp1124_a_gxw1xtg) : &a_gxw1xtg, echo1xtg_filt.bw, XTGfov) == FAILURE )
+    if( ampfov(_a_gxw1xtg.fixedflag ? (_temp1123_a_gxw1xtg=a_gxw1xtg,&_temp1123_a_gxw1xtg) : &a_gxw1xtg, echo1xtg_filt.bw, XTGfov) == FAILURE )
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "ampfov for gxw1xtg.");
         return FAILURE;        
     }
 
-    if( optramp(_pw_gxw1xtga.fixedflag ? (_temp1125_pw_gxw1xtga=pw_gxw1xtga,&_temp1125_pw_gxw1xtga) : &pw_gxw1xtga, a_gxw1xtg, xtg_tx,
+    if( optramp(_pw_gxw1xtga.fixedflag ? (_temp1124_pw_gxw1xtga=pw_gxw1xtga,&_temp1124_pw_gxw1xtga) : &pw_gxw1xtga, a_gxw1xtg, xtg_tx,
                 xtg_xrt, TYPDEF) == FAILURE )
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -42868,7 +43232,7 @@ XTGcveval( void )
     area_gxw1xtg = a_gxw1xtg*(float)(pw_gxw1xtg);
     area_gxw1rampxtg = 0.5*a_gxw1xtg*(float)(pw_gxw1xtga);
     
-    if( amppwgx1(_a_gx1bxtg.fixedflag ? (_temp1126_a_gx1bxtg=a_gx1bxtg,&_temp1126_a_gx1bxtg) : &a_gx1bxtg, _pw_gx1bxtg.fixedflag ? (_temp1127_pw_gx1bxtg=pw_gx1bxtg,&_temp1127_pw_gx1bxtg) : &pw_gx1bxtg, _pw_gx1bxtga.fixedflag ? (_temp1128_pw_gx1bxtga=pw_gx1bxtga,&_temp1128_pw_gx1bxtga) : &pw_gx1bxtga, _pw_gx1bxtgd.fixedflag ? (_temp1129_pw_gx1bxtgd=pw_gx1bxtgd,&_temp1129_pw_gx1bxtgd) : &pw_gx1bxtgd,
+    if( amppwgx1(_a_gx1bxtg.fixedflag ? (_temp1125_a_gx1bxtg=a_gx1bxtg,&_temp1125_a_gx1bxtg) : &a_gx1bxtg, _pw_gx1bxtg.fixedflag ? (_temp1126_pw_gx1bxtg=pw_gx1bxtg,&_temp1126_pw_gx1bxtg) : &pw_gx1bxtg, _pw_gx1bxtga.fixedflag ? (_temp1127_pw_gx1bxtga=pw_gx1bxtga,&_temp1127_pw_gx1bxtga) : &pw_gx1bxtga, _pw_gx1bxtgd.fixedflag ? (_temp1128_pw_gx1bxtgd=pw_gx1bxtgd,&_temp1128_pw_gx1bxtgd) : &pw_gx1bxtgd,
                  TYPSPIN, area_gxw1xtg, area_gxw1rampxtg,
                  1000000, 1.0, MIN_PLATEAU_TIME, xtg_xrt, xtg_tx_xyz) == FAILURE )
     {
@@ -42889,16 +43253,16 @@ XTGcveval( void )
     }
     area_xtgykiller  = _area_xtgykiller.fixedflag ?  ((void)(amp_killer*pw_killer), area_xtgykiller) : amp_killer*pw_killer;
     if (amppwgrad(area_xtgykiller-area_g1xtg, xtg_ty_xyz, 0.0, 0.0, xtg_yrt,
-                  MIN_PLATEAU_TIME, _a_gykxtgl.fixedflag ? (_temp1130_a_gykxtgl=a_gykxtgl,&_temp1130_a_gykxtgl) : &a_gykxtgl, _pw_gykxtgla.fixedflag ? (_temp1131_pw_gykxtgla=pw_gykxtgla,&_temp1131_pw_gykxtgla) : &pw_gykxtgla,
-                  _pw_gykxtgl.fixedflag ? (_temp1132_pw_gykxtgl=pw_gykxtgl,&_temp1132_pw_gykxtgl) : &pw_gykxtgl, _pw_gykxtgld.fixedflag ? (_temp1133_pw_gykxtgld=pw_gykxtgld,&_temp1133_pw_gykxtgld) : &pw_gykxtgld) == FAILURE) {
+                  MIN_PLATEAU_TIME, _a_gykxtgl.fixedflag ? (_temp1129_a_gykxtgl=a_gykxtgl,&_temp1129_a_gykxtgl) : &a_gykxtgl, _pw_gykxtgla.fixedflag ? (_temp1130_pw_gykxtgla=pw_gykxtgla,&_temp1130_pw_gykxtgla) : &pw_gykxtgla,
+                  _pw_gykxtgl.fixedflag ? (_temp1131_pw_gykxtgl=pw_gykxtgl,&_temp1131_pw_gykxtgl) : &pw_gykxtgl, _pw_gykxtgld.fixedflag ? (_temp1132_pw_gykxtgld=pw_gykxtgld,&_temp1132_pw_gykxtgld) : &pw_gykxtgld) == FAILURE) {
         epic_error(use_ermes, "%s failed in xtg.", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "amppwgrad:gykxtgl");
         return FAILURE;
     }
     
     if (amppwgrad(area_xtgykiller, xtg_ty_xyz, 0.0, 0.0, xtg_yrt,
-                  MIN_PLATEAU_TIME, _a_gykxtgr.fixedflag ? (_temp1134_a_gykxtgr=a_gykxtgr,&_temp1134_a_gykxtgr) : &a_gykxtgr, _pw_gykxtgra.fixedflag ? (_temp1135_pw_gykxtgra=pw_gykxtgra,&_temp1135_pw_gykxtgra) : &pw_gykxtgra,
-                  _pw_gykxtgr.fixedflag ? (_temp1136_pw_gykxtgr=pw_gykxtgr,&_temp1136_pw_gykxtgr) : &pw_gykxtgr, _pw_gykxtgrd.fixedflag ? (_temp1137_pw_gykxtgrd=pw_gykxtgrd,&_temp1137_pw_gykxtgrd) : &pw_gykxtgrd) == FAILURE) {
+                  MIN_PLATEAU_TIME, _a_gykxtgr.fixedflag ? (_temp1133_a_gykxtgr=a_gykxtgr,&_temp1133_a_gykxtgr) : &a_gykxtgr, _pw_gykxtgra.fixedflag ? (_temp1134_pw_gykxtgra=pw_gykxtgra,&_temp1134_pw_gykxtgra) : &pw_gykxtgra,
+                  _pw_gykxtgr.fixedflag ? (_temp1135_pw_gykxtgr=pw_gykxtgr,&_temp1135_pw_gykxtgr) : &pw_gykxtgr, _pw_gykxtgrd.fixedflag ? (_temp1136_pw_gykxtgrd=pw_gykxtgrd,&_temp1136_pw_gykxtgrd) : &pw_gykxtgrd) == FAILURE) {
         epic_error(use_ermes, "%s failed in xtg.", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "amppwgrad:gykxtgr");
         return FAILURE;
@@ -43047,7 +43411,7 @@ RScveval( void )
     /********************************************************/
     pw_gzrf1rs  = _pw_gzrf1rs.fixedflag ?  ((void)(pw_rf1rs), pw_gzrf1rs) : pw_rf1rs;
 
-    if (FAILURE==ampslice(_a_gzrf1rs.fixedflag ? (_temp1138_a_gzrf1rs=a_gzrf1rs,&_temp1138_a_gzrf1rs) : &a_gzrf1rs, bw_rf1rs, rfshim_slthick, gscale_rf1rs, TYPDEF))
+    if (FAILURE==ampslice(_a_gzrf1rs.fixedflag ? (_temp1137_a_gzrf1rs=a_gzrf1rs,&_temp1137_a_gzrf1rs) : &a_gzrf1rs, bw_rf1rs, rfshim_slthick, gscale_rf1rs, TYPDEF))
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "ampslice for gzrf1rs.");
@@ -43055,7 +43419,7 @@ RScveval( void )
         return FAILURE;
     }
 
-    if (FAILURE==optramp(_pw_gzrf1rsa.fixedflag ? (_temp1139_pw_gzrf1rsa=pw_gzrf1rsa,&_temp1139_pw_gzrf1rsa) : &pw_gzrf1rsa, a_gzrf1rs, rsloggrd.tz_xyz, rsloggrd.zrt, TYPDEF))
+    if (FAILURE==optramp(_pw_gzrf1rsa.fixedflag ? (_temp1138_pw_gzrf1rsa=pw_gzrf1rsa,&_temp1138_pw_gzrf1rsa) : &pw_gzrf1rsa, a_gzrf1rs, rsloggrd.tz_xyz, rsloggrd.zrt, TYPDEF))
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "optramp for gzrf1rsa.");
@@ -43067,8 +43431,8 @@ RScveval( void )
     area_gzkbsrs = 1.0E6*3.0*10.0/GAM/exist(rfshim_slthick);
 
     if (FAILURE==amppwgrad(area_gzkbsrs, rsloggrd.tz_xyz, 0.0, 0.0, rsloggrd.zrt,
-                           MIN_PLATEAU_TIME, _a_gzkbsrs.fixedflag ? (_temp1140_a_gzkbsrs=a_gzkbsrs,&_temp1140_a_gzkbsrs) : &a_gzkbsrs, _pw_gzkbsrsa.fixedflag ? (_temp1141_pw_gzkbsrsa=pw_gzkbsrsa,&_temp1141_pw_gzkbsrsa) : &pw_gzkbsrsa,
-                           _pw_gzkbsrs.fixedflag ? (_temp1142_pw_gzkbsrs=pw_gzkbsrs,&_temp1142_pw_gzkbsrs) : &pw_gzkbsrs, _pw_gzkbsrsd.fixedflag ? (_temp1143_pw_gzkbsrsd=pw_gzkbsrsd,&_temp1143_pw_gzkbsrsd) : &pw_gzkbsrsd ))
+                           MIN_PLATEAU_TIME, _a_gzkbsrs.fixedflag ? (_temp1139_a_gzkbsrs=a_gzkbsrs,&_temp1139_a_gzkbsrs) : &a_gzkbsrs, _pw_gzkbsrsa.fixedflag ? (_temp1140_pw_gzkbsrsa=pw_gzkbsrsa,&_temp1140_pw_gzkbsrsa) : &pw_gzkbsrsa,
+                           _pw_gzkbsrs.fixedflag ? (_temp1141_pw_gzkbsrs=pw_gzkbsrs,&_temp1141_pw_gzkbsrs) : &pw_gzkbsrs, _pw_gzkbsrsd.fixedflag ? (_temp1142_pw_gzkbsrsd=pw_gzkbsrsd,&_temp1142_pw_gzkbsrsd) : &pw_gzkbsrsd ))
     {
         epic_error(use_ermes, "%s failed in RScveval.",
                    EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),
@@ -43096,7 +43460,7 @@ RScveval( void )
         area_gz1rs += fabsf(area_gzkbsrs);
     }
 
-    if (amppwgz1(_a_gz1rs.fixedflag ? (_temp1144_a_gz1rs=a_gz1rs,&_temp1144_a_gz1rs) : &a_gz1rs,_pw_gz1rs.fixedflag ? (_temp1145_pw_gz1rs=pw_gz1rs,&_temp1145_pw_gz1rs) : &pw_gz1rs,_pw_gz1rsa.fixedflag ? (_temp1146_pw_gz1rsa=pw_gz1rsa,&_temp1146_pw_gz1rsa) : &pw_gz1rsa,_pw_gz1rsd.fixedflag ? (_temp1147_pw_gz1rsd=pw_gz1rsd,&_temp1147_pw_gz1rsd) : &pw_gz1rsd,area_gz1rs,
+    if (amppwgz1(_a_gz1rs.fixedflag ? (_temp1143_a_gz1rs=a_gz1rs,&_temp1143_a_gz1rs) : &a_gz1rs,_pw_gz1rs.fixedflag ? (_temp1144_pw_gz1rs=pw_gz1rs,&_temp1144_pw_gz1rs) : &pw_gz1rs,_pw_gz1rsa.fixedflag ? (_temp1145_pw_gz1rsa=pw_gz1rsa,&_temp1145_pw_gz1rsa) : &pw_gz1rsa,_pw_gz1rsd.fixedflag ? (_temp1146_pw_gz1rsd=pw_gz1rsd,&_temp1146_pw_gz1rsd) : &pw_gz1rsd,area_gz1rs,
                  (int)(1000000),MIN_PLATEAU_TIME,rsloggrd.zrt,rsloggrd.tz_xz) == FAILURE)
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -43108,8 +43472,8 @@ RScveval( void )
     area_gzkrs = 980;
 
     if (FAILURE==amppwgrad(area_gzkrs, rsloggrd.tz_xyz, 0.0, 0.0, rsloggrd.zrt,
-                           MIN_PLATEAU_TIME, _a_gzkrs.fixedflag ? (_temp1148_a_gzkrs=a_gzkrs,&_temp1148_a_gzkrs) : &a_gzkrs, _pw_gzkrsa.fixedflag ? (_temp1149_pw_gzkrsa=pw_gzkrsa,&_temp1149_pw_gzkrsa) : &pw_gzkrsa,
-                           _pw_gzkrs.fixedflag ? (_temp1150_pw_gzkrs=pw_gzkrs,&_temp1150_pw_gzkrs) : &pw_gzkrs, _pw_gzkrsd.fixedflag ? (_temp1151_pw_gzkrsd=pw_gzkrsd,&_temp1151_pw_gzkrsd) : &pw_gzkrsd ))
+                           MIN_PLATEAU_TIME, _a_gzkrs.fixedflag ? (_temp1147_a_gzkrs=a_gzkrs,&_temp1147_a_gzkrs) : &a_gzkrs, _pw_gzkrsa.fixedflag ? (_temp1148_pw_gzkrsa=pw_gzkrsa,&_temp1148_pw_gzkrsa) : &pw_gzkrsa,
+                           _pw_gzkrs.fixedflag ? (_temp1149_pw_gzkrs=pw_gzkrs,&_temp1149_pw_gzkrs) : &pw_gzkrs, _pw_gzkrsd.fixedflag ? (_temp1150_pw_gzkrsd=pw_gzkrsd,&_temp1150_pw_gzkrsd) : &pw_gzkrsd ))
     {
         epic_error(use_ermes, "%s failed in RScveval.",
                    EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),
@@ -43142,14 +43506,14 @@ RScveval( void )
         rfshim_fov  = _rfshim_fov.fixedflag ?  ((void)(temp_float), rfshim_fov) : temp_float;
     }
 
-    if ( FAILURE==ampfov(_a_gxwrs.fixedflag ? (_temp1152_a_gxwrs=a_gxwrs,&_temp1152_a_gxwrs) : &a_gxwrs, echo1rs_filt.bw, rfshim_fov) )
+    if ( FAILURE==ampfov(_a_gxwrs.fixedflag ? (_temp1151_a_gxwrs=a_gxwrs,&_temp1151_a_gxwrs) : &a_gxwrs, echo1rs_filt.bw, rfshim_fov) )
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "ampfov for gxwrs.");
         return FAILURE;
     }
 
-    if (FAILURE==optramp(_pw_gxwrsa.fixedflag ? (_temp1153_pw_gxwrsa=pw_gxwrsa,&_temp1153_pw_gxwrsa) : &pw_gxwrsa, a_gxwrs, rsloggrd.tx_xyz, rsloggrd.xrt, TYPDEF)) 
+    if (FAILURE==optramp(_pw_gxwrsa.fixedflag ? (_temp1152_pw_gxwrsa=pw_gxwrsa,&_temp1152_pw_gxwrsa) : &pw_gxwrsa, a_gxwrs, rsloggrd.tx_xyz, rsloggrd.xrt, TYPDEF)) 
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "optramp for pw_gxwrsa.");
@@ -43168,8 +43532,8 @@ RScveval( void )
     area_gxkbsrs = area_gzkbsrs;
 
     if (FAILURE==amppwgrad(area_gxkbsrs, rsloggrd.tx_xyz, 0.0, 0.0, rsloggrd.xrt,
-                           MIN_PLATEAU_TIME, _a_gxkbsrs.fixedflag ? (_temp1154_a_gxkbsrs=a_gxkbsrs,&_temp1154_a_gxkbsrs) : &a_gxkbsrs, _pw_gxkbsrsa.fixedflag ? (_temp1155_pw_gxkbsrsa=pw_gxkbsrsa,&_temp1155_pw_gxkbsrsa) : &pw_gxkbsrsa,
-                           _pw_gxkbsrs.fixedflag ? (_temp1156_pw_gxkbsrs=pw_gxkbsrs,&_temp1156_pw_gxkbsrs) : &pw_gxkbsrs, _pw_gxkbsrsd.fixedflag ? (_temp1157_pw_gxkbsrsd=pw_gxkbsrsd,&_temp1157_pw_gxkbsrsd) : &pw_gxkbsrsd ))
+                           MIN_PLATEAU_TIME, _a_gxkbsrs.fixedflag ? (_temp1153_a_gxkbsrs=a_gxkbsrs,&_temp1153_a_gxkbsrs) : &a_gxkbsrs, _pw_gxkbsrsa.fixedflag ? (_temp1154_pw_gxkbsrsa=pw_gxkbsrsa,&_temp1154_pw_gxkbsrsa) : &pw_gxkbsrsa,
+                           _pw_gxkbsrs.fixedflag ? (_temp1155_pw_gxkbsrs=pw_gxkbsrs,&_temp1155_pw_gxkbsrs) : &pw_gxkbsrs, _pw_gxkbsrsd.fixedflag ? (_temp1156_pw_gxkbsrsd=pw_gxkbsrsd,&_temp1156_pw_gxkbsrsd) : &pw_gxkbsrsd ))
     {
         epic_error(use_ermes, "%s failed in RFcveval.",
                    EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),
@@ -43188,8 +43552,8 @@ RScveval( void )
     area_gx1rs = area_gxkbsrs - (pw_gxwrs+pw_gxwrsa)/2.0*a_gxwrs;
 
     if (FAILURE==amppwgrad(area_gx1rs, rsloggrd.tx_xyz, 0.0, 0.0, rsloggrd.xrt,
-                           MIN_PLATEAU_TIME, _a_gx1rs.fixedflag ? (_temp1158_a_gx1rs=a_gx1rs,&_temp1158_a_gx1rs) : &a_gx1rs, _pw_gx1rsa.fixedflag ? (_temp1159_pw_gx1rsa=pw_gx1rsa,&_temp1159_pw_gx1rsa) : &pw_gx1rsa,
-                           _pw_gx1rs.fixedflag ? (_temp1160_pw_gx1rs=pw_gx1rs,&_temp1160_pw_gx1rs) : &pw_gx1rs, _pw_gx1rsd.fixedflag ? (_temp1161_pw_gx1rsd=pw_gx1rsd,&_temp1161_pw_gx1rsd) : &pw_gx1rsd ))
+                           MIN_PLATEAU_TIME, _a_gx1rs.fixedflag ? (_temp1157_a_gx1rs=a_gx1rs,&_temp1157_a_gx1rs) : &a_gx1rs, _pw_gx1rsa.fixedflag ? (_temp1158_pw_gx1rsa=pw_gx1rsa,&_temp1158_pw_gx1rsa) : &pw_gx1rsa,
+                           _pw_gx1rs.fixedflag ? (_temp1159_pw_gx1rs=pw_gx1rs,&_temp1159_pw_gx1rs) : &pw_gx1rs, _pw_gx1rsd.fixedflag ? (_temp1160_pw_gx1rsd=pw_gx1rsd,&_temp1160_pw_gx1rsd) : &pw_gx1rsd ))
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "amppwgx1 for gx1rs.");
@@ -43199,8 +43563,8 @@ RScveval( void )
     /* X Killer */
     area_gxkrs = 980;
     if (FAILURE==amppwgrad(area_gxkrs, rsloggrd.tx_xyz, 0.0, 0.0, rsloggrd.xrt,
-                           MIN_PLATEAU_TIME, _a_gxkrs.fixedflag ? (_temp1162_a_gxkrs=a_gxkrs,&_temp1162_a_gxkrs) : &a_gxkrs, _pw_gxkrsa.fixedflag ? (_temp1163_pw_gxkrsa=pw_gxkrsa,&_temp1163_pw_gxkrsa) : &pw_gxkrsa,
-                           _pw_gxkrs.fixedflag ? (_temp1164_pw_gxkrs=pw_gxkrs,&_temp1164_pw_gxkrs) : &pw_gxkrs, _pw_gxkrsd.fixedflag ? (_temp1165_pw_gxkrsd=pw_gxkrsd,&_temp1165_pw_gxkrsd) : &pw_gxkrsd ))
+                           MIN_PLATEAU_TIME, _a_gxkrs.fixedflag ? (_temp1161_a_gxkrs=a_gxkrs,&_temp1161_a_gxkrs) : &a_gxkrs, _pw_gxkrsa.fixedflag ? (_temp1162_pw_gxkrsa=pw_gxkrsa,&_temp1162_pw_gxkrsa) : &pw_gxkrsa,
+                           _pw_gxkrs.fixedflag ? (_temp1163_pw_gxkrs=pw_gxkrs,&_temp1163_pw_gxkrs) : &pw_gxkrs, _pw_gxkrsd.fixedflag ? (_temp1164_pw_gxkrsd=pw_gxkrsd,&_temp1164_pw_gxkrsd) : &pw_gxkrsd ))
     {
         epic_error(use_ermes, "%s failed in RScveval.",
                    EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),
@@ -43218,8 +43582,8 @@ RScveval( void )
         area_gx2rs = -(pw_gxw2rs+(pw_gxw2rsa+pw_gxw2rsd)/2.0)*a_gxw2rs;
 
         if (FAILURE==amppwgrad(area_gx2rs, rsloggrd.tx_xy, 0.0, 0.0, rsloggrd.xrt,
-                               MIN_PLATEAU_TIME, _a_gx2rs.fixedflag ? (_temp1166_a_gx2rs=a_gx2rs,&_temp1166_a_gx2rs) : &a_gx2rs, _pw_gx2rsa.fixedflag ? (_temp1167_pw_gx2rsa=pw_gx2rsa,&_temp1167_pw_gx2rsa) : &pw_gx2rsa,
-                               _pw_gx2rs.fixedflag ? (_temp1168_pw_gx2rs=pw_gx2rs,&_temp1168_pw_gx2rs) : &pw_gx2rs, _pw_gx2rsd.fixedflag ? (_temp1169_pw_gx2rsd=pw_gx2rsd,&_temp1169_pw_gx2rsd) : &pw_gx2rsd ))
+                               MIN_PLATEAU_TIME, _a_gx2rs.fixedflag ? (_temp1165_a_gx2rs=a_gx2rs,&_temp1165_a_gx2rs) : &a_gx2rs, _pw_gx2rsa.fixedflag ? (_temp1166_pw_gx2rsa=pw_gx2rsa,&_temp1166_pw_gx2rsa) : &pw_gx2rsa,
+                               _pw_gx2rs.fixedflag ? (_temp1167_pw_gx2rs=pw_gx2rs,&_temp1167_pw_gx2rs) : &pw_gx2rs, _pw_gx2rsd.fixedflag ? (_temp1168_pw_gx2rsd=pw_gx2rsd,&_temp1168_pw_gx2rsd) : &pw_gx2rsd ))
         {
             epic_error(use_ermes, "%s failed in RScveval.", EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),
                        STRING_ARG,"amppwgrad:gx2rs");
@@ -43243,7 +43607,7 @@ RScveval( void )
 
     /* Scale the waveform amps for the phase encodes 
      * so each phase instruction jump is an integer step */
-    if ( FAILURE==endview((int)(rfshim_yres), _endview_iamprs.fixedflag ? (_temp1170_endview_iamprs=endview_iamprs,&_temp1170_endview_iamprs) : &endview_iamprs) )
+    if ( FAILURE==endview((int)(rfshim_yres), _endview_iamprs.fixedflag ? (_temp1169_endview_iamprs=endview_iamprs,&_temp1169_endview_iamprs) : &endview_iamprs) )
     {
         epic_error(use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "endview:RFShim B1 map");
@@ -43252,7 +43616,7 @@ RScveval( void )
   
     endview_scalers  = _endview_scalers.fixedflag ?   ((void)((float)max_pg_iamp/(float)endview_iamprs), endview_scalers) : (float)max_pg_iamp/(float)endview_iamprs;
 
-    if ( FAILURE==amppwtpe(_a_gy1rsa.fixedflag ? (_temp1171_a_gy1rsa=a_gy1rsa,&_temp1171_a_gy1rsa) : &a_gy1rsa, _a_gy1rsb.fixedflag ? (_temp1172_a_gy1rsb=a_gy1rsb,&_temp1172_a_gy1rsb) : &a_gy1rsb, _pw_gy1rs.fixedflag ? (_temp1173_pw_gy1rs=pw_gy1rs,&_temp1173_pw_gy1rs) : &pw_gy1rs, _pw_gy1rsa.fixedflag ? (_temp1174_pw_gy1rsa=pw_gy1rsa,&_temp1174_pw_gy1rsa) : &pw_gy1rsa, _pw_gy1rsd.fixedflag ? (_temp1175_pw_gy1rsd=pw_gy1rsd,&_temp1175_pw_gy1rsd) : &pw_gy1rsd,
+    if ( FAILURE==amppwtpe(_a_gy1rsa.fixedflag ? (_temp1170_a_gy1rsa=a_gy1rsa,&_temp1170_a_gy1rsa) : &a_gy1rsa, _a_gy1rsb.fixedflag ? (_temp1171_a_gy1rsb=a_gy1rsb,&_temp1171_a_gy1rsb) : &a_gy1rsb, _pw_gy1rs.fixedflag ? (_temp1172_pw_gy1rs=pw_gy1rs,&_temp1172_pw_gy1rs) : &pw_gy1rs, _pw_gy1rsa.fixedflag ? (_temp1173_pw_gy1rsa=pw_gy1rsa,&_temp1173_pw_gy1rsa) : &pw_gy1rsa, _pw_gy1rsd.fixedflag ? (_temp1174_pw_gy1rsd=pw_gy1rsd,&_temp1174_pw_gy1rsd) : &pw_gy1rsd,
                            rsloggrd.ty_xyz/endview_scalers,rsloggrd.yrt,
                            (0.5 * (FLOAT)(rfshim_yres-1))/(rfshim_fov * 0.1) * 1.0e6/ GAM) ) 
     {
@@ -43410,7 +43774,7 @@ DTGcveval( void )
     /********************************************************/
     pw_gzrf1dtg  = _pw_gzrf1dtg.fixedflag ?  ((void)(pw_rf1dtg), pw_gzrf1dtg) : pw_rf1dtg;
 
-    if (FAILURE==ampslice(_a_gzrf1dtg.fixedflag ? (_temp1176_a_gzrf1dtg=a_gzrf1dtg,&_temp1176_a_gzrf1dtg) : &a_gzrf1dtg, bw_rf1dtg, dynTG_slthick, gscale_rf1dtg, TYPDEF))
+    if (FAILURE==ampslice(_a_gzrf1dtg.fixedflag ? (_temp1175_a_gzrf1dtg=a_gzrf1dtg,&_temp1175_a_gzrf1dtg) : &a_gzrf1dtg, bw_rf1dtg, dynTG_slthick, gscale_rf1dtg, TYPDEF))
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "ampslice for gzrf1dtg.");
@@ -43418,7 +43782,7 @@ DTGcveval( void )
         return FAILURE;
     }
 
-    if (FAILURE==optramp(_pw_gzrf1dtga.fixedflag ? (_temp1177_pw_gzrf1dtga=pw_gzrf1dtga,&_temp1177_pw_gzrf1dtga) : &pw_gzrf1dtga, a_gzrf1dtg, dtgloggrd.tz_xyz, dtgloggrd.zrt, TYPDEF))
+    if (FAILURE==optramp(_pw_gzrf1dtga.fixedflag ? (_temp1176_pw_gzrf1dtga=pw_gzrf1dtga,&_temp1176_pw_gzrf1dtga) : &pw_gzrf1dtga, a_gzrf1dtg, dtgloggrd.tz_xyz, dtgloggrd.zrt, TYPDEF))
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "optramp for gzrf1dtga.");
@@ -43430,8 +43794,8 @@ DTGcveval( void )
     area_gzkbsdtg = 1.0E6*3.0*10.0/GAM/exist(dynTG_slthick);
 
     if (FAILURE==amppwgrad(area_gzkbsdtg, dtgloggrd.tz_xyz, 0.0, 0.0, dtgloggrd.zrt,
-                           MIN_PLATEAU_TIME, _a_gzkbsdtg.fixedflag ? (_temp1178_a_gzkbsdtg=a_gzkbsdtg,&_temp1178_a_gzkbsdtg) : &a_gzkbsdtg, _pw_gzkbsdtga.fixedflag ? (_temp1179_pw_gzkbsdtga=pw_gzkbsdtga,&_temp1179_pw_gzkbsdtga) : &pw_gzkbsdtga,
-                           _pw_gzkbsdtg.fixedflag ? (_temp1180_pw_gzkbsdtg=pw_gzkbsdtg,&_temp1180_pw_gzkbsdtg) : &pw_gzkbsdtg, _pw_gzkbsdtgd.fixedflag ? (_temp1181_pw_gzkbsdtgd=pw_gzkbsdtgd,&_temp1181_pw_gzkbsdtgd) : &pw_gzkbsdtgd ))
+                           MIN_PLATEAU_TIME, _a_gzkbsdtg.fixedflag ? (_temp1177_a_gzkbsdtg=a_gzkbsdtg,&_temp1177_a_gzkbsdtg) : &a_gzkbsdtg, _pw_gzkbsdtga.fixedflag ? (_temp1178_pw_gzkbsdtga=pw_gzkbsdtga,&_temp1178_pw_gzkbsdtga) : &pw_gzkbsdtga,
+                           _pw_gzkbsdtg.fixedflag ? (_temp1179_pw_gzkbsdtg=pw_gzkbsdtg,&_temp1179_pw_gzkbsdtg) : &pw_gzkbsdtg, _pw_gzkbsdtgd.fixedflag ? (_temp1180_pw_gzkbsdtgd=pw_gzkbsdtgd,&_temp1180_pw_gzkbsdtgd) : &pw_gzkbsdtgd ))
     {
         epic_error(use_ermes, "%s failed in DTGcveval.",
                    EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),
@@ -43459,7 +43823,7 @@ DTGcveval( void )
         area_gz1dtg += fabsf(area_gzkbsdtg);
     }
 
-    if (amppwgz1(_a_gz1dtg.fixedflag ? (_temp1182_a_gz1dtg=a_gz1dtg,&_temp1182_a_gz1dtg) : &a_gz1dtg,_pw_gz1dtg.fixedflag ? (_temp1183_pw_gz1dtg=pw_gz1dtg,&_temp1183_pw_gz1dtg) : &pw_gz1dtg,_pw_gz1dtga.fixedflag ? (_temp1184_pw_gz1dtga=pw_gz1dtga,&_temp1184_pw_gz1dtga) : &pw_gz1dtga,_pw_gz1dtgd.fixedflag ? (_temp1185_pw_gz1dtgd=pw_gz1dtgd,&_temp1185_pw_gz1dtgd) : &pw_gz1dtgd,area_gz1dtg,
+    if (amppwgz1(_a_gz1dtg.fixedflag ? (_temp1181_a_gz1dtg=a_gz1dtg,&_temp1181_a_gz1dtg) : &a_gz1dtg,_pw_gz1dtg.fixedflag ? (_temp1182_pw_gz1dtg=pw_gz1dtg,&_temp1182_pw_gz1dtg) : &pw_gz1dtg,_pw_gz1dtga.fixedflag ? (_temp1183_pw_gz1dtga=pw_gz1dtga,&_temp1183_pw_gz1dtga) : &pw_gz1dtga,_pw_gz1dtgd.fixedflag ? (_temp1184_pw_gz1dtgd=pw_gz1dtgd,&_temp1184_pw_gz1dtgd) : &pw_gz1dtgd,area_gz1dtg,
                  (int)(1000000),MIN_PLATEAU_TIME,dtgloggrd.zrt,dtgloggrd.tz_xz) == FAILURE)
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
@@ -43471,8 +43835,8 @@ DTGcveval( void )
     area_gzkdtg = 980;
 
     if (FAILURE==amppwgrad(area_gzkdtg, dtgloggrd.tz_xyz, 0.0, 0.0, dtgloggrd.zrt,
-                           MIN_PLATEAU_TIME, _a_gzkdtg.fixedflag ? (_temp1186_a_gzkdtg=a_gzkdtg,&_temp1186_a_gzkdtg) : &a_gzkdtg, _pw_gzkdtga.fixedflag ? (_temp1187_pw_gzkdtga=pw_gzkdtga,&_temp1187_pw_gzkdtga) : &pw_gzkdtga,
-                           _pw_gzkdtg.fixedflag ? (_temp1188_pw_gzkdtg=pw_gzkdtg,&_temp1188_pw_gzkdtg) : &pw_gzkdtg, _pw_gzkdtgd.fixedflag ? (_temp1189_pw_gzkdtgd=pw_gzkdtgd,&_temp1189_pw_gzkdtgd) : &pw_gzkdtgd ))
+                           MIN_PLATEAU_TIME, _a_gzkdtg.fixedflag ? (_temp1185_a_gzkdtg=a_gzkdtg,&_temp1185_a_gzkdtg) : &a_gzkdtg, _pw_gzkdtga.fixedflag ? (_temp1186_pw_gzkdtga=pw_gzkdtga,&_temp1186_pw_gzkdtga) : &pw_gzkdtga,
+                           _pw_gzkdtg.fixedflag ? (_temp1187_pw_gzkdtg=pw_gzkdtg,&_temp1187_pw_gzkdtg) : &pw_gzkdtg, _pw_gzkdtgd.fixedflag ? (_temp1188_pw_gzkdtgd=pw_gzkdtgd,&_temp1188_pw_gzkdtgd) : &pw_gzkdtgd ))
     {
         epic_error(use_ermes, "%s failed in DTGcveval.",
                    EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),
@@ -43505,14 +43869,14 @@ DTGcveval( void )
         dynTG_fov  = _dynTG_fov.fixedflag ?  ((void)(temp_float), dynTG_fov) : temp_float;
     }
 
-    if ( FAILURE==ampfov(_a_gxwdtg.fixedflag ? (_temp1190_a_gxwdtg=a_gxwdtg,&_temp1190_a_gxwdtg) : &a_gxwdtg, echo1dtg_filt.bw, dynTG_fov) )
+    if ( FAILURE==ampfov(_a_gxwdtg.fixedflag ? (_temp1189_a_gxwdtg=a_gxwdtg,&_temp1189_a_gxwdtg) : &a_gxwdtg, echo1dtg_filt.bw, dynTG_fov) )
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "ampfov for gxwdtg.");
         return FAILURE;
     }
 
-    if (FAILURE==optramp(_pw_gxwdtga.fixedflag ? (_temp1191_pw_gxwdtga=pw_gxwdtga,&_temp1191_pw_gxwdtga) : &pw_gxwdtga, a_gxwdtg, dtgloggrd.tx_xyz, dtgloggrd.xrt, TYPDEF)) 
+    if (FAILURE==optramp(_pw_gxwdtga.fixedflag ? (_temp1190_pw_gxwdtga=pw_gxwdtga,&_temp1190_pw_gxwdtga) : &pw_gxwdtga, a_gxwdtg, dtgloggrd.tx_xyz, dtgloggrd.xrt, TYPDEF)) 
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "optramp for pw_gxwdtga.");
@@ -43531,8 +43895,8 @@ DTGcveval( void )
     area_gxkbsdtg = area_gzkbsdtg;
 
     if (FAILURE==amppwgrad(area_gxkbsdtg, dtgloggrd.tx_xyz, 0.0, 0.0, dtgloggrd.xrt,
-                           MIN_PLATEAU_TIME, _a_gxkbsdtg.fixedflag ? (_temp1192_a_gxkbsdtg=a_gxkbsdtg,&_temp1192_a_gxkbsdtg) : &a_gxkbsdtg, _pw_gxkbsdtga.fixedflag ? (_temp1193_pw_gxkbsdtga=pw_gxkbsdtga,&_temp1193_pw_gxkbsdtga) : &pw_gxkbsdtga,
-                           _pw_gxkbsdtg.fixedflag ? (_temp1194_pw_gxkbsdtg=pw_gxkbsdtg,&_temp1194_pw_gxkbsdtg) : &pw_gxkbsdtg, _pw_gxkbsdtgd.fixedflag ? (_temp1195_pw_gxkbsdtgd=pw_gxkbsdtgd,&_temp1195_pw_gxkbsdtgd) : &pw_gxkbsdtgd ))
+                           MIN_PLATEAU_TIME, _a_gxkbsdtg.fixedflag ? (_temp1191_a_gxkbsdtg=a_gxkbsdtg,&_temp1191_a_gxkbsdtg) : &a_gxkbsdtg, _pw_gxkbsdtga.fixedflag ? (_temp1192_pw_gxkbsdtga=pw_gxkbsdtga,&_temp1192_pw_gxkbsdtga) : &pw_gxkbsdtga,
+                           _pw_gxkbsdtg.fixedflag ? (_temp1193_pw_gxkbsdtg=pw_gxkbsdtg,&_temp1193_pw_gxkbsdtg) : &pw_gxkbsdtg, _pw_gxkbsdtgd.fixedflag ? (_temp1194_pw_gxkbsdtgd=pw_gxkbsdtgd,&_temp1194_pw_gxkbsdtgd) : &pw_gxkbsdtgd ))
     {
         epic_error(use_ermes, "%s failed in DTGcveval.",
                    EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),
@@ -43551,8 +43915,8 @@ DTGcveval( void )
     area_gx1dtg = area_gxkbsdtg - (pw_gxwdtg+pw_gxwdtga)/2.0*a_gxwdtg;
 
     if (FAILURE==amppwgrad(area_gx1dtg, dtgloggrd.tx_xyz, 0.0, 0.0, dtgloggrd.xrt,
-                           MIN_PLATEAU_TIME, _a_gx1dtg.fixedflag ? (_temp1196_a_gx1dtg=a_gx1dtg,&_temp1196_a_gx1dtg) : &a_gx1dtg, _pw_gx1dtga.fixedflag ? (_temp1197_pw_gx1dtga=pw_gx1dtga,&_temp1197_pw_gx1dtga) : &pw_gx1dtga,
-                           _pw_gx1dtg.fixedflag ? (_temp1198_pw_gx1dtg=pw_gx1dtg,&_temp1198_pw_gx1dtg) : &pw_gx1dtg, _pw_gx1dtgd.fixedflag ? (_temp1199_pw_gx1dtgd=pw_gx1dtgd,&_temp1199_pw_gx1dtgd) : &pw_gx1dtgd ))
+                           MIN_PLATEAU_TIME, _a_gx1dtg.fixedflag ? (_temp1195_a_gx1dtg=a_gx1dtg,&_temp1195_a_gx1dtg) : &a_gx1dtg, _pw_gx1dtga.fixedflag ? (_temp1196_pw_gx1dtga=pw_gx1dtga,&_temp1196_pw_gx1dtga) : &pw_gx1dtga,
+                           _pw_gx1dtg.fixedflag ? (_temp1197_pw_gx1dtg=pw_gx1dtg,&_temp1197_pw_gx1dtg) : &pw_gx1dtg, _pw_gx1dtgd.fixedflag ? (_temp1198_pw_gx1dtgd=pw_gx1dtgd,&_temp1198_pw_gx1dtgd) : &pw_gx1dtgd ))
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "amppwgx1 for gx1dtg.");
@@ -43562,8 +43926,8 @@ DTGcveval( void )
     /* X Killer */
     area_gxkdtg = 980;
     if (FAILURE==amppwgrad(area_gxkdtg, dtgloggrd.tx_xyz, 0.0, 0.0, dtgloggrd.xrt,
-                           MIN_PLATEAU_TIME, _a_gxkdtg.fixedflag ? (_temp1200_a_gxkdtg=a_gxkdtg,&_temp1200_a_gxkdtg) : &a_gxkdtg, _pw_gxkdtga.fixedflag ? (_temp1201_pw_gxkdtga=pw_gxkdtga,&_temp1201_pw_gxkdtga) : &pw_gxkdtga,
-                           _pw_gxkdtg.fixedflag ? (_temp1202_pw_gxkdtg=pw_gxkdtg,&_temp1202_pw_gxkdtg) : &pw_gxkdtg, _pw_gxkdtgd.fixedflag ? (_temp1203_pw_gxkdtgd=pw_gxkdtgd,&_temp1203_pw_gxkdtgd) : &pw_gxkdtgd ))
+                           MIN_PLATEAU_TIME, _a_gxkdtg.fixedflag ? (_temp1199_a_gxkdtg=a_gxkdtg,&_temp1199_a_gxkdtg) : &a_gxkdtg, _pw_gxkdtga.fixedflag ? (_temp1200_pw_gxkdtga=pw_gxkdtga,&_temp1200_pw_gxkdtga) : &pw_gxkdtga,
+                           _pw_gxkdtg.fixedflag ? (_temp1201_pw_gxkdtg=pw_gxkdtg,&_temp1201_pw_gxkdtg) : &pw_gxkdtg, _pw_gxkdtgd.fixedflag ? (_temp1202_pw_gxkdtgd=pw_gxkdtgd,&_temp1202_pw_gxkdtgd) : &pw_gxkdtgd ))
     {
         epic_error(use_ermes, "%s failed in DTGcveval.",
                    EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),
@@ -43582,8 +43946,8 @@ DTGcveval( void )
         area_gx2dtg = -(pw_gxwdtg+(pw_gxwdtga+pw_gxwdtgd)/2.0)*a_gxwdtg;
 
         if (FAILURE==amppwgrad(area_gx2dtg, dtgloggrd.tx_xy, 0.0, 0.0, dtgloggrd.xrt,
-                               MIN_PLATEAU_TIME, _a_gx2dtg.fixedflag ? (_temp1204_a_gx2dtg=a_gx2dtg,&_temp1204_a_gx2dtg) : &a_gx2dtg, _pw_gx2dtga.fixedflag ? (_temp1205_pw_gx2dtga=pw_gx2dtga,&_temp1205_pw_gx2dtga) : &pw_gx2dtga,
-                               _pw_gx2dtg.fixedflag ? (_temp1206_pw_gx2dtg=pw_gx2dtg,&_temp1206_pw_gx2dtg) : &pw_gx2dtg, _pw_gx2dtgd.fixedflag ? (_temp1207_pw_gx2dtgd=pw_gx2dtgd,&_temp1207_pw_gx2dtgd) : &pw_gx2dtgd ))
+                               MIN_PLATEAU_TIME, _a_gx2dtg.fixedflag ? (_temp1203_a_gx2dtg=a_gx2dtg,&_temp1203_a_gx2dtg) : &a_gx2dtg, _pw_gx2dtga.fixedflag ? (_temp1204_pw_gx2dtga=pw_gx2dtga,&_temp1204_pw_gx2dtga) : &pw_gx2dtga,
+                               _pw_gx2dtg.fixedflag ? (_temp1205_pw_gx2dtg=pw_gx2dtg,&_temp1205_pw_gx2dtg) : &pw_gx2dtg, _pw_gx2dtgd.fixedflag ? (_temp1206_pw_gx2dtgd=pw_gx2dtgd,&_temp1206_pw_gx2dtgd) : &pw_gx2dtgd ))
         {
             epic_error(use_ermes, "%s failed in DTGcveval.",
                        EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),
@@ -43607,7 +43971,7 @@ DTGcveval( void )
 
     /* Scale the waveform amps for the phase encodes 
      * so each phase instruction jump is an integer step */
-    if ( FAILURE==endview((int)(dynTG_yres), _endview_iampdtg.fixedflag ? (_temp1208_endview_iampdtg=endview_iampdtg,&_temp1208_endview_iampdtg) : &endview_iampdtg) )
+    if ( FAILURE==endview((int)(dynTG_yres), _endview_iampdtg.fixedflag ? (_temp1207_endview_iampdtg=endview_iampdtg,&_temp1207_endview_iampdtg) : &endview_iampdtg) )
     {
         epic_error(use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "endview:DynTG B1 map");
@@ -43616,7 +43980,7 @@ DTGcveval( void )
   
     endview_scaledtg  = _endview_scaledtg.fixedflag ?   ((void)((float)max_pg_iamp/(float)endview_iampdtg), endview_scaledtg) : (float)max_pg_iamp/(float)endview_iampdtg;
 
-    if ( FAILURE==amppwtpe(_a_gy1dtga.fixedflag ? (_temp1209_a_gy1dtga=a_gy1dtga,&_temp1209_a_gy1dtga) : &a_gy1dtga, _a_gy1dtgb.fixedflag ? (_temp1210_a_gy1dtgb=a_gy1dtgb,&_temp1210_a_gy1dtgb) : &a_gy1dtgb, _pw_gy1dtg.fixedflag ? (_temp1211_pw_gy1dtg=pw_gy1dtg,&_temp1211_pw_gy1dtg) : &pw_gy1dtg, _pw_gy1dtga.fixedflag ? (_temp1212_pw_gy1dtga=pw_gy1dtga,&_temp1212_pw_gy1dtga) : &pw_gy1dtga, _pw_gy1dtgd.fixedflag ? (_temp1213_pw_gy1dtgd=pw_gy1dtgd,&_temp1213_pw_gy1dtgd) : &pw_gy1dtgd,
+    if ( FAILURE==amppwtpe(_a_gy1dtga.fixedflag ? (_temp1208_a_gy1dtga=a_gy1dtga,&_temp1208_a_gy1dtga) : &a_gy1dtga, _a_gy1dtgb.fixedflag ? (_temp1209_a_gy1dtgb=a_gy1dtgb,&_temp1209_a_gy1dtgb) : &a_gy1dtgb, _pw_gy1dtg.fixedflag ? (_temp1210_pw_gy1dtg=pw_gy1dtg,&_temp1210_pw_gy1dtg) : &pw_gy1dtg, _pw_gy1dtga.fixedflag ? (_temp1211_pw_gy1dtga=pw_gy1dtga,&_temp1211_pw_gy1dtga) : &pw_gy1dtga, _pw_gy1dtgd.fixedflag ? (_temp1212_pw_gy1dtgd=pw_gy1dtgd,&_temp1212_pw_gy1dtgd) : &pw_gy1dtgd,
                            dtgloggrd.ty_xyz/endview_scaledtg,dtgloggrd.yrt,
                            (0.5 * (FLOAT)(dynTG_yres-1))/(dynTG_fov * 0.1) * 1.0e6/ GAM) ) 
     {
@@ -43713,7 +44077,7 @@ ExtCalcveval( void )
     cal_vthick  = _cal_vthick.fixedflag ?    ((void)(cal_slthick*cal_slq), cal_vthick) : cal_slthick*cal_slq;
     bw_rf1cal  = _bw_rf1cal.fixedflag ?  ((void)((int)rfpulse[RF1_EXTCAL_SLOT].nom_bw*rfpulse[RF1_EXTCAL_SLOT].nom_pw/pw_rf1cal), bw_rf1cal) : (int)rfpulse[RF1_EXTCAL_SLOT].nom_bw*rfpulse[RF1_EXTCAL_SLOT].nom_pw/pw_rf1cal;
 
-    if (ampslice(_a_gzrf1cal.fixedflag ? (_temp1214_a_gzrf1cal=a_gzrf1cal,&_temp1214_a_gzrf1cal) : &a_gzrf1cal, bw_rf1cal, cal_vthick, 1.0, TYPDEF) == FAILURE) {
+    if (ampslice(_a_gzrf1cal.fixedflag ? (_temp1213_a_gzrf1cal=a_gzrf1cal,&_temp1213_a_gzrf1cal) : &a_gzrf1cal, bw_rf1cal, cal_vthick, 1.0, TYPDEF) == FAILURE) {
         epic_error(use_ermes, supfailfmt,
                    EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),STRING_ARG,"amplice (for gzrf1cal)");
         return FAILURE;
@@ -43721,7 +44085,7 @@ ExtCalcveval( void )
 
     a_gzrf1cal  = _a_gzrf1cal.fixedflag ?    ((void)(cal_ampscale*cal_slq/(cal_slq-4)*a_gzrf1cal), a_gzrf1cal) : cal_ampscale*cal_slq/(cal_slq-4)*a_gzrf1cal;   /* scale for slice blank of 2 */
 
-    amp_rt_dbdtopt(_cal_amplimit.fixedflag ? (_temp1215_cal_amplimit=cal_amplimit,&_temp1215_cal_amplimit) : &cal_amplimit, &target_risetime, cal_slewrate, 1.0, calloggrd.tz);
+    amp_rt_dbdtopt(_cal_amplimit.fixedflag ? (_temp1214_cal_amplimit=cal_amplimit,&_temp1214_cal_amplimit) : &cal_amplimit, &target_risetime, cal_slewrate, 1.0, calloggrd.tz);
 
     if(a_gzrf1cal <= cal_amplimit)
     {
@@ -43733,7 +44097,7 @@ ExtCalcveval( void )
         target_risetime = calloggrd.zrta.z;  /* rise time for target amp */
     }
 
-    if (optramp(_pw_gzrf1cala.fixedflag ? (_temp1216_pw_gzrf1cala=pw_gzrf1cala,&_temp1216_pw_gzrf1cala) : &pw_gzrf1cala, a_gzrf1cal, target_amp, target_risetime, TYPDEF) == FAILURE) {
+    if (optramp(_pw_gzrf1cala.fixedflag ? (_temp1215_pw_gzrf1cala=pw_gzrf1cala,&_temp1215_pw_gzrf1cala) : &pw_gzrf1cala, a_gzrf1cal, target_amp, target_risetime, TYPDEF) == FAILURE) {
         epic_error(use_ermes, supfailfmt,
                    EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
                    STRING_ARG, "optramp (for gzrf1cala)");
@@ -43741,7 +44105,7 @@ ExtCalcveval( void )
     }
     pw_gzrf1cald  = _pw_gzrf1cald.fixedflag ?  ((void)(pw_gzrf1cala), pw_gzrf1cald) : pw_gzrf1cala;
 
-    if (endview(cal_slq, _endviewz_iampcal.fixedflag ? (_temp1217_endviewz_iampcal=endviewz_iampcal,&_temp1217_endviewz_iampcal) : &endviewz_iampcal) == FAILURE)
+    if (endview(cal_slq, _endviewz_iampcal.fixedflag ? (_temp1216_endviewz_iampcal=endviewz_iampcal,&_temp1216_endviewz_iampcal) : &endviewz_iampcal) == FAILURE)
     {
         epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1),STRING_ARG,"endview:gzcombcal");
@@ -43754,11 +44118,11 @@ ExtCalcveval( void )
     temp_area = (0.5 * (FLOAT)(cal_slq-1))/(cal_vthick * 0.1) * 1.0e6/ GAM;
 
     /* Z slice encode + gzrf1 refocus */
-    amp_rt_dbdtopt(_cal_amplimit.fixedflag ? (_temp1218_cal_amplimit=cal_amplimit,&_temp1218_cal_amplimit) : &cal_amplimit, &target_risetime, cal_slewrate, 1.0, calloggrd.tz_xyz);
+    amp_rt_dbdtopt(_cal_amplimit.fixedflag ? (_temp1217_cal_amplimit=cal_amplimit,&_temp1217_cal_amplimit) : &cal_amplimit, &target_risetime, cal_slewrate, 1.0, calloggrd.tz_xyz);
     target_amp = cal_amplimit/endviewz_scalecal;
     target_risetime = RUP_GRD(ceil(target_risetime/endviewz_scalecal));  /* rise time for target amp */
-    if ( FAILURE==amppwtpe(_a_gzcombcala.fixedflag ? (_temp1219_a_gzcombcala=a_gzcombcala,&_temp1219_a_gzcombcala) : &a_gzcombcala, _a_gzcombcalb.fixedflag ? (_temp1220_a_gzcombcalb=a_gzcombcalb,&_temp1220_a_gzcombcalb) : &a_gzcombcalb, _pw_gzcombcal.fixedflag ? (_temp1221_pw_gzcombcal=pw_gzcombcal,&_temp1221_pw_gzcombcal) : &pw_gzcombcal, 
-                           _pw_gzcombcala.fixedflag ? (_temp1222_pw_gzcombcala=pw_gzcombcala,&_temp1222_pw_gzcombcala) : &pw_gzcombcala, _pw_gzcombcald.fixedflag ? (_temp1223_pw_gzcombcald=pw_gzcombcald,&_temp1223_pw_gzcombcald) : &pw_gzcombcald,
+    if ( FAILURE==amppwtpe(_a_gzcombcala.fixedflag ? (_temp1218_a_gzcombcala=a_gzcombcala,&_temp1218_a_gzcombcala) : &a_gzcombcala, _a_gzcombcalb.fixedflag ? (_temp1219_a_gzcombcalb=a_gzcombcalb,&_temp1219_a_gzcombcalb) : &a_gzcombcalb, _pw_gzcombcal.fixedflag ? (_temp1220_pw_gzcombcal=pw_gzcombcal,&_temp1220_pw_gzcombcal) : &pw_gzcombcal, 
+                           _pw_gzcombcala.fixedflag ? (_temp1221_pw_gzcombcala=pw_gzcombcala,&_temp1221_pw_gzcombcala) : &pw_gzcombcala, _pw_gzcombcald.fixedflag ? (_temp1222_pw_gzcombcald=pw_gzcombcald,&_temp1222_pw_gzcombcald) : &pw_gzcombcald,
                            target_amp, target_risetime,
                            temp_area + refocus_cal) )
     {
@@ -43782,8 +44146,8 @@ ExtCalcveval( void )
     a_gzcombcal  = _a_gzcombcal.fixedflag ?  ((void)(-a_combcal), a_gzcombcal) : -a_combcal;
 
     /* Z rewinder */
-    if ( FAILURE==amppwtpe(_a_gzprcala.fixedflag ? (_temp1224_a_gzprcala=a_gzprcala,&_temp1224_a_gzprcala) : &a_gzprcala, _a_gzprcalb.fixedflag ? (_temp1225_a_gzprcalb=a_gzprcalb,&_temp1225_a_gzprcalb) : &a_gzprcalb, _pw_gzprcal.fixedflag ? (_temp1226_pw_gzprcal=pw_gzprcal,&_temp1226_pw_gzprcal) : &pw_gzprcal, 
-                           _pw_gzprcala.fixedflag ? (_temp1227_pw_gzprcala=pw_gzprcala,&_temp1227_pw_gzprcala) : &pw_gzprcala, _pw_gzprcald.fixedflag ? (_temp1228_pw_gzprcald=pw_gzprcald,&_temp1228_pw_gzprcald) : &pw_gzprcald,
+    if ( FAILURE==amppwtpe(_a_gzprcala.fixedflag ? (_temp1223_a_gzprcala=a_gzprcala,&_temp1223_a_gzprcala) : &a_gzprcala, _a_gzprcalb.fixedflag ? (_temp1224_a_gzprcalb=a_gzprcalb,&_temp1224_a_gzprcalb) : &a_gzprcalb, _pw_gzprcal.fixedflag ? (_temp1225_pw_gzprcal=pw_gzprcal,&_temp1225_pw_gzprcal) : &pw_gzprcal, 
+                           _pw_gzprcala.fixedflag ? (_temp1226_pw_gzprcala=pw_gzprcala,&_temp1226_pw_gzprcala) : &pw_gzprcala, _pw_gzprcald.fixedflag ? (_temp1227_pw_gzprcald=pw_gzprcald,&_temp1227_pw_gzprcald) : &pw_gzprcald,
                            target_amp, target_risetime,
                            temp_area + area_gzkcal) )
     {
@@ -43828,7 +44192,7 @@ ExtCalcveval( void )
         return FAILURE;
     }
 
-    amp_rt_dbdtopt(_cal_amplimit.fixedflag ? (_temp1229_cal_amplimit=cal_amplimit,&_temp1229_cal_amplimit) : &cal_amplimit, &target_risetime, cal_slewrate, 1.0, calloggrd.tx_xyz);
+    amp_rt_dbdtopt(_cal_amplimit.fixedflag ? (_temp1228_cal_amplimit=cal_amplimit,&_temp1228_cal_amplimit) : &cal_amplimit, &target_risetime, cal_slewrate, 1.0, calloggrd.tx_xyz);
     if(a_gxwcal <= cal_amplimit)
     {
         target_amp = cal_amplimit;
@@ -43839,7 +44203,7 @@ ExtCalcveval( void )
         target_risetime = calloggrd.xrta.x;  /* rise time for target amp */
     }
 
-    if (FAILURE==optramp(_pw_gxwcala.fixedflag ? (_temp1230_pw_gxwcala=pw_gxwcala,&_temp1230_pw_gxwcala) : &pw_gxwcala, a_gxwcal, target_amp, target_risetime, TYPDEF))
+    if (FAILURE==optramp(_pw_gxwcala.fixedflag ? (_temp1229_pw_gxwcala=pw_gxwcala,&_temp1229_pw_gxwcala) : &pw_gxwcala, a_gxwcal, target_amp, target_risetime, TYPDEF))
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "optramp for pw_gxwcala.");
@@ -43852,8 +44216,8 @@ ExtCalcveval( void )
     /* Gx1 */
     area_gxwcal = a_gxwcal*tacq_cal;
     temp_area = 0.5*a_gxwcal*pw_gxwcala;
-    amp_rt_dbdtopt(_cal_amplimit.fixedflag ? (_temp1231_cal_amplimit=cal_amplimit,&_temp1231_cal_amplimit) : &cal_amplimit, &target_risetime, cal_slewrate, 1.0, calloggrd.tx_xyz);
-    if (amppwgx1(_a_gx1cal.fixedflag ? (_temp1232_a_gx1cal=a_gx1cal,&_temp1232_a_gx1cal) : &a_gx1cal, _pw_gx1cal.fixedflag ? (_temp1233_pw_gx1cal=pw_gx1cal,&_temp1233_pw_gx1cal) : &pw_gx1cal, _pw_gx1cala.fixedflag ? (_temp1234_pw_gx1cala=pw_gx1cala,&_temp1234_pw_gx1cala) : &pw_gx1cala, _pw_gx1cald.fixedflag ? (_temp1235_pw_gx1cald=pw_gx1cald,&_temp1235_pw_gx1cald) : &pw_gx1cald,
+    amp_rt_dbdtopt(_cal_amplimit.fixedflag ? (_temp1230_cal_amplimit=cal_amplimit,&_temp1230_cal_amplimit) : &cal_amplimit, &target_risetime, cal_slewrate, 1.0, calloggrd.tx_xyz);
+    if (amppwgx1(_a_gx1cal.fixedflag ? (_temp1231_a_gx1cal=a_gx1cal,&_temp1231_a_gx1cal) : &a_gx1cal, _pw_gx1cal.fixedflag ? (_temp1232_pw_gx1cal=pw_gx1cal,&_temp1232_pw_gx1cal) : &pw_gx1cal, _pw_gx1cala.fixedflag ? (_temp1233_pw_gx1cala=pw_gx1cala,&_temp1233_pw_gx1cala) : &pw_gx1cala, _pw_gx1cald.fixedflag ? (_temp1234_pw_gx1cald=pw_gx1cald,&_temp1234_pw_gx1cald) : &pw_gx1cald,
                  (int)TYPGRAD, area_gxwcal, temp_area,
                  1000000, 1.0, MIN_PLATEAU_TIME,
                  target_risetime, cal_amplimit) == FAILURE)
@@ -43870,7 +44234,7 @@ ExtCalcveval( void )
     /***********************************************/
     /*    Y phase encode                           */
     /**********************************************/
-    if (endview(cal_yres, _endview_iampcal.fixedflag ? (_temp1236_endview_iampcal=endview_iampcal,&_temp1236_endview_iampcal) : &endview_iampcal) == FAILURE)
+    if (endview(cal_yres, _endview_iampcal.fixedflag ? (_temp1235_endview_iampcal=endview_iampcal,&_temp1235_endview_iampcal) : &endview_iampcal) == FAILURE)
     {
         epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1),STRING_ARG,"endview y for cal");
@@ -43878,11 +44242,11 @@ ExtCalcveval( void )
     } 
 
     endview_scalecal  = _endview_scalecal.fixedflag ?   ((void)((float)max_pg_iamp/(float)endview_iampcal), endview_scalecal) : (float)max_pg_iamp/(float)endview_iampcal;
-    amp_rt_dbdtopt(_cal_amplimit.fixedflag ? (_temp1237_cal_amplimit=cal_amplimit,&_temp1237_cal_amplimit) : &cal_amplimit, &target_risetime, cal_slewrate, 1.0, calloggrd.ty_xyz);
+    amp_rt_dbdtopt(_cal_amplimit.fixedflag ? (_temp1236_cal_amplimit=cal_amplimit,&_temp1236_cal_amplimit) : &cal_amplimit, &target_risetime, cal_slewrate, 1.0, calloggrd.ty_xyz);
     target_amp = cal_amplimit/endview_scalecal;
     target_risetime = RUP_GRD(ceil(target_risetime/endview_scalecal));  /* rise time for target amp */
     
-    if ( FAILURE==amppwtpe(_a_gy1cala.fixedflag ? (_temp1238_a_gy1cala=a_gy1cala,&_temp1238_a_gy1cala) : &a_gy1cala, _a_gy1calb.fixedflag ? (_temp1239_a_gy1calb=a_gy1calb,&_temp1239_a_gy1calb) : &a_gy1calb, _pw_gy1cal.fixedflag ? (_temp1240_pw_gy1cal=pw_gy1cal,&_temp1240_pw_gy1cal) : &pw_gy1cal, _pw_gy1cala.fixedflag ? (_temp1241_pw_gy1cala=pw_gy1cala,&_temp1241_pw_gy1cala) : &pw_gy1cala, _pw_gy1cald.fixedflag ? (_temp1242_pw_gy1cald=pw_gy1cald,&_temp1242_pw_gy1cald) : &pw_gy1cald,
+    if ( FAILURE==amppwtpe(_a_gy1cala.fixedflag ? (_temp1237_a_gy1cala=a_gy1cala,&_temp1237_a_gy1cala) : &a_gy1cala, _a_gy1calb.fixedflag ? (_temp1238_a_gy1calb=a_gy1calb,&_temp1238_a_gy1calb) : &a_gy1calb, _pw_gy1cal.fixedflag ? (_temp1239_pw_gy1cal=pw_gy1cal,&_temp1239_pw_gy1cal) : &pw_gy1cal, _pw_gy1cala.fixedflag ? (_temp1240_pw_gy1cala=pw_gy1cala,&_temp1240_pw_gy1cala) : &pw_gy1cala, _pw_gy1cald.fixedflag ? (_temp1241_pw_gy1cald=pw_gy1cald,&_temp1241_pw_gy1cald) : &pw_gy1cald,
                            target_amp, target_risetime,
                            (0.5 * (FLOAT)(cal_yres-1))/(cal_yfov * 0.1) * 1.0e6/ GAM) )
     {
@@ -44022,7 +44386,7 @@ AutoCoilcveval( void )
     coil_vthick  = _coil_vthick.fixedflag ?    ((void)(coil_slthick*coil_slq), coil_vthick) : coil_slthick*coil_slq;
     bw_rf1coil  = _bw_rf1coil.fixedflag ?  ((void)((int)rfpulse[RF1_AUTOCOIL_SLOT].nom_bw*rfpulse[RF1_AUTOCOIL_SLOT].nom_pw/pw_rf1coil), bw_rf1coil) : (int)rfpulse[RF1_AUTOCOIL_SLOT].nom_bw*rfpulse[RF1_AUTOCOIL_SLOT].nom_pw/pw_rf1coil;
 
-    if (ampslice(_a_gzrf1coil.fixedflag ? (_temp1243_a_gzrf1coil=a_gzrf1coil,&_temp1243_a_gzrf1coil) : &a_gzrf1coil, bw_rf1coil, coil_vthick, 1.0, TYPDEF) == FAILURE) {
+    if (ampslice(_a_gzrf1coil.fixedflag ? (_temp1242_a_gzrf1coil=a_gzrf1coil,&_temp1242_a_gzrf1coil) : &a_gzrf1coil, bw_rf1coil, coil_vthick, 1.0, TYPDEF) == FAILURE) {
         epic_error(use_ermes, supfailfmt,
                    EM_PSD_SUPPORT_FAILURE,EE_ARGS(1),STRING_ARG,"amplice (for gzrf1coil)");
         return FAILURE;
@@ -44030,7 +44394,7 @@ AutoCoilcveval( void )
 
     a_gzrf1coil  = _a_gzrf1coil.fixedflag ?    ((void)(1.05*coil_slq/(coil_slq-4)*a_gzrf1coil), a_gzrf1coil) : 1.05*coil_slq/(coil_slq-4)*a_gzrf1coil;   /* scale for slice blank of 2 */
 
-    amp_rt_dbdtopt(_coil_amplimit.fixedflag ? (_temp1244_coil_amplimit=coil_amplimit,&_temp1244_coil_amplimit) : &coil_amplimit, &target_risetime, coil_slewrate, 1.0, coilloggrd.tz);
+    amp_rt_dbdtopt(_coil_amplimit.fixedflag ? (_temp1243_coil_amplimit=coil_amplimit,&_temp1243_coil_amplimit) : &coil_amplimit, &target_risetime, coil_slewrate, 1.0, coilloggrd.tz);
     if(a_gzrf1coil <= coil_amplimit)
     {
         target_amp = coil_amplimit;
@@ -44041,7 +44405,7 @@ AutoCoilcveval( void )
         target_risetime = coilloggrd.zrta.z;  /* rise time for target amp */
     }
 
-    if (optramp(_pw_gzrf1coila.fixedflag ? (_temp1245_pw_gzrf1coila=pw_gzrf1coila,&_temp1245_pw_gzrf1coila) : &pw_gzrf1coila, a_gzrf1coil, target_amp, target_risetime, TYPDEF) == FAILURE) {
+    if (optramp(_pw_gzrf1coila.fixedflag ? (_temp1244_pw_gzrf1coila=pw_gzrf1coila,&_temp1244_pw_gzrf1coila) : &pw_gzrf1coila, a_gzrf1coil, target_amp, target_risetime, TYPDEF) == FAILURE) {
         epic_error(use_ermes, supfailfmt,
                    EM_PSD_SUPPORT_FAILURE, EE_ARGS(1),
                    STRING_ARG, "optramp (for gzrf1coila)");
@@ -44049,7 +44413,7 @@ AutoCoilcveval( void )
     }
     pw_gzrf1coild  = _pw_gzrf1coild.fixedflag ?  ((void)(pw_gzrf1coila), pw_gzrf1coild) : pw_gzrf1coila;
 
-    if (endview(coil_slq, _endviewz_iampcoil.fixedflag ? (_temp1246_endviewz_iampcoil=endviewz_iampcoil,&_temp1246_endviewz_iampcoil) : &endviewz_iampcoil) == FAILURE)
+    if (endview(coil_slq, _endviewz_iampcoil.fixedflag ? (_temp1245_endviewz_iampcoil=endviewz_iampcoil,&_temp1245_endviewz_iampcoil) : &endviewz_iampcoil) == FAILURE)
     {
         epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1),STRING_ARG,"endview:gzcombcoil");
@@ -44060,12 +44424,12 @@ AutoCoilcveval( void )
     refocus_coil = fabs(a_gzrf1coil)*(coil_iso_delay + pw_gzrf1coild/2.0);
     temp_area = (0.5 * (FLOAT)(coil_slq-1))/(coil_vthick * 0.1) * 1.0e6/ GAM;
 
-    amp_rt_dbdtopt(_coil_amplimit.fixedflag ? (_temp1247_coil_amplimit=coil_amplimit,&_temp1247_coil_amplimit) : &coil_amplimit, &target_risetime, coil_slewrate, 1.0, coilloggrd.tz_xyz);
+    amp_rt_dbdtopt(_coil_amplimit.fixedflag ? (_temp1246_coil_amplimit=coil_amplimit,&_temp1246_coil_amplimit) : &coil_amplimit, &target_risetime, coil_slewrate, 1.0, coilloggrd.tz_xyz);
     target_amp = coil_amplimit/endviewz_scalecal;
     target_risetime = RUP_GRD(ceil(target_risetime/endviewz_scalecal));  /* rise time for target amp */
     /* Z slice encode + gzrf1 refocus */
-    if ( FAILURE==amppwtpe(_a_gzcombcoila.fixedflag ? (_temp1248_a_gzcombcoila=a_gzcombcoila,&_temp1248_a_gzcombcoila) : &a_gzcombcoila, _a_gzcombcoilb.fixedflag ? (_temp1249_a_gzcombcoilb=a_gzcombcoilb,&_temp1249_a_gzcombcoilb) : &a_gzcombcoilb, _pw_gzcombcoil.fixedflag ? (_temp1250_pw_gzcombcoil=pw_gzcombcoil,&_temp1250_pw_gzcombcoil) : &pw_gzcombcoil, 
-                           _pw_gzcombcoila.fixedflag ? (_temp1251_pw_gzcombcoila=pw_gzcombcoila,&_temp1251_pw_gzcombcoila) : &pw_gzcombcoila, _pw_gzcombcoild.fixedflag ? (_temp1252_pw_gzcombcoild=pw_gzcombcoild,&_temp1252_pw_gzcombcoild) : &pw_gzcombcoild,
+    if ( FAILURE==amppwtpe(_a_gzcombcoila.fixedflag ? (_temp1247_a_gzcombcoila=a_gzcombcoila,&_temp1247_a_gzcombcoila) : &a_gzcombcoila, _a_gzcombcoilb.fixedflag ? (_temp1248_a_gzcombcoilb=a_gzcombcoilb,&_temp1248_a_gzcombcoilb) : &a_gzcombcoilb, _pw_gzcombcoil.fixedflag ? (_temp1249_pw_gzcombcoil=pw_gzcombcoil,&_temp1249_pw_gzcombcoil) : &pw_gzcombcoil, 
+                           _pw_gzcombcoila.fixedflag ? (_temp1250_pw_gzcombcoila=pw_gzcombcoila,&_temp1250_pw_gzcombcoila) : &pw_gzcombcoila, _pw_gzcombcoild.fixedflag ? (_temp1251_pw_gzcombcoild=pw_gzcombcoild,&_temp1251_pw_gzcombcoild) : &pw_gzcombcoild,
                            target_amp, target_risetime,
                            temp_area + refocus_coil) )
     {
@@ -44089,8 +44453,8 @@ AutoCoilcveval( void )
     a_gzcombcoil  = _a_gzcombcoil.fixedflag ?  ((void)(-a_combcoil), a_gzcombcoil) : -a_combcoil;
 
     /* Z rewinder */
-    if ( FAILURE==amppwtpe(_a_gzprcoila.fixedflag ? (_temp1253_a_gzprcoila=a_gzprcoila,&_temp1253_a_gzprcoila) : &a_gzprcoila, _a_gzprcoilb.fixedflag ? (_temp1254_a_gzprcoilb=a_gzprcoilb,&_temp1254_a_gzprcoilb) : &a_gzprcoilb, _pw_gzprcoil.fixedflag ? (_temp1255_pw_gzprcoil=pw_gzprcoil,&_temp1255_pw_gzprcoil) : &pw_gzprcoil, 
-                           _pw_gzprcoila.fixedflag ? (_temp1256_pw_gzprcoila=pw_gzprcoila,&_temp1256_pw_gzprcoila) : &pw_gzprcoila, _pw_gzprcoild.fixedflag ? (_temp1257_pw_gzprcoild=pw_gzprcoild,&_temp1257_pw_gzprcoild) : &pw_gzprcoild,
+    if ( FAILURE==amppwtpe(_a_gzprcoila.fixedflag ? (_temp1252_a_gzprcoila=a_gzprcoila,&_temp1252_a_gzprcoila) : &a_gzprcoila, _a_gzprcoilb.fixedflag ? (_temp1253_a_gzprcoilb=a_gzprcoilb,&_temp1253_a_gzprcoilb) : &a_gzprcoilb, _pw_gzprcoil.fixedflag ? (_temp1254_pw_gzprcoil=pw_gzprcoil,&_temp1254_pw_gzprcoil) : &pw_gzprcoil, 
+                           _pw_gzprcoila.fixedflag ? (_temp1255_pw_gzprcoila=pw_gzprcoila,&_temp1255_pw_gzprcoila) : &pw_gzprcoila, _pw_gzprcoild.fixedflag ? (_temp1256_pw_gzprcoild=pw_gzprcoild,&_temp1256_pw_gzprcoild) : &pw_gzprcoild,
                            target_amp, target_risetime,
                            temp_area + area_gzkcoil) )
     {
@@ -44135,7 +44499,7 @@ AutoCoilcveval( void )
         return FAILURE;
     }
 
-    amp_rt_dbdtopt(_coil_amplimit.fixedflag ? (_temp1258_coil_amplimit=coil_amplimit,&_temp1258_coil_amplimit) : &coil_amplimit, &target_risetime, coil_slewrate, 1.0, coilloggrd.tx_xyz);
+    amp_rt_dbdtopt(_coil_amplimit.fixedflag ? (_temp1257_coil_amplimit=coil_amplimit,&_temp1257_coil_amplimit) : &coil_amplimit, &target_risetime, coil_slewrate, 1.0, coilloggrd.tx_xyz);
     if(a_gxwcoil <= coil_amplimit)
     {
         target_amp = coil_amplimit;
@@ -44146,7 +44510,7 @@ AutoCoilcveval( void )
         target_risetime = coilloggrd.xrta.x;  /* rise time for target amp */
     }
 
-    if (FAILURE==optramp(_pw_gxwcoila.fixedflag ? (_temp1259_pw_gxwcoila=pw_gxwcoila,&_temp1259_pw_gxwcoila) : &pw_gxwcoila, a_gxwcoil, target_amp, target_risetime, TYPDEF))
+    if (FAILURE==optramp(_pw_gxwcoila.fixedflag ? (_temp1258_pw_gxwcoila=pw_gxwcoila,&_temp1258_pw_gxwcoila) : &pw_gxwcoila, a_gxwcoil, target_amp, target_risetime, TYPDEF))
     {
         epic_error(use_ermes, "%s failed", EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1), STRING_ARG, "optramp for pw_gxwcoila.");
@@ -44160,8 +44524,8 @@ AutoCoilcveval( void )
     area_gxwcoil = a_gxwcoil*tacq_coil;
     temp_area = 0.5*a_gxwcoil*pw_gxwcoila;
 
-    amp_rt_dbdtopt(_coil_amplimit.fixedflag ? (_temp1260_coil_amplimit=coil_amplimit,&_temp1260_coil_amplimit) : &coil_amplimit, &target_risetime, coil_slewrate, 1.0, coilloggrd.tx_xyz);
-    if (amppwgx1(_a_gx1coil.fixedflag ? (_temp1261_a_gx1coil=a_gx1coil,&_temp1261_a_gx1coil) : &a_gx1coil, _pw_gx1coil.fixedflag ? (_temp1262_pw_gx1coil=pw_gx1coil,&_temp1262_pw_gx1coil) : &pw_gx1coil, _pw_gx1coila.fixedflag ? (_temp1263_pw_gx1coila=pw_gx1coila,&_temp1263_pw_gx1coila) : &pw_gx1coila, _pw_gx1coild.fixedflag ? (_temp1264_pw_gx1coild=pw_gx1coild,&_temp1264_pw_gx1coild) : &pw_gx1coild,
+    amp_rt_dbdtopt(_coil_amplimit.fixedflag ? (_temp1259_coil_amplimit=coil_amplimit,&_temp1259_coil_amplimit) : &coil_amplimit, &target_risetime, coil_slewrate, 1.0, coilloggrd.tx_xyz);
+    if (amppwgx1(_a_gx1coil.fixedflag ? (_temp1260_a_gx1coil=a_gx1coil,&_temp1260_a_gx1coil) : &a_gx1coil, _pw_gx1coil.fixedflag ? (_temp1261_pw_gx1coil=pw_gx1coil,&_temp1261_pw_gx1coil) : &pw_gx1coil, _pw_gx1coila.fixedflag ? (_temp1262_pw_gx1coila=pw_gx1coila,&_temp1262_pw_gx1coila) : &pw_gx1coila, _pw_gx1coild.fixedflag ? (_temp1263_pw_gx1coild=pw_gx1coild,&_temp1263_pw_gx1coild) : &pw_gx1coild,
                  (int)TYPGRAD, area_gxwcoil, temp_area,
                  1000000, 1.0, MIN_PLATEAU_TIME,
                  target_risetime, coil_amplimit) == FAILURE)
@@ -44178,7 +44542,7 @@ AutoCoilcveval( void )
     /***********************************************/
     /*    Y phase encode                           */
     /**********************************************/
-    if (endview(coil_yres, _endview_iampcoil.fixedflag ? (_temp1265_endview_iampcoil=endview_iampcoil,&_temp1265_endview_iampcoil) : &endview_iampcoil) == FAILURE)
+    if (endview(coil_yres, _endview_iampcoil.fixedflag ? (_temp1264_endview_iampcoil=endview_iampcoil,&_temp1264_endview_iampcoil) : &endview_iampcoil) == FAILURE)
     {
         epic_error(use_ermes,supfailfmt,EM_PSD_SUPPORT_FAILURE,
                    EE_ARGS(1),STRING_ARG,"endview y for coil");
@@ -44186,11 +44550,11 @@ AutoCoilcveval( void )
     } 
     endview_scalecoil  = _endview_scalecoil.fixedflag ?   ((void)((float)max_pg_iamp/(float)endview_iampcoil), endview_scalecoil) : (float)max_pg_iamp/(float)endview_iampcoil;
 
-    amp_rt_dbdtopt(_coil_amplimit.fixedflag ? (_temp1266_coil_amplimit=coil_amplimit,&_temp1266_coil_amplimit) : &coil_amplimit, &target_risetime, coil_slewrate, 1.0, coilloggrd.ty_xyz);
+    amp_rt_dbdtopt(_coil_amplimit.fixedflag ? (_temp1265_coil_amplimit=coil_amplimit,&_temp1265_coil_amplimit) : &coil_amplimit, &target_risetime, coil_slewrate, 1.0, coilloggrd.ty_xyz);
     target_amp = coil_amplimit/endview_scalecoil;
     target_risetime = RUP_GRD(ceil(target_risetime/endview_scalecoil));  /* rise time for target amp */
 
-    if ( FAILURE==amppwtpe(_a_gy1coila.fixedflag ? (_temp1267_a_gy1coila=a_gy1coila,&_temp1267_a_gy1coila) : &a_gy1coila, _a_gy1coilb.fixedflag ? (_temp1268_a_gy1coilb=a_gy1coilb,&_temp1268_a_gy1coilb) : &a_gy1coilb, _pw_gy1coil.fixedflag ? (_temp1269_pw_gy1coil=pw_gy1coil,&_temp1269_pw_gy1coil) : &pw_gy1coil, _pw_gy1coila.fixedflag ? (_temp1270_pw_gy1coila=pw_gy1coila,&_temp1270_pw_gy1coila) : &pw_gy1coila, _pw_gy1coild.fixedflag ? (_temp1271_pw_gy1coild=pw_gy1coild,&_temp1271_pw_gy1coild) : &pw_gy1coild,
+    if ( FAILURE==amppwtpe(_a_gy1coila.fixedflag ? (_temp1266_a_gy1coila=a_gy1coila,&_temp1266_a_gy1coila) : &a_gy1coila, _a_gy1coilb.fixedflag ? (_temp1267_a_gy1coilb=a_gy1coilb,&_temp1267_a_gy1coilb) : &a_gy1coilb, _pw_gy1coil.fixedflag ? (_temp1268_pw_gy1coil=pw_gy1coil,&_temp1268_pw_gy1coil) : &pw_gy1coil, _pw_gy1coila.fixedflag ? (_temp1269_pw_gy1coila=pw_gy1coila,&_temp1269_pw_gy1coila) : &pw_gy1coila, _pw_gy1coild.fixedflag ? (_temp1270_pw_gy1coild=pw_gy1coild,&_temp1270_pw_gy1coild) : &pw_gy1coild,
                            target_amp, target_risetime,
                            (0.5 * (FLOAT)(coil_yres-1))/(coil_yfov * 0.1) * 1.0e6/ GAM) )
     {
@@ -44429,7 +44793,7 @@ PS1predownload( void )
         || isRioSystem() )
     {
         /* MRIhc57081: Limit TG to coil peak B1 on MR750w */
-        calcTGLimit(_tgcap.fixedflag ? (_temp1272_tgcap=tgcap,&_temp1272_tgcap) : &tgcap, _tgwindow.fixedflag ? (_temp1273_tgwindow=tgwindow,&_temp1273_tgwindow) : &tgwindow, maxB1Seq, txCoilInfo[getTxIndex(coilInfo[0])]);
+        calcTGLimit(_tgcap.fixedflag ? (_temp1271_tgcap=tgcap,&_temp1271_tgcap) : &tgcap, _tgwindow.fixedflag ? (_temp1272_tgwindow=tgwindow,&_temp1272_tgwindow) : &tgwindow, maxB1Seq, txCoilInfo[getTxIndex(coilInfo[0])]);
     }
     else
     {
@@ -44483,7 +44847,7 @@ PS1predownload( void )
        Disable writing corner points files for prescan entry points. */
     int gradHeatFile_save = gradHeatFile;
     gradHeatFile  = _gradHeatFile.fixedflag ?  ((void)(FALSE), gradHeatFile) : FALSE;
-    if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1274_min_seqgrad=min_seqgrad,&_temp1274_min_seqgrad) : &min_seqgrad,
+    if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1273_min_seqgrad=min_seqgrad,&_temp1273_min_seqgrad) : &min_seqgrad,
                             gradx, GX_FREE,
                             grady, GY_FREE,
                             gradz, GZ_FREE,
@@ -44577,7 +44941,7 @@ CFLpredownload( void )
        Disable writing corner points files for prescan entry points. */
     int gradHeatFile_save = gradHeatFile;
     gradHeatFile  = _gradHeatFile.fixedflag ?  ((void)(FALSE), gradHeatFile) : FALSE;
-    if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1275_min_seqgrad=min_seqgrad,&_temp1275_min_seqgrad) : &min_seqgrad,
+    if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1274_min_seqgrad=min_seqgrad,&_temp1274_min_seqgrad) : &min_seqgrad,
                             gradx, GX_FREE,
                             grady, GY_FREE,
                             gradz, GZ_FREE,
@@ -44622,7 +44986,7 @@ RCVNpredownload( void )
        Disable writing corner points files for prescan entry points. */
     int gradHeatFile_save = gradHeatFile;
     gradHeatFile  = _gradHeatFile.fixedflag ?  ((void)(FALSE), gradHeatFile) : FALSE;
-    if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1276_min_seqgrad=min_seqgrad,&_temp1276_min_seqgrad) : &min_seqgrad,
+    if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1275_min_seqgrad=min_seqgrad,&_temp1275_min_seqgrad) : &min_seqgrad,
                             gradx, GX_FREE,
                             grady, GY_FREE,
                             gradz, GZ_FREE,
@@ -44762,7 +45126,7 @@ CFHpredownload( void )
        Disable writing corner points files for prescan entry points. */
     int gradHeatFile_save = gradHeatFile;
     gradHeatFile  = _gradHeatFile.fixedflag ?  ((void)(FALSE), gradHeatFile) : FALSE;
-    if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1277_min_seqgrad=min_seqgrad,&_temp1277_min_seqgrad) : &min_seqgrad,
+    if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1276_min_seqgrad=min_seqgrad,&_temp1276_min_seqgrad) : &min_seqgrad,
                             gradx, GX_FREE,
                             grady, GY_FREE,
                             gradz, GZ_FREE,
@@ -45102,7 +45466,7 @@ FTGpredownload( void )
            Disable writing corner points files for prescan entry points. */
         int gradHeatFile_save = gradHeatFile;
         gradHeatFile  = _gradHeatFile.fixedflag ?  ((void)(FALSE), gradHeatFile) : FALSE;
-        if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1278_min_seqgrad=min_seqgrad,&_temp1278_min_seqgrad) : &min_seqgrad,
+        if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1277_min_seqgrad=min_seqgrad,&_temp1277_min_seqgrad) : &min_seqgrad,
                                 gradx, GX_FREE,
                                 grady, GY_FREE,
                                 gradz, GZ_FREE,
@@ -45212,7 +45576,7 @@ XTGpredownload( void )
            Disable writing corner points files for prescan entry points. */
         int gradHeatFile_save = gradHeatFile;
         gradHeatFile  = _gradHeatFile.fixedflag ?  ((void)(FALSE), gradHeatFile) : FALSE;
-        if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1279_min_seqgrad=min_seqgrad,&_temp1279_min_seqgrad) : &min_seqgrad,
+        if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1278_min_seqgrad=min_seqgrad,&_temp1278_min_seqgrad) : &min_seqgrad,
                                 gradx, GX_FREE,
                                 grady, GY_FREE,
                                 gradz, GZ_FREE,
@@ -45312,7 +45676,7 @@ ASpredownload( void )
        Disable writing corner points files for prescan entry points. */
     int gradHeatFile_save = gradHeatFile;
     gradHeatFile  = _gradHeatFile.fixedflag ?  ((void)(FALSE), gradHeatFile) : FALSE;
-    if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1280_min_seqgrad=min_seqgrad,&_temp1280_min_seqgrad) : &min_seqgrad,
+    if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1279_min_seqgrad=min_seqgrad,&_temp1279_min_seqgrad) : &min_seqgrad,
                             gradx, GX_FREE,
                             grady, GY_FREE,
                             gradz, GZ_FREE,
@@ -45436,7 +45800,7 @@ RSpredownload( void )
            Disable writing corner points files for prescan entry points. */
         int gradHeatFile_save = gradHeatFile;
         gradHeatFile  = _gradHeatFile.fixedflag ?  ((void)(FALSE), gradHeatFile) : FALSE;
-        if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1281_min_seqgrad=min_seqgrad,&_temp1281_min_seqgrad) : &min_seqgrad,
+        if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1280_min_seqgrad=min_seqgrad,&_temp1280_min_seqgrad) : &min_seqgrad,
                                 gradx, GX_FREE,
                                 grady, GY_FREE,
                                 gradz, GZ_FREE,
@@ -45576,7 +45940,7 @@ DTGpredownload( void )
            Disable writing corner points files for prescan entry points. */
         int gradHeatFile_save = gradHeatFile;
         gradHeatFile  = _gradHeatFile.fixedflag ?  ((void)(FALSE), gradHeatFile) : FALSE;
-        if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1282_min_seqgrad=min_seqgrad,&_temp1282_min_seqgrad) : &min_seqgrad,
+        if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1281_min_seqgrad=min_seqgrad,&_temp1281_min_seqgrad) : &min_seqgrad,
                                 gradx, GX_FREE,
                                 grady, GY_FREE,
                                 gradz, GZ_FREE,
@@ -45762,7 +46126,7 @@ ExtCalpredownload( void )
 
         int gradHeatFile_save = gradHeatFile;
         gradHeatFile  = _gradHeatFile.fixedflag ?  ((void)(FALSE), gradHeatFile) : FALSE;
-        if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1283_min_seqgrad=min_seqgrad,&_temp1283_min_seqgrad) : &min_seqgrad,
+        if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1282_min_seqgrad=min_seqgrad,&_temp1282_min_seqgrad) : &min_seqgrad,
                                 gradx, GX_FREE,
                                 grady, GY_FREE,
                                 gradz, GZ_FREE,
@@ -45813,7 +46177,7 @@ ExtCalpredownload( void )
                                     cal_vthick,
                                     cal_pfkr_flag,
                                     cal_pfkr_fraction,
-                                    _cal_sampledPts.fixedflag ? (_temp1284_cal_sampledPts=cal_sampledPts,&_temp1284_cal_sampledPts) : &cal_sampledPts ))
+                                    _cal_sampledPts.fixedflag ? (_temp1283_cal_sampledPts=cal_sampledPts,&_temp1283_cal_sampledPts) : &cal_sampledPts ))
     {
         epic_error(use_ermes, "%s failed",
                    EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "generateZyIndex");
@@ -45902,7 +46266,7 @@ AutoCoilpredownload( void )
 
         int gradHeatFile_save = gradHeatFile;
         gradHeatFile  = _gradHeatFile.fixedflag ?  ((void)(FALSE), gradHeatFile) : FALSE;
-        if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1285_min_seqgrad=min_seqgrad,&_temp1285_min_seqgrad) : &min_seqgrad,
+        if ( FAILURE == minseq( _min_seqgrad.fixedflag ? (_temp1284_min_seqgrad=min_seqgrad,&_temp1284_min_seqgrad) : &min_seqgrad,
                                 gradx, GX_FREE,
                                 grady, GY_FREE,
                                 gradz, GZ_FREE,
@@ -45954,7 +46318,7 @@ AutoCoilpredownload( void )
                                     coil_vthick,
                                     coil_pfkr_flag,
                                     coil_pfkr_fraction,
-                                    _coil_sampledPts.fixedflag ? (_temp1286_coil_sampledPts=coil_sampledPts,&_temp1286_coil_sampledPts) : &coil_sampledPts ))
+                                    _coil_sampledPts.fixedflag ? (_temp1285_coil_sampledPts=coil_sampledPts,&_temp1285_coil_sampledPts) : &coil_sampledPts ))
     {
         epic_error(use_ermes, "%s failed",
                    EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "generateZyIndex");
@@ -48409,7 +48773,40 @@ int *diff_order_pass;
 int *diff_order_nex;
 int *diff_order_dif;
 
+/* update for external gradient waveforms for QTI granty 9/28/2017 */
+/* holds QTI waveforms */
+WF_PULSE gxdlbuff = INITPULSE;
+WF_PULSE gxdrbuff = INITPULSE;
+WF_PULSE gydlbuff = INITPULSE;
+WF_PULSE gydrbuff = INITPULSE;
+WF_PULSE gzdlbuff = INITPULSE;
+WF_PULSE gzdrbuff = INITPULSE;
 
+WF_PULSE gxiso1 = INITPULSE;
+WF_PULSE gxiso2 = INITPULSE;
+WF_PULSE gyiso1 = INITPULSE;
+WF_PULSE gyiso2 = INITPULSE;
+WF_PULSE gziso1 = INITPULSE;
+WF_PULSE gziso2 = INITPULSE;
+
+/* bipolar trapezoidal waveform */
+WF_PULSE gbpbuffx = INITPULSE;
+WF_PULSE gbpbuffy = INITPULSE;
+WF_PULSE gbpbuffz = INITPULSE;
+/* Single trapezoidal waveform */
+WF_PULSE gtrapbuffx = INITPULSE;
+WF_PULSE gtrapbuffy = INITPULSE;
+WF_PULSE gtrapbuffz = INITPULSE;
+/* daiep comment because of error when simulating */
+
+WF_PULSE gxdr = INITPULSE;
+WF_PULSE gxdl = INITPULSE;
+WF_PULSE gydr = INITPULSE;
+WF_PULSE gydl = INITPULSE;
+WF_PULSE gzdr = INITPULSE;
+WF_PULSE gzdl = INITPULSE;
+
+/* daiep end */
 /* declare delta grad and freq arrays */
 
 /* delta grad and freq arrays */
@@ -49901,6 +50298,7 @@ STATUS pulsegen( void )
     LONG pulsePos;
     int lpfval = -1;
     float betax;
+    EXTERN_FILENAME test_wave_file; /* granty edit for qti */
 
     tot_etl  = _tot_etl.fixedflag ?    ((void)(etl+iref_etl), tot_etl) : etl+iref_etl; /* internref */
 
@@ -50140,7 +50538,7 @@ STATUS pulsegen( void )
 	  
             amppwygmn(gyb_tot_0thmoment, gyb_tot_1stmoment, pw_gy1a, pw_gy1,
                       pw_gy1d, tempa, tempb, loggrd.ty_xyz, (float)loggrd.yrt*loggrd.scale_3axis_risetime,
-                      1, _pw_gymn1a.fixedflag ? (_temp1287_pw_gymn1a=pw_gymn1a,&_temp1287_pw_gymn1a) : &pw_gymn1a, _pw_gymn1.fixedflag ? (_temp1288_pw_gymn1=pw_gymn1,&_temp1288_pw_gymn1) : &pw_gymn1, _pw_gymn1d.fixedflag ? (_temp1289_pw_gymn1d=pw_gymn1d,&_temp1289_pw_gymn1d) : &pw_gymn1d, &temp_gmnamp);
+                      1, _pw_gymn1a.fixedflag ? (_temp1286_pw_gymn1a=pw_gymn1a,&_temp1286_pw_gymn1a) : &pw_gymn1a, _pw_gymn1.fixedflag ? (_temp1287_pw_gymn1=pw_gymn1,&_temp1287_pw_gymn1) : &pw_gymn1, _pw_gymn1d.fixedflag ? (_temp1288_pw_gymn1d=pw_gymn1d,&_temp1288_pw_gymn1d) : &pw_gymn1d, &temp_gmnamp);
 	  
             gymn[ileave] = (int)((float)ia_gymn1 * a_gymn1/ temp_gmnamp);
           
@@ -51523,56 +51921,114 @@ STATUS pulsegen( void )
       
         if (PSD_OFF == dualspinecho_flag)
         {
-	    if(ftde_flag == PSD_OFF){ /* granty edit to add full time diffusion encoding option */
-            	if(xygradCrusherFlag == PSD_ON ) {
-                	tempx = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&xgradCrusherL,"xgradCrusherLa",0)) - pw_gxdl - pw_gxdld - pw_wgxdl);
-            	} else {
-                	tempx = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gxdl - pw_gxdld - pw_wgxdl);
-            	}
-            }else{
-            	if(xygradCrusherFlag == PSD_ON ) {
-                	tempx = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&xgradCrusherL,"xgradCrusherLa",0)) - pw_gxdl - pw_gxdld - pw_wgxdl - pw_gxde - pw_gxded - pw_gxdea);
-            	} else {
-                	tempx = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gxdl - pw_gxdld - pw_wgxdl - pw_gxde - pw_gxded - pw_gxdea);
-            	}
-		           
+/* maybe granty */
+	    res_gxdl  = _res_gxdl.fixedflag ?  ((void)(res_gd1), res_gxdl) : res_gd1;
+	    pw_gxdl  = _pw_gxdl.fixedflag ?  ((void)(pw_gd1), pw_gxdl) : pw_gd1;
+/* granty end */
+            if(xygradCrusherFlag == PSD_ON ) {
+                tempx = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&xgradCrusherL,"xgradCrusherLa",0)) - pw_gxdl - pw_gxdld - pw_wgxdl);
+            } else {
+                tempx = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gxdl - pw_gxdld - pw_wgxdl);
+            }
+            /* TRAPEZOID(XGRAD, gxdl, tempx, 0, TYPNDEF, loggrd); */ /* maybe grant, daiep */
 
-  trapezoid((WF_PROCESSOR)wg_gxde, "gxde", &gxde, &gxdea,
-                        &gxded, pw_gxde, pw_gxdea, pw_gxded,
-                        ia_gxde, 0, 0, 0, 0, tempx+pw_gxdla+pw_gxdl+pw_gxdld-pw_gxdea, TRAP_ALL,
-                        &loggrd);
+/* maybe granty */
+    	    pulsename(&gxdl,"gxdl");
 
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"ide%d_x1.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/ide%d_x1.bin",(int)opuser12);
+#endif 
+	    printf("pg 16497 ia_gxdl = %d\n", ia_gxdl);
+	    printf("max_bval = %f\n", max_bval);
+	    printf("ide_max_bval = %f\n", ide_max_bval);
+            fflush( stdout );
+	    
+	    if(waveform_type == 3){ /* used to change which pulsed gets used to calculate the b-mat in dti predownload */
+            	createextwave(&gxdl,(WF_PROCESSOR)XGRAD,
+                           res_gxdl,test_wave_file);
+	    	createinstr( &gxdl,(long)tempx,
+                           pw_gxdl,ia_gxdl);
+	     }
+
+
+
+    	    pulsename(&gxiso1,"gxiso1");
+            createextwave(&gxiso1,(WF_PROCESSOR)wg_gxdl,
+                           res_gxdl,test_wave_file);
+
+
+    	    pulsename(&gxdlbuff,"gxdlbuff");
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"sde%d_1.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/sde%d_1.bin",(int)opuser12);
+#endif 
+            createextwave(&gxdlbuff,(WF_PROCESSOR)wg_gxdl,
+                           res_gxdl,test_wave_file);
+
+	    if(waveform_type != 3){ /* used to change which pulsed gets used to calculate the b-mat in dti predownload */
+            	createextwave(&gxdl,(WF_PROCESSOR)XGRAD,
+                           res_gxdl,test_wave_file);
+	    	createinstr( &gxdl,(long)tempx,
+                           pw_gxdl,ia_gxdl);
+	     }
+/* granty end */
 #if defined(HOST_TGT)
-            	setiamptiter(xamp_iters, cur_num_iters, &gxde, 0, 1);
+            /* setiamptiter(xamp_iters, cur_num_iters, &gxdl, 0, 1);*/ /* maybe granty, daiep*/
+			setiampiter(xamp_iters, cur_num_iters, &gxdl, 0, 1);
 #endif
-	   }
-            	     
-
-  trapezoid((WF_PROCESSOR)wg_gxdl, "gxdl", &gxdl, &gxdla,
-                        &gxdld, pw_gxdl, pw_gxdla, pw_gxdld,
-                        ia_gxdl, 0, 0, 0, 0, tempx-pw_gxdla, TRAP_ALL,
-                        &loggrd);
-
-
-
-#if defined(HOST_TGT)
-            setiamptiter(xamp_iters, cur_num_iters, &gxdl, 0, 1);
-#endif
+/* maybe granty */
+	    res_gxdr  = _res_gxdr.fixedflag ?  ((void)(res_gd2), res_gxdr) : res_gd2;
+	    pw_gxdr  = _pw_gxdr.fixedflag ?  ((void)(pw_gd2), pw_gxdr) : pw_gd2;
+/* granty end */
             if(xygradCrusherFlag == PSD_ON ) {
                 tempx = RUP_GRD(IMax(2,pend(&gzrf2r1,"gzrf2r1d",0),pend(&xgradCrusherR,"xgradCrusherRd",0)) + pw_gxdra + pw_wgxdr);
             } else {
                 tempx = RUP_GRD(pend(&gzrf2r1,"gzrf2r1d",0) + pw_gxdra + pw_wgxdr);
             }
-                 
+            /* TRAPEZOID(XGRAD, gxdr, tempx, 0, TYPNDEF, loggrd); */ /* maybe granty, daiep */
+/* maybe granty */
+    	    pulsename(&gxdr,"gxdr");
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"ide%d_x2.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/ide%d_x2.bin",(int)opuser12);
+#endif 
 
-  trapezoid((WF_PROCESSOR)wg_gxdr, "gxdr", &gxdr, &gxdra,
-                        &gxdrd, pw_gxdr, pw_gxdra, pw_gxdrd,
-                        ia_gxdr, 0, 0, 0, 0, tempx-pw_gxdra, TRAP_ALL,
-                        &loggrd);
+	    if(waveform_type == 3){
+            	createextwave(&gxdr,(WF_PROCESSOR)XGRAD,
+                           res_gxdr,test_wave_file);
+            	createinstr( &gxdr,(long)tempx,
+                           pw_gxdr,ia_gxdr);
+	    }
 
+    	    pulsename(&gxiso2,"gxiso2");
+            createextwave(&gxiso2,(WF_PROCESSOR)wg_gxdr,
+                           res_gxdr,test_wave_file);
+
+    	    pulsename(&gxdlbuff,"gxdrbuff");
+
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"sde%d_2.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/sde%d_2.bin",(int)opuser12);
+#endif
  
+            createextwave(&gxdrbuff,(WF_PROCESSOR)wg_gxdr,
+                           res_gxdr,test_wave_file);
+
+	    if(waveform_type != 3){
+            	createextwave(&gxdr,(WF_PROCESSOR)XGRAD,
+                           res_gxdr,test_wave_file);
+            	createinstr( &gxdr,(long)tempx,
+                           pw_gxdr,ia_gxdr);
+	    }
+ /* granty end */
 #if defined(HOST_TGT)
-            setiamptiter(xamp_iters, cur_num_iters, &gxdr, 0, 1);
+            /* setiamptiter(xamp_iters, cur_num_iters, &gxdr, 0, 1);*/ /* maybe granty, daiep*/
+			setiampiter(xamp_iters, cur_num_iters, &gxdr, 0, 1);
 #endif
 
         } else {
@@ -51697,58 +52153,106 @@ if(dse_enh_flag)
     /* DTI */
     if ((oppseq == PSD_SE && opdiffuse == PSD_ON) || tensor_flag == PSD_ON) {
         if (PSD_OFF == dualspinecho_flag)
-        {/* granty maybe */
-	    if(ftde_flag == PSD_OFF){
-            	if(xygradCrusherFlag == PSD_ON ) {
-                	tempy = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&ygradCrusherL,"ygradCrusherLa",0)) - pw_gydl - pw_gydld - pw_wgydl);
-            	} else {
-                	tempy = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gydl - pw_gydld - pw_wgydl);
-            	}
-	    }else{
-            	if(xygradCrusherFlag == PSD_ON ) {
-                	tempy = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&ygradCrusherL,"ygradCrusherLa",0)) - pw_gydl - pw_gydld - pw_wgydl - pw_gyde - pw_gyded - pw_gydea);
-            	} else {
-                	tempy = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gydl - pw_gydld - pw_wgydl - pw_gyde - pw_gyded - pw_gydea);
-            	}
-            	           
-
-  trapezoid((WF_PROCESSOR)wg_gyde, "gyde", &gyde, &gydea,
-                        &gyded, pw_gyde, pw_gydea, pw_gyded,
-                        ia_gyde, 0, 0, 0, 0, tempy+pw_gydla+pw_gydl+pw_gydld-pw_gydea, TRAP_ALL,
-                        &loggrd);
-
-         
-#if defined(HOST_TGT)
-            	setiamptiter(yamp_iters, cur_num_iters, &gydl, 0, 1);
+        {
+/* maybe granty */
+	    res_gydl  = _res_gydl.fixedflag ?  ((void)(res_gd1), res_gydl) : res_gd1;
+	    pw_gydl  = _pw_gydl.fixedflag ?  ((void)(pw_gd1), pw_gydl) : pw_gd1;
+/* granty end */
+            if(xygradCrusherFlag == PSD_ON ) {
+                tempy = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&ygradCrusherL,"ygradCrusherLa",0)) - pw_gydl - pw_gydld - pw_wgydl);
+            } else {
+                tempy = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gydl - pw_gydld - pw_wgydl);
+            }
+            /* TRAPEZOID(YGRAD, gydl, tempy, 0, TYPNDEF, loggrd); */ /* maybe granty, daiep */
+/* maybe granty */
+    	    pulsename(&gydl,"gydl");
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"ide%d_y1.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/ide%d_y1.bin",(int)opuser12);
 #endif
+	    if(waveform_type == 3){
+            	createextwave(&gydl,(WF_PROCESSOR)wg_gydl,
+                           res_gydl,test_wave_file);
+            	createinstr( &gydl,(long)tempy,
+                           pw_gydl,ia_gydl);
 	    }
-                 
 
-  trapezoid((WF_PROCESSOR)wg_gydl, "gydl", &gydl, &gydla,
-                        &gydld, pw_gydl, pw_gydla, pw_gydld,
-                        ia_gydl, 0, 0, 0, 0, tempy-pw_gydla, TRAP_ALL,
-                        &loggrd);
+    	    pulsename(&gyiso1,"gyiso1");
+            createextwave(&gyiso1,(WF_PROCESSOR)wg_gydl,
+                           res_gydl,test_wave_file);
 
-         
-#if defined(HOST_TGT)
-            setiamptiter(yamp_iters, cur_num_iters, &gydl, 0, 1);
+    	    pulsename(&gydlbuff,"gydlbuff");
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"sde%d_1.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/sde%d_1.bin",(int)opuser12);
 #endif
+            createextwave(&gydlbuff,(WF_PROCESSOR)wg_gydl,
+                           res_gydl,test_wave_file);
 
+	    if(waveform_type != 3){
+            	createextwave(&gydl,(WF_PROCESSOR)wg_gydl,
+                           res_gydl,test_wave_file);
+            	createinstr( &gydl,(long)tempy,
+                           pw_gydl,ia_gydl);
+	    }
+/* granty end */         
+#if defined(HOST_TGT)
+            /* setiamptiter(yamp_iters, cur_num_iters, &gydl, 0, 1); */ /* maybe granty, daiep */
+			setiampiter(yamp_iters, cur_num_iters, &gydl, 0, 1);
+#endif
+/* maybe granty */
+	    res_gydr  = _res_gydr.fixedflag ?  ((void)(res_gd2), res_gydr) : res_gd2;
+	    pw_gydr  = _pw_gydr.fixedflag ?  ((void)(pw_gd2), pw_gydr) : pw_gd2;
+/* granty end */
             if(xygradCrusherFlag == PSD_ON ) {
                 tempy = RUP_GRD(IMax(2,pend(&gzrf2r1,"gzrf2r1d",0),pend(&ygradCrusherR,"ygradCrusherRd",0)) + pw_gydra + pw_wgydr);
             } else {
                 tempy = RUP_GRD(pend(&gzrf2r1,"gzrf2r1d",0) + pw_gydra + pw_wgydr);
             }
-                 
+            /* TRAPEZOID(YGRAD, gydr, tempy, 0, TYPNDEF, loggrd); */ /* maybe granty, daiep */
+/* granty edit custom pulse */
 
-  trapezoid((WF_PROCESSOR)wg_gydr, "gydr", &gydr, &gydra,
-                        &gydrd, pw_gydr, pw_gydra, pw_gydrd,
-                        ia_gydr, 0, 0, 0, 0, tempy-pw_gydra, TRAP_ALL,
-                        &loggrd);
 
+
+    	    pulsename(&gydr,"gydr");
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"ide%d_y2.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/ide%d_y2.bin",(int)opuser12);
+#endif
+
+	    if( waveform_type == 3){
+            	createextwave(&gydr,(WF_PROCESSOR)wg_gydr,
+                           res_gydr,test_wave_file);
+            	createinstr( &gydr,(long)tempy,
+                           pw_gydr,ia_gydr);
+	    }
+
+    	    pulsename(&gyiso2,"gyiso2");
+            createextwave(&gyiso2,(WF_PROCESSOR)wg_gydr,
+                           res_gydr,test_wave_file);
+
+    	    pulsename(&gydrbuff,"gydrbuff");
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"sde%d_2.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/sde%d_2.bin",(int)opuser12);
+#endif 
+            createextwave(&gydrbuff,(WF_PROCESSOR)wg_gydr,
+                           res_gydr,test_wave_file);
+
+	    if( waveform_type != 3){
+            	createextwave(&gydr,(WF_PROCESSOR)wg_gydr,
+                           res_gydr,test_wave_file);
+            	createinstr( &gydr,(long)tempy,
+                           pw_gydr,ia_gydr);
+	    }
 
 #if defined(HOST_TGT)
-            setiamptiter(yamp_iters, cur_num_iters, &gydr, 0, 1);
+            /* setiamptiter(yamp_iters, cur_num_iters, &gydr, 0, 1); */ /* maybe granty, daiep */
+			setiampiter(yamp_iters, cur_num_iters, &gydr, 0, 1);
 #endif
 
         } else {
@@ -51873,57 +52377,112 @@ if(dse_enh_flag)
     if ((oppseq == PSD_SE && opdiffuse == PSD_ON) || tensor_flag == PSD_ON) {
         if (PSD_OFF == dualspinecho_flag)
         {
-		if(ftde_flag == PSD_OFF){ /* granty maybe This is th original parts */
+/* maybe granty */
+	    res_gzdl  = _res_gzdl.fixedflag ?  ((void)(res_gd1), res_gzdl) : res_gd1;
+	    pw_gzdl  = _pw_gzdl.fixedflag ?  ((void)(pw_gd1), pw_gzdl) : pw_gd1;
+/* granty end */
             if(xygradCrusherFlag == PSD_ON) {
                 tempz = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&xgradCrusherL,"xgradCrusherLa",0)) - pw_gzdl - pw_gzdld - pw_wgzdl);
             } else {
                 tempz = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gzdl - pw_gzdld - pw_wgzdl);
             }
-	    }else{ /* granty maybe */
-            	if(xygradCrusherFlag == PSD_ON) {
-            	    tempz = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&xgradCrusherL,"xgradCrusherLa",0)) - pw_gzdl - pw_gzdld - pw_wgzdl - pw_gzde - pw_gzded - pw_gzdea);
-            	} else {
-            	    tempz = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gzdl - pw_gzdld - pw_wgzdl - pw_gzde - pw_gzded - pw_gzdea);
-            	}
-            	           
+            /* TRAPEZOID(ZGRAD, gzdl, tempz, 0, TYPNDEF, loggrd);*/ /* maybe granty, daiep */
+/* granty edit custom pulse */
 
-  trapezoid((WF_PROCESSOR)wg_gzde, "gzde", &gzde, &gzdea,
-                        &gzded, pw_gzde, pw_gzdea, pw_gzded,
-                        ia_gzde, 0, 0, 0, 0, tempz+pw_gzdla+pw_gzdl+pw_gzdld-pw_gzdea, TRAP_ALL,
-                        &loggrd);
+    	    pulsename(&gzdl,"gzdl");
 
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"ide%d_z1.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/ide%d_z1.bin",(int)opuser12);
+#endif 
+
+	    if( waveform_type == 3){
+            	createextwave(&gzdl,(WF_PROCESSOR)wg_gzdl,
+                           res_gzdl,test_wave_file);
+
+            	createinstr( &gzdl,(long)tempz,
+                           pw_gzdl,ia_gzdl);
+	    }
+
+    	    pulsename(&gziso1,"gziso1");
+            createextwave(&gziso1,(WF_PROCESSOR)wg_gzdl,
+                           res_gzdl,test_wave_file);
+
+    	    pulsename(&gzdlbuff,"gzdlbuff");
+
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"sde%d_1.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/sde%d_1.bin",(int)opuser12);
+#endif 
+
+            createextwave(&gzdlbuff,(WF_PROCESSOR)wg_gzdl,
+                           res_gzdl,test_wave_file);
+
+	    if( waveform_type != 3){
+            	createextwave(&gzdl,(WF_PROCESSOR)wg_gzdl,
+                           res_gzdl,test_wave_file);
+
+            	createinstr( &gzdl,(long)tempz,
+                           pw_gzdl,ia_gzdl);
+	    }
 
 #if defined(HOST_TGT)
-           	 setiamptiter(zamp_iters, cur_num_iters, &gzde, 0, 1);
+            /* setiamptiter(zamp_iters, cur_num_iters, &gzdl, 0, 1); */ /*maybe granty, daiep */
+			setiampiter(zamp_iters, cur_num_iters, &gzdl, 0, 1);
 #endif
-	    } /* granty maybe end */
-                 
-
-  trapezoid((WF_PROCESSOR)wg_gzdl, "gzdl", &gzdl, &gzdla,
-                        &gzdld, pw_gzdl, pw_gzdla, pw_gzdld,
-                        ia_gzdl, 0, 0, 0, 0, tempz-pw_gzdla, TRAP_ALL,
-                        &loggrd);
-
-
-#if defined(HOST_TGT)
-            setiamptiter(zamp_iters, cur_num_iters, &gzdl, 0, 1);
-#endif
-
+/* maybe granty */
+	    res_gzdr  = _res_gzdr.fixedflag ?  ((void)(res_gd2), res_gzdr) : res_gd2;
+	    pw_gzdr  = _pw_gzdr.fixedflag ?  ((void)(pw_gd2), pw_gzdr) : pw_gd2;
+/* granty end */
             if(xygradCrusherFlag == PSD_ON) {
                 tempz = RUP_GRD(IMax(2,pend(&gzrf2r1,"gzrf2r1d",0),pend(&xgradCrusherR,"xgradCrusherRd",0)) + pw_gzdra + pw_wgzdr);
             } else {
                 tempz = RUP_GRD(pend(&gzrf2r1,"gzrf2r1d",0) + pw_gzdra + pw_wgzdr);
             }
-                 
+            /* TRAPEZOID(ZGRAD, gzdr, tempz, 0, TYPNDEF, loggrd); */ /* maybe granty, daiep */
+/* maybe granty */
+    	    pulsename(&gzdr,"gzdr");
 
-  trapezoid((WF_PROCESSOR)wg_gzdr, "gzdr", &gzdr, &gzdra,
-                        &gzdrd, pw_gzdr, pw_gzdra, pw_gzdrd,
-                        ia_gzdr, 0, 0, 0, 0, tempz-pw_gzdra, TRAP_ALL,
-                        &loggrd);
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"ide%d_z2.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/ide%d_z2.bin",(int)opuser12);
+#endif 
 
+	    if( waveform_type == 3){
+	            createextwave(&gzdr,(WF_PROCESSOR)wg_gzdr,
+                           res_gzdr,test_wave_file);
+	            createinstr( &gzdr,(long)tempz,
+                           pw_gzdr,ia_gzdr);
+	    }
+
+    	    pulsename(&gziso2,"gziso2");
+            createextwave(&gziso2,(WF_PROCESSOR)wg_gzdr,
+                           res_gzdr,test_wave_file);
+
+    	    pulsename(&gzdrbuff,"gzdrbuff");
+
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"sde%d_2.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/sde%d_2.bin",(int)opuser12);
+#endif 
+            createextwave(&gzdrbuff,(WF_PROCESSOR)wg_gzdr,
+                           res_gzdr,test_wave_file);
+
+	    if( waveform_type != 3){
+	            createextwave(&gzdr,(WF_PROCESSOR)wg_gzdr,
+                           res_gzdr,test_wave_file);
+	            createinstr( &gzdr,(long)tempz,
+                           pw_gzdr,ia_gzdr);
+	    }
+/* granty end */
 
 #if defined(HOST_TGT)
-            setiamptiter(zamp_iters, cur_num_iters, &gzdr, 0, 1);
+            /* setiamptiter(zamp_iters, cur_num_iters, &gzdr, 0, 1);*/ /*maybe granty, daiep */
+			setiampiter(zamp_iters, cur_num_iters, &gzdr, 0, 1);
 #endif
 
         } else {
@@ -52835,7 +53394,7 @@ ExtCalpulsegen();
         }
 
         /* TG limit calc based on Tx freq offset */
-        calcTGLimitAtOffset((int)rfov_max_freq_shift, _TGlimit.fixedflag ? (_temp1290_TGlimit=TGlimit,&_temp1290_TGlimit) : &TGlimit, psddebugcode2);
+        calcTGLimitAtOffset((int)rfov_max_freq_shift, _TGlimit.fixedflag ? (_temp1289_TGlimit=TGlimit,&_temp1289_TGlimit) : &TGlimit, psddebugcode2);
     }
     else if (mux_flag)
     {
@@ -60075,7 +60634,7 @@ ExtCalpulsegen( void )
         s16 gzcombcal_mem[res_gzcombcal];
         s16 gzcombcal_indx = 0;       /* indx into user memory */
 
-        getbeta(_pg_beta.fixedflag ? (_temp1291_pg_beta=pg_beta,&_temp1291_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gzcombcal, &calloggrd);
+        getbeta(_pg_beta.fixedflag ? (_temp1290_pg_beta=pg_beta,&_temp1290_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gzcombcal, &calloggrd);
 
         /* leading edge of zeros */
         if ((0 != 0) && (pw_gzcombcalf != 0))
@@ -60149,7 +60708,7 @@ ExtCalpulsegen( void )
         s16 gzprcal_mem[res_gzprcal];
         s16 gzprcal_indx = 0;       /* indx into user memory */
 
-        getbeta(_pg_beta.fixedflag ? (_temp1292_pg_beta=pg_beta,&_temp1292_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gzprcal, &calloggrd);
+        getbeta(_pg_beta.fixedflag ? (_temp1291_pg_beta=pg_beta,&_temp1291_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gzprcal, &calloggrd);
 
         /* leading edge of zeros */
         if ((0 != 0) && (pw_gzprcalf != 0))
@@ -60260,7 +60819,7 @@ ExtCalpulsegen( void )
         s16 gx1cal_mem[res_gx1cal];
         s16 gx1cal_indx = 0;       /* indx into user memory */
 
-        getbeta(_pg_beta.fixedflag ? (_temp1293_pg_beta=pg_beta,&_temp1293_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gx1cal, &calloggrd);
+        getbeta(_pg_beta.fixedflag ? (_temp1292_pg_beta=pg_beta,&_temp1292_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gx1cal, &calloggrd);
 
         /* leading edge of zeros */
         if ((0 != 0) && (pw_gx1calf != 0))
@@ -60336,7 +60895,7 @@ ExtCalpulsegen( void )
         s16 gy1cal_mem[res_gy1cal];
         s16 gy1cal_indx = 0;       /* indx into user memory */
 
-        getbeta(_pg_beta.fixedflag ? (_temp1294_pg_beta=pg_beta,&_temp1294_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gy1cal, &calloggrd);
+        getbeta(_pg_beta.fixedflag ? (_temp1293_pg_beta=pg_beta,&_temp1293_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gy1cal, &calloggrd);
 
         /* leading edge of zeros */
         if ((0 != 0) && (pw_gy1calf != 0))
@@ -60409,7 +60968,7 @@ ExtCalpulsegen( void )
         s16 gy1rcal_mem[res_gy1rcal];
         s16 gy1rcal_indx = 0;       /* indx into user memory */
 
-        getbeta(_pg_beta.fixedflag ? (_temp1295_pg_beta=pg_beta,&_temp1295_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gy1rcal, &calloggrd);
+        getbeta(_pg_beta.fixedflag ? (_temp1294_pg_beta=pg_beta,&_temp1294_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gy1rcal, &calloggrd);
 
         /* leading edge of zeros */
         if ((0 != 0) && (pw_gy1rcalf != 0))
@@ -60658,7 +61217,7 @@ AutoCoilpulsegen( void )
         s16 gzcombcoil_mem[res_gzcombcoil];
         s16 gzcombcoil_indx = 0;       /* indx into user memory */
 
-        getbeta(_pg_beta.fixedflag ? (_temp1296_pg_beta=pg_beta,&_temp1296_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gzcombcoil, &coilloggrd);
+        getbeta(_pg_beta.fixedflag ? (_temp1295_pg_beta=pg_beta,&_temp1295_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gzcombcoil, &coilloggrd);
 
         /* leading edge of zeros */
         if ((0 != 0) && (pw_gzcombcoilf != 0))
@@ -60732,7 +61291,7 @@ AutoCoilpulsegen( void )
         s16 gzprcoil_mem[res_gzprcoil];
         s16 gzprcoil_indx = 0;       /* indx into user memory */
 
-        getbeta(_pg_beta.fixedflag ? (_temp1297_pg_beta=pg_beta,&_temp1297_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gzprcoil, &coilloggrd);
+        getbeta(_pg_beta.fixedflag ? (_temp1296_pg_beta=pg_beta,&_temp1296_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gzprcoil, &coilloggrd);
 
         /* leading edge of zeros */
         if ((0 != 0) && (pw_gzprcoilf != 0))
@@ -60843,7 +61402,7 @@ AutoCoilpulsegen( void )
         s16 gx1coil_mem[res_gx1coil];
         s16 gx1coil_indx = 0;       /* indx into user memory */
 
-        getbeta(_pg_beta.fixedflag ? (_temp1298_pg_beta=pg_beta,&_temp1298_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gx1coil, &coilloggrd);
+        getbeta(_pg_beta.fixedflag ? (_temp1297_pg_beta=pg_beta,&_temp1297_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gx1coil, &coilloggrd);
 
         /* leading edge of zeros */
         if ((0 != 0) && (pw_gx1coilf != 0))
@@ -60919,7 +61478,7 @@ AutoCoilpulsegen( void )
         s16 gy1coil_mem[res_gy1coil];
         s16 gy1coil_indx = 0;       /* indx into user memory */
 
-        getbeta(_pg_beta.fixedflag ? (_temp1299_pg_beta=pg_beta,&_temp1299_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gy1coil, &coilloggrd);
+        getbeta(_pg_beta.fixedflag ? (_temp1298_pg_beta=pg_beta,&_temp1298_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gy1coil, &coilloggrd);
 
         /* leading edge of zeros */
         if ((0 != 0) && (pw_gy1coilf != 0))
@@ -60992,7 +61551,7 @@ AutoCoilpulsegen( void )
         s16 gy1rcoil_mem[res_gy1rcoil];
         s16 gy1rcoil_indx = 0;       /* indx into user memory */
 
-        getbeta(_pg_beta.fixedflag ? (_temp1300_pg_beta=pg_beta,&_temp1300_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gy1rcoil, &coilloggrd);
+        getbeta(_pg_beta.fixedflag ? (_temp1299_pg_beta=pg_beta,&_temp1299_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gy1rcoil, &coilloggrd);
 
         /* leading edge of zeros */
         if ((0 != 0) && (pw_gy1rcoilf != 0))
@@ -61222,7 +61781,7 @@ STATUS monitor_PG(void)
   {
     pulsename(&gycylra,"gycylra");
  
-        getbeta(_pg_beta.fixedflag ? (_temp1301_pg_beta=pg_beta,&_temp1301_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gycylra, &monloggrd);
+        getbeta(_pg_beta.fixedflag ? (_temp1300_pg_beta=pg_beta,&_temp1300_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gycylra, &monloggrd);
  
     if ( (start_gycylra>0.0) || (start_gycylra<0.0) )
       {
@@ -61247,7 +61806,7 @@ STATUS monitor_PG(void)
   {
     pulsename(&gzcylra,"gzcylra");
  
-        getbeta(_pg_beta.fixedflag ? (_temp1302_pg_beta=pg_beta,&_temp1302_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gzcylra, &monloggrd);
+        getbeta(_pg_beta.fixedflag ? (_temp1301_pg_beta=pg_beta,&_temp1301_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gzcylra, &monloggrd);
  
     if ( (start_gzcylra>0.0) || (start_gzcylra<0.0) )
       {
@@ -61673,7 +62232,7 @@ STATUS monitor_PG(void)
   {
     pulsename(&gycylratipup,"gycylratipup");
  
-        getbeta(_pg_beta.fixedflag ? (_temp1303_pg_beta=pg_beta,&_temp1303_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gycylratipup, &monloggrd);
+        getbeta(_pg_beta.fixedflag ? (_temp1302_pg_beta=pg_beta,&_temp1302_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gycylratipup, &monloggrd);
  
     if ( (start_gycylratipup>0.0) || (start_gycylratipup<0.0) )
       {
@@ -61699,7 +62258,7 @@ STATUS monitor_PG(void)
   {
     pulsename(&gzcylratipup,"gzcylratipup");
  
-        getbeta(_pg_beta.fixedflag ? (_temp1304_pg_beta=pg_beta,&_temp1304_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gzcylratipup, &monloggrd);
+        getbeta(_pg_beta.fixedflag ? (_temp1303_pg_beta=pg_beta,&_temp1303_pg_beta) : &pg_beta, (WF_PROCESSOR)wg_gzcylratipup, &monloggrd);
  
     if ( (start_gzcylratipup>0.0) || (start_gzcylratipup<0.0) )
       {

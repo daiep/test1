@@ -6,7 +6,7 @@
  * to be downloaded to the target PSD and a function to endian convert
  * these variables.
  *
- * Generated on Tue May  7 09:48:37 2019 
+ * Generated on Thu May 23 11:06:01 2019 
  */
 
 #ifndef h_epi2_cvcopy_cpp
@@ -2326,7 +2326,6 @@ static const cvcopy_table_entry cvcopy_table[] = {
     { &scale_ramp, sizeof(scale_ramp) },
     { &debugTensor, sizeof(debugTensor) },
     { &tensor_flag, sizeof(tensor_flag) },
-    { &ftde_flag, sizeof(ftde_flag) },
     { &num_tensor, sizeof(num_tensor) },
     { &validTensorFile, sizeof(validTensorFile) },
     { &validTensorFileAndEntry, sizeof(validTensorFileAndEntry) },
@@ -2827,6 +2826,76 @@ static const cvcopy_table_entry cvcopy_table[] = {
     { &opslquant_save, sizeof(opslquant_save) },
     { &save_avmintr, sizeof(save_avmintr) },
     { &save_pitracqval4, sizeof(save_pitracqval4) },
+    { &res_gd1, sizeof(res_gd1) },
+    { &res_gd2, sizeof(res_gd2) },
+    { &pw_gd1, sizeof(pw_gd1) },
+    { &pw_gd2, sizeof(pw_gd2) },
+    { &a_gxdl, sizeof(a_gxdl) },
+    { &a_gxdr, sizeof(a_gxdr) },
+    { &ia_gxdl, sizeof(ia_gxdl) },
+    { &ia_gxdr, sizeof(ia_gxdr) },
+    { &res_gxdl, sizeof(res_gxdl) },
+    { &res_gxdr, sizeof(res_gxdr) },
+    { &pw_gxdr, sizeof(pw_gxdr) },
+    { &pw_gxdl, sizeof(pw_gxdl) },
+    { &wg_gxdr, sizeof(wg_gxdr) },
+    { &wg_gxdl, sizeof(wg_gxdl) },
+    { &a_gydl, sizeof(a_gydl) },
+    { &a_gydr, sizeof(a_gydr) },
+    { &ia_gydl, sizeof(ia_gydl) },
+    { &ia_gydr, sizeof(ia_gydr) },
+    { &res_gydl, sizeof(res_gydl) },
+    { &res_gydr, sizeof(res_gydr) },
+    { &pw_gydr, sizeof(pw_gydr) },
+    { &pw_gydl, sizeof(pw_gydl) },
+    { &wg_gydr, sizeof(wg_gydr) },
+    { &wg_gydl, sizeof(wg_gydl) },
+    { &a_gzdl, sizeof(a_gzdl) },
+    { &a_gzdr, sizeof(a_gzdr) },
+    { &ia_gzdl, sizeof(ia_gzdl) },
+    { &ia_gzdr, sizeof(ia_gzdr) },
+    { &res_gzdl, sizeof(res_gzdl) },
+    { &res_gzdr, sizeof(res_gzdr) },
+    { &pw_gzdr, sizeof(pw_gzdr) },
+    { &pw_gzdl, sizeof(pw_gzdl) },
+    { &wg_gzdr, sizeof(wg_gzdr) },
+    { &wg_gzdl, sizeof(wg_gzdl) },
+    { &a_gxdla, sizeof(a_gxdla) },
+    { &a_gxdld, sizeof(a_gxdld) },
+    { &a_gxdra, sizeof(a_gxdra) },
+    { &a_gxdrd, sizeof(a_gxdrd) },
+    { &ia_gxdla, sizeof(ia_gxdla) },
+    { &ia_gxdld, sizeof(ia_gxdld) },
+    { &ia_gxdra, sizeof(ia_gxdra) },
+    { &ia_gxdrd, sizeof(ia_gxdrd) },
+    { &pw_gxdla, sizeof(pw_gxdla) },
+    { &pw_gxdld, sizeof(pw_gxdld) },
+    { &pw_gxdra, sizeof(pw_gxdra) },
+    { &pw_gxdrd, sizeof(pw_gxdrd) },
+    { &a_gydla, sizeof(a_gydla) },
+    { &a_gydld, sizeof(a_gydld) },
+    { &a_gydra, sizeof(a_gydra) },
+    { &a_gydrd, sizeof(a_gydrd) },
+    { &ia_gydla, sizeof(ia_gydla) },
+    { &ia_gydld, sizeof(ia_gydld) },
+    { &ia_gydra, sizeof(ia_gydra) },
+    { &ia_gydrd, sizeof(ia_gydrd) },
+    { &pw_gydla, sizeof(pw_gydla) },
+    { &pw_gydld, sizeof(pw_gydld) },
+    { &pw_gydra, sizeof(pw_gydra) },
+    { &pw_gydrd, sizeof(pw_gydrd) },
+    { &a_gzdla, sizeof(a_gzdla) },
+    { &a_gzdld, sizeof(a_gzdld) },
+    { &a_gzdra, sizeof(a_gzdra) },
+    { &a_gzdrd, sizeof(a_gzdrd) },
+    { &ia_gzdla, sizeof(ia_gzdla) },
+    { &ia_gzdld, sizeof(ia_gzdld) },
+    { &ia_gzdra, sizeof(ia_gzdra) },
+    { &ia_gzdrd, sizeof(ia_gzdrd) },
+    { &pw_gzdla, sizeof(pw_gzdla) },
+    { &pw_gzdld, sizeof(pw_gzdld) },
+    { &pw_gzdra, sizeof(pw_gzdra) },
+    { &pw_gzdrd, sizeof(pw_gzdrd) },
     { &num_passdelay, sizeof(num_passdelay) },
     { &use_maxloggrad, sizeof(use_maxloggrad) },
     { &max_grad, sizeof(max_grad) },
@@ -2952,6 +3021,9 @@ static const cvcopy_table_entry cvcopy_table[] = {
     { &ia_incdifx, sizeof(ia_incdifx) },
     { &ia_incdify, sizeof(ia_incdify) },
     { &ia_incdifz, sizeof(ia_incdifz) },
+    { &waveform_type, sizeof(waveform_type) },
+    { &ide_max_bval, sizeof(ide_max_bval) },
+    { &sde_max_bval, sizeof(sde_max_bval) },
     { &bincr, sizeof(bincr) },
     { &invthick, sizeof(invthick) },
     { &xerror, sizeof(xerror) },
@@ -3121,9 +3193,6 @@ static const cvcopy_table_entry cvcopy_table[] = {
     { &c1_scale, sizeof(c1_scale) },
     { &c2_scale, sizeof(c2_scale) },
     { &crusher_cycles, sizeof(crusher_cycles) },
-    { &sar_amp, sizeof(sar_amp) },
-    { &sar_cycle, sizeof(sar_cycle) },
-    { &sar_width, sizeof(sar_width) },
     { &max_seqtime, sizeof(max_seqtime) },
     { &max_slicesar, sizeof(max_slicesar) },
     { &max_seqsar, sizeof(max_seqsar) },
@@ -3767,24 +3836,6 @@ static const cvcopy_table_entry cvcopy_table[] = {
     { &wg_gzmn, sizeof(wg_gzmn) },
     { &res_rf2se1, sizeof(res_rf2se1) },
     { &wg_rf2se1, sizeof(wg_rf2se1) },
-    { &a_gxde, sizeof(a_gxde) },
-    { &ia_gxde, sizeof(ia_gxde) },
-    { &pw_gxdea, sizeof(pw_gxdea) },
-    { &pw_gxded, sizeof(pw_gxded) },
-    { &pw_gxde, sizeof(pw_gxde) },
-    { &wg_gxde, sizeof(wg_gxde) },
-    { &a_gxdl, sizeof(a_gxdl) },
-    { &ia_gxdl, sizeof(ia_gxdl) },
-    { &pw_gxdla, sizeof(pw_gxdla) },
-    { &pw_gxdld, sizeof(pw_gxdld) },
-    { &pw_gxdl, sizeof(pw_gxdl) },
-    { &wg_gxdl, sizeof(wg_gxdl) },
-    { &a_gxdr, sizeof(a_gxdr) },
-    { &ia_gxdr, sizeof(ia_gxdr) },
-    { &pw_gxdra, sizeof(pw_gxdra) },
-    { &pw_gxdrd, sizeof(pw_gxdrd) },
-    { &pw_gxdr, sizeof(pw_gxdr) },
-    { &wg_gxdr, sizeof(wg_gxdr) },
     { &a_gxdl1, sizeof(a_gxdl1) },
     { &ia_gxdl1, sizeof(ia_gxdl1) },
     { &pw_gxdl1a, sizeof(pw_gxdl1a) },
@@ -3815,24 +3866,6 @@ static const cvcopy_table_entry cvcopy_table[] = {
     { &pw_gxkd, sizeof(pw_gxkd) },
     { &pw_gxk, sizeof(pw_gxk) },
     { &wg_gxk, sizeof(wg_gxk) },
-    { &a_gyde, sizeof(a_gyde) },
-    { &ia_gyde, sizeof(ia_gyde) },
-    { &pw_gydea, sizeof(pw_gydea) },
-    { &pw_gyded, sizeof(pw_gyded) },
-    { &pw_gyde, sizeof(pw_gyde) },
-    { &wg_gyde, sizeof(wg_gyde) },
-    { &a_gydl, sizeof(a_gydl) },
-    { &ia_gydl, sizeof(ia_gydl) },
-    { &pw_gydla, sizeof(pw_gydla) },
-    { &pw_gydld, sizeof(pw_gydld) },
-    { &pw_gydl, sizeof(pw_gydl) },
-    { &wg_gydl, sizeof(wg_gydl) },
-    { &a_gydr, sizeof(a_gydr) },
-    { &ia_gydr, sizeof(ia_gydr) },
-    { &pw_gydra, sizeof(pw_gydra) },
-    { &pw_gydrd, sizeof(pw_gydrd) },
-    { &pw_gydr, sizeof(pw_gydr) },
-    { &wg_gydr, sizeof(wg_gydr) },
     { &a_gydl1, sizeof(a_gydl1) },
     { &ia_gydl1, sizeof(ia_gydl1) },
     { &pw_gydl1a, sizeof(pw_gydl1a) },
@@ -3863,24 +3896,6 @@ static const cvcopy_table_entry cvcopy_table[] = {
     { &pw_gykd, sizeof(pw_gykd) },
     { &pw_gyk, sizeof(pw_gyk) },
     { &wg_gyk, sizeof(wg_gyk) },
-    { &a_gzde, sizeof(a_gzde) },
-    { &ia_gzde, sizeof(ia_gzde) },
-    { &pw_gzdea, sizeof(pw_gzdea) },
-    { &pw_gzded, sizeof(pw_gzded) },
-    { &pw_gzde, sizeof(pw_gzde) },
-    { &wg_gzde, sizeof(wg_gzde) },
-    { &a_gzdl, sizeof(a_gzdl) },
-    { &ia_gzdl, sizeof(ia_gzdl) },
-    { &pw_gzdla, sizeof(pw_gzdla) },
-    { &pw_gzdld, sizeof(pw_gzdld) },
-    { &pw_gzdl, sizeof(pw_gzdl) },
-    { &wg_gzdl, sizeof(wg_gzdl) },
-    { &a_gzdr, sizeof(a_gzdr) },
-    { &ia_gzdr, sizeof(ia_gzdr) },
-    { &pw_gzdra, sizeof(pw_gzdra) },
-    { &pw_gzdrd, sizeof(pw_gzdrd) },
-    { &pw_gzdr, sizeof(pw_gzdr) },
-    { &wg_gzdr, sizeof(wg_gzdr) },
     { &a_gzdl1, sizeof(a_gzdl1) },
     { &ia_gzdl1, sizeof(ia_gzdl1) },
     { &pw_gzdl1a, sizeof(pw_gzdl1a) },
@@ -12711,9 +12726,6 @@ void cvcopy_cnv_endian( char * data )
     cv_cnv_endian_tensor_flag( data );
     data += sizeof(tensor_flag);
 
-    cv_cnv_endian_ftde_flag( data );
-    data += sizeof(ftde_flag);
-
     cv_cnv_endian_num_tensor( data );
     data += sizeof(num_tensor);
 
@@ -14214,6 +14226,216 @@ void cvcopy_cnv_endian( char * data )
     cv_cnv_endian_save_pitracqval4( data );
     data += sizeof(save_pitracqval4);
 
+    cv_cnv_endian_res_gd1( data );
+    data += sizeof(res_gd1);
+
+    cv_cnv_endian_res_gd2( data );
+    data += sizeof(res_gd2);
+
+    cv_cnv_endian_pw_gd1( data );
+    data += sizeof(pw_gd1);
+
+    cv_cnv_endian_pw_gd2( data );
+    data += sizeof(pw_gd2);
+
+    cv_cnv_endian_a_gxdl( data );
+    data += sizeof(a_gxdl);
+
+    cv_cnv_endian_a_gxdr( data );
+    data += sizeof(a_gxdr);
+
+    cv_cnv_endian_ia_gxdl( data );
+    data += sizeof(ia_gxdl);
+
+    cv_cnv_endian_ia_gxdr( data );
+    data += sizeof(ia_gxdr);
+
+    cv_cnv_endian_res_gxdl( data );
+    data += sizeof(res_gxdl);
+
+    cv_cnv_endian_res_gxdr( data );
+    data += sizeof(res_gxdr);
+
+    cv_cnv_endian_pw_gxdr( data );
+    data += sizeof(pw_gxdr);
+
+    cv_cnv_endian_pw_gxdl( data );
+    data += sizeof(pw_gxdl);
+
+    cv_cnv_endian_wg_gxdr( data );
+    data += sizeof(wg_gxdr);
+
+    cv_cnv_endian_wg_gxdl( data );
+    data += sizeof(wg_gxdl);
+
+    cv_cnv_endian_a_gydl( data );
+    data += sizeof(a_gydl);
+
+    cv_cnv_endian_a_gydr( data );
+    data += sizeof(a_gydr);
+
+    cv_cnv_endian_ia_gydl( data );
+    data += sizeof(ia_gydl);
+
+    cv_cnv_endian_ia_gydr( data );
+    data += sizeof(ia_gydr);
+
+    cv_cnv_endian_res_gydl( data );
+    data += sizeof(res_gydl);
+
+    cv_cnv_endian_res_gydr( data );
+    data += sizeof(res_gydr);
+
+    cv_cnv_endian_pw_gydr( data );
+    data += sizeof(pw_gydr);
+
+    cv_cnv_endian_pw_gydl( data );
+    data += sizeof(pw_gydl);
+
+    cv_cnv_endian_wg_gydr( data );
+    data += sizeof(wg_gydr);
+
+    cv_cnv_endian_wg_gydl( data );
+    data += sizeof(wg_gydl);
+
+    cv_cnv_endian_a_gzdl( data );
+    data += sizeof(a_gzdl);
+
+    cv_cnv_endian_a_gzdr( data );
+    data += sizeof(a_gzdr);
+
+    cv_cnv_endian_ia_gzdl( data );
+    data += sizeof(ia_gzdl);
+
+    cv_cnv_endian_ia_gzdr( data );
+    data += sizeof(ia_gzdr);
+
+    cv_cnv_endian_res_gzdl( data );
+    data += sizeof(res_gzdl);
+
+    cv_cnv_endian_res_gzdr( data );
+    data += sizeof(res_gzdr);
+
+    cv_cnv_endian_pw_gzdr( data );
+    data += sizeof(pw_gzdr);
+
+    cv_cnv_endian_pw_gzdl( data );
+    data += sizeof(pw_gzdl);
+
+    cv_cnv_endian_wg_gzdr( data );
+    data += sizeof(wg_gzdr);
+
+    cv_cnv_endian_wg_gzdl( data );
+    data += sizeof(wg_gzdl);
+
+    cv_cnv_endian_a_gxdla( data );
+    data += sizeof(a_gxdla);
+
+    cv_cnv_endian_a_gxdld( data );
+    data += sizeof(a_gxdld);
+
+    cv_cnv_endian_a_gxdra( data );
+    data += sizeof(a_gxdra);
+
+    cv_cnv_endian_a_gxdrd( data );
+    data += sizeof(a_gxdrd);
+
+    cv_cnv_endian_ia_gxdla( data );
+    data += sizeof(ia_gxdla);
+
+    cv_cnv_endian_ia_gxdld( data );
+    data += sizeof(ia_gxdld);
+
+    cv_cnv_endian_ia_gxdra( data );
+    data += sizeof(ia_gxdra);
+
+    cv_cnv_endian_ia_gxdrd( data );
+    data += sizeof(ia_gxdrd);
+
+    cv_cnv_endian_pw_gxdla( data );
+    data += sizeof(pw_gxdla);
+
+    cv_cnv_endian_pw_gxdld( data );
+    data += sizeof(pw_gxdld);
+
+    cv_cnv_endian_pw_gxdra( data );
+    data += sizeof(pw_gxdra);
+
+    cv_cnv_endian_pw_gxdrd( data );
+    data += sizeof(pw_gxdrd);
+
+    cv_cnv_endian_a_gydla( data );
+    data += sizeof(a_gydla);
+
+    cv_cnv_endian_a_gydld( data );
+    data += sizeof(a_gydld);
+
+    cv_cnv_endian_a_gydra( data );
+    data += sizeof(a_gydra);
+
+    cv_cnv_endian_a_gydrd( data );
+    data += sizeof(a_gydrd);
+
+    cv_cnv_endian_ia_gydla( data );
+    data += sizeof(ia_gydla);
+
+    cv_cnv_endian_ia_gydld( data );
+    data += sizeof(ia_gydld);
+
+    cv_cnv_endian_ia_gydra( data );
+    data += sizeof(ia_gydra);
+
+    cv_cnv_endian_ia_gydrd( data );
+    data += sizeof(ia_gydrd);
+
+    cv_cnv_endian_pw_gydla( data );
+    data += sizeof(pw_gydla);
+
+    cv_cnv_endian_pw_gydld( data );
+    data += sizeof(pw_gydld);
+
+    cv_cnv_endian_pw_gydra( data );
+    data += sizeof(pw_gydra);
+
+    cv_cnv_endian_pw_gydrd( data );
+    data += sizeof(pw_gydrd);
+
+    cv_cnv_endian_a_gzdla( data );
+    data += sizeof(a_gzdla);
+
+    cv_cnv_endian_a_gzdld( data );
+    data += sizeof(a_gzdld);
+
+    cv_cnv_endian_a_gzdra( data );
+    data += sizeof(a_gzdra);
+
+    cv_cnv_endian_a_gzdrd( data );
+    data += sizeof(a_gzdrd);
+
+    cv_cnv_endian_ia_gzdla( data );
+    data += sizeof(ia_gzdla);
+
+    cv_cnv_endian_ia_gzdld( data );
+    data += sizeof(ia_gzdld);
+
+    cv_cnv_endian_ia_gzdra( data );
+    data += sizeof(ia_gzdra);
+
+    cv_cnv_endian_ia_gzdrd( data );
+    data += sizeof(ia_gzdrd);
+
+    cv_cnv_endian_pw_gzdla( data );
+    data += sizeof(pw_gzdla);
+
+    cv_cnv_endian_pw_gzdld( data );
+    data += sizeof(pw_gzdld);
+
+    cv_cnv_endian_pw_gzdra( data );
+    data += sizeof(pw_gzdra);
+
+    cv_cnv_endian_pw_gzdrd( data );
+    data += sizeof(pw_gzdrd);
+
     cv_cnv_endian_num_passdelay( data );
     data += sizeof(num_passdelay);
 
@@ -14588,6 +14810,15 @@ void cvcopy_cnv_endian( char * data )
 
     cv_cnv_endian_ia_incdifz( data );
     data += sizeof(ia_incdifz);
+
+    cv_cnv_endian_waveform_type( data );
+    data += sizeof(waveform_type);
+
+    cv_cnv_endian_ide_max_bval( data );
+    data += sizeof(ide_max_bval);
+
+    cv_cnv_endian_sde_max_bval( data );
+    data += sizeof(sde_max_bval);
 
     cv_cnv_endian_bincr( data );
     data += sizeof(bincr);
@@ -15095,15 +15326,6 @@ void cvcopy_cnv_endian( char * data )
 
     cv_cnv_endian_crusher_cycles( data );
     data += sizeof(crusher_cycles);
-
-    cv_cnv_endian_sar_amp( data );
-    data += sizeof(sar_amp);
-
-    cv_cnv_endian_sar_cycle( data );
-    data += sizeof(sar_cycle);
-
-    cv_cnv_endian_sar_width( data );
-    data += sizeof(sar_width);
 
     cv_cnv_endian_max_seqtime( data );
     data += sizeof(max_seqtime);
@@ -17034,60 +17256,6 @@ void cvcopy_cnv_endian( char * data )
     cv_cnv_endian_wg_rf2se1( data );
     data += sizeof(wg_rf2se1);
 
-    cv_cnv_endian_a_gxde( data );
-    data += sizeof(a_gxde);
-
-    cv_cnv_endian_ia_gxde( data );
-    data += sizeof(ia_gxde);
-
-    cv_cnv_endian_pw_gxdea( data );
-    data += sizeof(pw_gxdea);
-
-    cv_cnv_endian_pw_gxded( data );
-    data += sizeof(pw_gxded);
-
-    cv_cnv_endian_pw_gxde( data );
-    data += sizeof(pw_gxde);
-
-    cv_cnv_endian_wg_gxde( data );
-    data += sizeof(wg_gxde);
-
-    cv_cnv_endian_a_gxdl( data );
-    data += sizeof(a_gxdl);
-
-    cv_cnv_endian_ia_gxdl( data );
-    data += sizeof(ia_gxdl);
-
-    cv_cnv_endian_pw_gxdla( data );
-    data += sizeof(pw_gxdla);
-
-    cv_cnv_endian_pw_gxdld( data );
-    data += sizeof(pw_gxdld);
-
-    cv_cnv_endian_pw_gxdl( data );
-    data += sizeof(pw_gxdl);
-
-    cv_cnv_endian_wg_gxdl( data );
-    data += sizeof(wg_gxdl);
-
-    cv_cnv_endian_a_gxdr( data );
-    data += sizeof(a_gxdr);
-
-    cv_cnv_endian_ia_gxdr( data );
-    data += sizeof(ia_gxdr);
-
-    cv_cnv_endian_pw_gxdra( data );
-    data += sizeof(pw_gxdra);
-
-    cv_cnv_endian_pw_gxdrd( data );
-    data += sizeof(pw_gxdrd);
-
-    cv_cnv_endian_pw_gxdr( data );
-    data += sizeof(pw_gxdr);
-
-    cv_cnv_endian_wg_gxdr( data );
-    data += sizeof(wg_gxdr);
-
     cv_cnv_endian_a_gxdl1( data );
     data += sizeof(a_gxdl1);
 
@@ -17178,60 +17346,6 @@ void cvcopy_cnv_endian( char * data )
     cv_cnv_endian_wg_gxk( data );
     data += sizeof(wg_gxk);
 
-    cv_cnv_endian_a_gyde( data );
-    data += sizeof(a_gyde);
-
-    cv_cnv_endian_ia_gyde( data );
-    data += sizeof(ia_gyde);
-
-    cv_cnv_endian_pw_gydea( data );
-    data += sizeof(pw_gydea);
-
-    cv_cnv_endian_pw_gyded( data );
-    data += sizeof(pw_gyded);
-
-    cv_cnv_endian_pw_gyde( data );
-    data += sizeof(pw_gyde);
-
-    cv_cnv_endian_wg_gyde( data );
-    data += sizeof(wg_gyde);
-
-    cv_cnv_endian_a_gydl( data );
-    data += sizeof(a_gydl);
-
-    cv_cnv_endian_ia_gydl( data );
-    data += sizeof(ia_gydl);
-
-    cv_cnv_endian_pw_gydla( data );
-    data += sizeof(pw_gydla);
-
-    cv_cnv_endian_pw_gydld( data );
-    data += sizeof(pw_gydld);
-
-    cv_cnv_endian_pw_gydl( data );
-    data += sizeof(pw_gydl);
-
-    cv_cnv_endian_wg_gydl( data );
-    data += sizeof(wg_gydl);
-
-    cv_cnv_endian_a_gydr( data );
-    data += sizeof(a_gydr);
-
-    cv_cnv_endian_ia_gydr( data );
-    data += sizeof(ia_gydr);
-
-    cv_cnv_endian_pw_gydra( data );
-    data += sizeof(pw_gydra);
-
-    cv_cnv_endian_pw_gydrd( data );
-    data += sizeof(pw_gydrd);
-
-    cv_cnv_endian_pw_gydr( data );
-    data += sizeof(pw_gydr);
-
-    cv_cnv_endian_wg_gydr( data );
-    data += sizeof(wg_gydr);
-
     cv_cnv_endian_a_gydl1( data );
     data += sizeof(a_gydl1);
 
@@ -17321,60 +17435,6 @@ void cvcopy_cnv_endian( char * data )
 
     cv_cnv_endian_wg_gyk( data );
     data += sizeof(wg_gyk);
-
-    cv_cnv_endian_a_gzde( data );
-    data += sizeof(a_gzde);
-
-    cv_cnv_endian_ia_gzde( data );
-    data += sizeof(ia_gzde);
-
-    cv_cnv_endian_pw_gzdea( data );
-    data += sizeof(pw_gzdea);
-
-    cv_cnv_endian_pw_gzded( data );
-    data += sizeof(pw_gzded);
-
-    cv_cnv_endian_pw_gzde( data );
-    data += sizeof(pw_gzde);
-
-    cv_cnv_endian_wg_gzde( data );
-    data += sizeof(wg_gzde);
-
-    cv_cnv_endian_a_gzdl( data );
-    data += sizeof(a_gzdl);
-
-    cv_cnv_endian_ia_gzdl( data );
-    data += sizeof(ia_gzdl);
-
-    cv_cnv_endian_pw_gzdla( data );
-    data += sizeof(pw_gzdla);
-
-    cv_cnv_endian_pw_gzdld( data );
-    data += sizeof(pw_gzdld);
-
-    cv_cnv_endian_pw_gzdl( data );
-    data += sizeof(pw_gzdl);
-
-    cv_cnv_endian_wg_gzdl( data );
-    data += sizeof(wg_gzdl);
-
-    cv_cnv_endian_a_gzdr( data );
-    data += sizeof(a_gzdr);
-
-    cv_cnv_endian_ia_gzdr( data );
-    data += sizeof(ia_gzdr);
-
-    cv_cnv_endian_pw_gzdra( data );
-    data += sizeof(pw_gzdra);
-
-    cv_cnv_endian_pw_gzdrd( data );
-    data += sizeof(pw_gzdrd);
-
-    cv_cnv_endian_pw_gzdr( data );
-    data += sizeof(pw_gzdr);
-
-    cv_cnv_endian_wg_gzdr( data );
-    data += sizeof(wg_gzdr);
 
     cv_cnv_endian_a_gzdl1( data );
     data += sizeof(a_gzdl1);
@@ -25380,7 +25440,6 @@ static const char * cvcopy_table_names[] = {
     "scale_ramp", 
     "debugTensor", 
     "tensor_flag", 
-    "ftde_flag", 
     "num_tensor", 
     "validTensorFile", 
     "validTensorFileAndEntry", 
@@ -25881,6 +25940,76 @@ static const char * cvcopy_table_names[] = {
     "opslquant_save", 
     "save_avmintr", 
     "save_pitracqval4", 
+    "res_gd1", 
+    "res_gd2", 
+    "pw_gd1", 
+    "pw_gd2", 
+    "a_gxdl", 
+    "a_gxdr", 
+    "ia_gxdl", 
+    "ia_gxdr", 
+    "res_gxdl", 
+    "res_gxdr", 
+    "pw_gxdr", 
+    "pw_gxdl", 
+    "wg_gxdr", 
+    "wg_gxdl", 
+    "a_gydl", 
+    "a_gydr", 
+    "ia_gydl", 
+    "ia_gydr", 
+    "res_gydl", 
+    "res_gydr", 
+    "pw_gydr", 
+    "pw_gydl", 
+    "wg_gydr", 
+    "wg_gydl", 
+    "a_gzdl", 
+    "a_gzdr", 
+    "ia_gzdl", 
+    "ia_gzdr", 
+    "res_gzdl", 
+    "res_gzdr", 
+    "pw_gzdr", 
+    "pw_gzdl", 
+    "wg_gzdr", 
+    "wg_gzdl", 
+    "a_gxdla", 
+    "a_gxdld", 
+    "a_gxdra", 
+    "a_gxdrd", 
+    "ia_gxdla", 
+    "ia_gxdld", 
+    "ia_gxdra", 
+    "ia_gxdrd", 
+    "pw_gxdla", 
+    "pw_gxdld", 
+    "pw_gxdra", 
+    "pw_gxdrd", 
+    "a_gydla", 
+    "a_gydld", 
+    "a_gydra", 
+    "a_gydrd", 
+    "ia_gydla", 
+    "ia_gydld", 
+    "ia_gydra", 
+    "ia_gydrd", 
+    "pw_gydla", 
+    "pw_gydld", 
+    "pw_gydra", 
+    "pw_gydrd", 
+    "a_gzdla", 
+    "a_gzdld", 
+    "a_gzdra", 
+    "a_gzdrd", 
+    "ia_gzdla", 
+    "ia_gzdld", 
+    "ia_gzdra", 
+    "ia_gzdrd", 
+    "pw_gzdla", 
+    "pw_gzdld", 
+    "pw_gzdra", 
+    "pw_gzdrd", 
     "num_passdelay", 
     "use_maxloggrad", 
     "max_grad", 
@@ -26006,6 +26135,9 @@ static const char * cvcopy_table_names[] = {
     "ia_incdifx", 
     "ia_incdify", 
     "ia_incdifz", 
+    "waveform_type", 
+    "ide_max_bval", 
+    "sde_max_bval", 
     "bincr", 
     "invthick", 
     "xerror", 
@@ -26175,9 +26307,6 @@ static const char * cvcopy_table_names[] = {
     "c1_scale", 
     "c2_scale", 
     "crusher_cycles", 
-    "sar_amp", 
-    "sar_cycle", 
-    "sar_width", 
     "max_seqtime", 
     "max_slicesar", 
     "max_seqsar", 
@@ -26821,24 +26950,6 @@ static const char * cvcopy_table_names[] = {
     "wg_gzmn", 
     "res_rf2se1", 
     "wg_rf2se1", 
-    "a_gxde", 
-    "ia_gxde", 
-    "pw_gxdea", 
-    "pw_gxded", 
-    "pw_gxde", 
-    "wg_gxde", 
-    "a_gxdl", 
-    "ia_gxdl", 
-    "pw_gxdla", 
-    "pw_gxdld", 
-    "pw_gxdl", 
-    "wg_gxdl", 
-    "a_gxdr", 
-    "ia_gxdr", 
-    "pw_gxdra", 
-    "pw_gxdrd", 
-    "pw_gxdr", 
-    "wg_gxdr", 
     "a_gxdl1", 
     "ia_gxdl1", 
     "pw_gxdl1a", 
@@ -26869,24 +26980,6 @@ static const char * cvcopy_table_names[] = {
     "pw_gxkd", 
     "pw_gxk", 
     "wg_gxk", 
-    "a_gyde", 
-    "ia_gyde", 
-    "pw_gydea", 
-    "pw_gyded", 
-    "pw_gyde", 
-    "wg_gyde", 
-    "a_gydl", 
-    "ia_gydl", 
-    "pw_gydla", 
-    "pw_gydld", 
-    "pw_gydl", 
-    "wg_gydl", 
-    "a_gydr", 
-    "ia_gydr", 
-    "pw_gydra", 
-    "pw_gydrd", 
-    "pw_gydr", 
-    "wg_gydr", 
     "a_gydl1", 
     "ia_gydl1", 
     "pw_gydl1a", 
@@ -26917,24 +27010,6 @@ static const char * cvcopy_table_names[] = {
     "pw_gykd", 
     "pw_gyk", 
     "wg_gyk", 
-    "a_gzde", 
-    "ia_gzde", 
-    "pw_gzdea", 
-    "pw_gzded", 
-    "pw_gzde", 
-    "wg_gzde", 
-    "a_gzdl", 
-    "ia_gzdl", 
-    "pw_gzdla", 
-    "pw_gzdld", 
-    "pw_gzdl", 
-    "wg_gzdl", 
-    "a_gzdr", 
-    "ia_gzdr", 
-    "pw_gzdra", 
-    "pw_gzdrd", 
-    "pw_gzdr", 
-    "wg_gzdr", 
     "a_gzdl1", 
     "ia_gzdl1", 
     "pw_gzdl1a", 

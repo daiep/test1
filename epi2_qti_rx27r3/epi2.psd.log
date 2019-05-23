@@ -1,67 +1,202 @@
-2019/03/11 15:03:09.498242|epi2|21666|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
-2019/03/11 15:03:09.499856|epi2|21666|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
-2019/03/11 15:03:59.389289|epi2|21666|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:04:02.795650|epi2|21666|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:04:05.929461|epi2|21666|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:04:14.208916|epi2|21666|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:04:17.809061|epi2|21666|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:04:20.518398|epi2|21666|psd_syserr|ERROR|epi2.host.cpp|32138|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242942, Msg: For the current prescription, either Dual Spin Echo or Real Time Field Adjustment needs to be turned on.
-2019/03/11 15:04:20.532160|epi2|21666|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:04:25.463626|epi2|21666|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:04:28.330459|epi2|21666|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:04:31.112956|epi2|21666|psd_syserr|ERROR|epi2.host.cpp|27508|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242824, Msg: The minimum number of directions allowed is 6 in tensor acquisition.
-2019/03/11 15:04:31.129024|epi2|21666|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:04:32.981218|epi2|21666|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:04:52.534620|epi2|21666|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:04:56.533057|epi2|21666|psd_syserr|ERROR|epi2.host.cpp|3296|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227006, Msg: The selected TR needs to be increased to 1000 ms for the current prescription.
-2019/03/11 15:04:56.543305|epi2|21666|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:05:24.357342|epi2|21714|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
-2019/03/11 15:05:24.362749|epi2|21714|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
-2019/03/11 15:05:35.018213|epi2|21714|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: optw: CV not found
-2019/03/11 15:06:07.195558|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:06:10.590462|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:06:12.604974|epi2|21714|psd_syserr|ERROR|epi2.host.cpp|3296|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227006, Msg: The selected TR needs to be increased to 1000 ms for the current prescription.
-2019/03/11 15:06:12.615761|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:06:27.508955|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:06:32.473472|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:06:38.134974|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:06:51.246273|epi2|21714|psd_syserr|ERROR|epi2.host.cpp|27508|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242824, Msg: The minimum number of directions allowed is 6 in tensor acquisition.
-2019/03/11 15:06:51.262248|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:06:56.094651|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:07:00.100854|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:07:03.708583|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:07:07.790071|epi2|21714|psd_syserr|ERROR|epi2.host.cpp|32138|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242942, Msg: For the current prescription, either Dual Spin Echo or Real Time Field Adjustment needs to be turned on.
-2019/03/11 15:07:07.803778|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:07:23.827378|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:07:29.812198|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:07:33.026044|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:07:38.884255|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:07:41.589856|epi2|21714|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:17:59.661647|epi2|1306|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
-2019/03/11 15:17:59.663152|epi2|1306|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
-2019/03/11 15:19:19.195199|epi2|1306|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:19:26.070024|epi2|1306|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:19:27.877706|epi2|1306|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:19:31.705408|epi2|1306|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:19:33.874950|epi2|1306|psd_syserr|ERROR|epi2.host.cpp|32138|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242942, Msg: For the current prescription, either Dual Spin Echo or Real Time Field Adjustment needs to be turned on.
-2019/03/11 15:19:33.888650|epi2|1306|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/11 15:19:36.617859|epi2|1306|psd_syserr|ERROR|epi2.host.cpp|32138|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242942, Msg: For the current prescription, either Dual Spin Echo or Real Time Field Adjustment needs to be turned on.
-2019/03/11 15:19:36.637396|epi2|1306|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/19 15:52:07.250926|epi2|31532|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
-2019/03/19 15:52:07.301578|epi2|31532|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
-2019/03/19 15:53:31.197851|epi2|31532|psd_syserr|ERROR|epi2.host.cpp|3296|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227006, Msg: The selected TR needs to be increased to 1000 ms for the current prescription.
-2019/03/19 15:54:28.068941|epi2|31532|psd_syserr|ERROR|epi2.host.cpp|3296|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227006, Msg: The selected TR needs to be increased to 1000 ms for the current prescription.
-2019/03/19 15:54:43.784996|epi2|31532|psd_syserr|ERROR|epi2.host.cpp|32138|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242942, Msg: For the current prescription, either Dual Spin Echo or Real Time Field Adjustment needs to be turned on.
-2019/03/19 16:00:13.686638|epi2|31532|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/19 16:00:16.571802|epi2|31532|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/19 16:00:17.677211|epi2|31532|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/19 16:11:22.547305|epi2|7272|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
-2019/03/19 16:11:22.548811|epi2|7272|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
-2019/03/19 16:11:38.089679|epi2|7272|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: opreserach: CV not found
-2019/03/19 16:12:02.034699|epi2|7272|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: hoecc)support: CV not found
-2019/03/19 16:12:54.105844|epi2|7272|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/19 16:12:57.466313|epi2|7272|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/19 16:12:59.304349|epi2|7272|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/19 16:13:00.514014|epi2|7272|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
-2019/03/19 16:25:10.497120|epi2|7272|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: : CV not found
-2019/03/19 16:25:27.850152|epi2|7272|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:54:13.161445|epi2|19133|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/03/11 14:54:13.174160|epi2|19133|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/03/11 14:54:23.995994|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:54:34.909048|epi2|19133|psd_syserr|ERROR|epi2.host.cpp|3296|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227006, Msg: The selected TR needs to be increased to 1000 ms for the current prescription.
+2019/03/11 14:54:34.920213|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:54:41.743773|epi2|19133|psd_syserr|ERROR|epi2.host.cpp|3296|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227006, Msg: The selected TR needs to be increased to 1000 ms for the current prescription.
+2019/03/11 14:54:41.754455|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:55:00.580104|epi2|19133|psd_syserr|ERROR|epi2.host.cpp|3296|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227006, Msg: The selected TR needs to be increased to 1000 ms for the current prescription.
+2019/03/11 14:55:00.590761|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:55:08.161095|epi2|19133|psd_syserr|ERROR|epic_util.cpp|738|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 0, Msg: Attempt to assign out of range value to optr
+2019/03/11 14:55:08.161114|epi2|19133|psd_syserr|ERROR|epic_util.cpp|764|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217520, Msg: optr is out of range
+2019/03/11 14:55:19.436485|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:55:21.594551|epi2|19133|psd_syserr|ERROR|epi2.host.cpp|3296|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227006, Msg: The selected TR needs to be increased to 1000 ms for the current prescription.
+2019/03/11 14:55:21.604808|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:55:32.610168|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:56:28.461803|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:56:32.455567|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:56:35.796391|epi2|19133|psd_syserr|ERROR|epi2.host.cpp|27508|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242824, Msg: The minimum number of directions allowed is 6 in tensor acquisition.
+2019/03/11 14:56:35.812734|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:56:42.472947|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:56:45.937540|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:56:50.110200|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:56:52.832852|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:56:55.727453|epi2|19133|psd_syserr|ERROR|epi2.host.cpp|32138|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242942, Msg: For the current prescription, either Dual Spin Echo or Real Time Field Adjustment needs to be turned on.
+2019/03/11 14:56:55.741290|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:56:59.721552|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:57:12.648366|epi2|19133|psd_syserr|ERROR|epi2.host.cpp|27508|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242824, Msg: The minimum number of directions allowed is 6 in tensor acquisition.
+2019/03/11 14:57:12.688605|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:57:16.092910|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:57:24.311478|epi2|19133|psd_syserr|ERROR|epic_util.cpp|738|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 0, Msg: Attempt to assign out of range value to opdiffuse
+2019/03/11 14:57:27.380019|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:57:29.976072|epi2|19133|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: : CV not found
+2019/03/11 14:57:32.911214|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:57:35.950343|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:57:39.279675|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:57:42.419817|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:57:45.799795|epi2|19133|psd_syserr|ERROR|epi2.host.cpp|32138|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242942, Msg: For the current prescription, either Dual Spin Echo or Real Time Field Adjustment needs to be turned on.
+2019/03/11 14:57:45.813714|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:57:47.412391|epi2|19133|psd_syserr|ERROR|epi2.host.cpp|32138|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242942, Msg: For the current prescription, either Dual Spin Echo or Real Time Field Adjustment needs to be turned on.
+2019/03/11 14:57:47.427688|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:57:55.395535|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:58:02.411863|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:58:11.131316|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:58:24.556562|epi2|19133|psd_syserr|ERROR|epi2.host.cpp|3296|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227006, Msg: The selected TR needs to be increased to 1000 ms for the current prescription.
+2019/03/11 14:58:24.566354|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:58:36.243130|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:58:46.430419|epi2|19133|psd_syserr|ERROR|epi2.host.cpp|32138|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242942, Msg: For the current prescription, either Dual Spin Echo or Real Time Field Adjustment needs to be turned on.
+2019/03/11 14:58:46.444172|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:58:47.897366|epi2|19133|psd_syserr|ERROR|epi2.host.cpp|32138|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242942, Msg: For the current prescription, either Dual Spin Echo or Real Time Field Adjustment needs to be turned on.
+2019/03/11 14:58:47.911036|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:58:49.174351|epi2|19133|psd_syserr|ERROR|epi2.host.cpp|32138|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242942, Msg: For the current prescription, either Dual Spin Echo or Real Time Field Adjustment needs to be turned on.
+2019/03/11 14:58:49.188011|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:58:53.180581|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:58:56.107284|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/03/11 14:58:59.127198|epi2|19133|psd_syserr|ERROR|epi2.host.cpp|27508|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2242824, Msg: The minimum number of directions allowed is 6 in tensor acquisition.
+2019/03/11 14:58:59.143160|epi2|19133|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/17 15:10:05.093490|epi2|16266|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/17 15:10:05.133704|epi2|16266|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 12:52:29.854381|epi2|25049|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 12:52:29.937377|epi2|25049|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 12:52:55.465892|epi2|25049|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: opdiffdirnub: CV not found
+2019/05/20 12:54:12.830558|epi2|25049|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 12:54:28.906766|epi2|25049|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 12:54:28.909770|epi2|25049|psd_syserr|ERROR|epi2.host.cpp|29570|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 12:54:49.387106|epi2|25049|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 12:54:49.390083|epi2|25049|psd_syserr|ERROR|epi2.host.cpp|29570|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 13:08:52.503243|epi2|25049|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 13:15:10.202726|epi2|25049|psd_syserr|ERROR|epi2.host.cpp|29570|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 13:15:10.237972|epi2|25049|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 13:15:33.500695|epi2|25049|psd_syserr|ERROR|epi2.host.cpp|29570|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 13:15:33.503285|epi2|25049|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 13:27:50.188927|epi2|25049|psd_syserr|ERROR|epi2.host.cpp|29570|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 13:27:50.199879|epi2|25049|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 13:27:50.202499|epi2|25049|psd_syserr|ERROR|epi2.host.cpp|29570|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 13:27:50.626449|epi2|25049|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 13:27:50.628988|epi2|25049|psd_syserr|ERROR|epi2.host.cpp|29570|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 13:27:50.631796|epi2|25049|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 13:27:50.634344|epi2|25049|psd_syserr|ERROR|epi2.host.cpp|29570|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 13:28:57.652904|epi2|31220|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 13:28:57.654328|epi2|31220|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 13:29:34.992298|epi2|31220|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 13:29:34.994295|epi2|31220|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 13:42:04.526524|epi2|969|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 13:42:04.528021|epi2|969|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 13:42:21.187757|epi2|969|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 13:42:21.190168|epi2|969|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 13:46:54.592978|epi2|2180|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 13:46:54.594350|epi2|2180|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 13:47:12.044977|epi2|2180|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 13:47:12.046910|epi2|2180|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 13:50:53.930826|epi2|3489|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 13:50:53.932338|epi2|3489|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 13:51:25.536183|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 13:51:25.538052|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 13:54:00.765604|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:00.339735|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:00.376778|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:13.740545|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:13.748204|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.143695|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.146565|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.148376|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.150746|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.156322|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.160454|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.177916|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.180357|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.182109|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.190581|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.192354|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.196583|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.198362|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.205553|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.207313|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.211815|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.219212|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.388254|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.394181|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.398804|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.406151|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.410855|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.421145|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.429830|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.433185|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.436888|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.444444|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.452855|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.454632|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.457062|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.458804|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.468600|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.470366|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.759910|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.761711|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.784278|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.786109|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.817131|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.818951|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:46.836705|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:46.838523|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:47.126396|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:47.128230|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:47.136698|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:47.138496|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:47.140989|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:47.142752|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:47.146870|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:47.156184|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:47.158704|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:47.160456|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:47.164780|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:47.172155|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:47.174615|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:47.176349|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:47.185267|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:47.187040|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:47.207906|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:47.209699|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:03:49.419470|epi2|3489|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:03:49.421303|epi2|3489|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:05:47.342318|epi2|7573|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 14:05:47.343706|epi2|7573|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 14:06:01.767592|epi2|7573|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:06:01.770375|epi2|7573|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:15:48.989032|epi2|9019|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 14:15:48.990440|epi2|9019|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 14:16:02.666023|epi2|9019|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:16:02.668048|epi2|9019|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:20:11.024445|epi2|10254|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 14:20:11.025810|epi2|10254|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 14:20:25.624883|epi2|10254|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:20:25.626918|epi2|10254|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 14:26:54.012579|epi2|14956|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 14:26:54.013999|epi2|14956|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 14:27:09.261281|epi2|14956|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 14:27:09.263380|epi2|14956|psd_syserr|ERROR|epi2.host.cpp|29571|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/20 15:16:19.923797|epi2|14956|epic_processcmds|ERROR|epic_processcmds.cpp|515| fatal error, PSD 14956 terminating
+2019/05/20 22:54:39.931590|epi2|25712|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 22:54:39.933228|epi2|25712|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/20 22:55:05.686699|epi2|25712|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/20 22:55:05.688772|epi2|25712|psd_syserr|ERROR|epi2.host.cpp|29577|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/21 00:45:59.294892|epi2|29484|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/21 00:45:59.378256|epi2|29484|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/21 00:46:16.860136|epi2|29484|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/21 00:46:16.881298|epi2|29484|psd_syserr|ERROR|epi2.host.cpp|29579|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/21 00:46:57.543470|epi2|29484|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/21 00:46:57.547900|epi2|29484|psd_syserr|ERROR|epi2.host.cpp|29579|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2227073, Msg: Support routine pgen_calcbvalue() failed.
+2019/05/21 01:43:30.924779|epi2|31790|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/21 01:43:30.941233|epi2|31790|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/21 01:43:51.201018|epi2|31790|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/21 23:40:04.711194|epi2|28700|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/21 23:40:04.712790|epi2|28700|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/22 00:42:06.002028|epi2|28700|epic_processcmds|ERROR|epic_processcmds.cpp|515| fatal error, PSD 28700 terminating
+2019/05/23 10:55:36.936756|epi2|5248|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/23 10:55:37.020963|epi2|5248|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/23 10:55:56.756027|epi2|5248|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/23 11:10:46.987148|epi2|6669|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/23 11:10:46.988666|epi2|6669|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/23 11:11:04.080085|epi2|6669|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.
+2019/05/23 11:12:05.170840|epi2|6724|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/23 11:12:05.172057|epi2|6724|psd_syserr|ERROR|epic_get.cpp|846|  Name: EPI2, Release: RX27.0_R03, Compiler v3.4, ERROR: 2217472, Msg: cfmaxb1rmshead: CV not found
+2019/05/23 11:12:21.735714|epi2|6724|VRGF_error|ERROR|genVRGF.cpp|87| Can't create /usr/g/bin/vrgf.param. Might be in Simulation mode. Gonna try to write it locally.

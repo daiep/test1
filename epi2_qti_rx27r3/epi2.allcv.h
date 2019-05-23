@@ -13321,7 +13321,6 @@ float scale_ramp = 1.0 ;
 
 int debugTensor = 0 ;
 int tensor_flag = 0 ;
-int ftde_flag = 0 ;/* granty edit for full time diffusion encoding */
 int num_tensor = MIN_DTI_DIRECTIONS ;
 int validTensorFile = 0; /* HCSDM00476194 */
 int validTensorFileAndEntry = 0; /* HCSDM00476194 */
@@ -13993,6 +13992,105 @@ int opslquant_save = 0 ;
 int save_avmintr = 0;
 int save_pitracqval4 = 0;
 
+/* external waveforms for qti granty 9/28/2017 */
+int res_gd1 = 0; /* number of points in the diffusion waveform before refocusing pulse */
+int res_gd2 = 0; /* number of points in the diffusion waveform after the refocusing pulse */
+
+int pw_gd1 = 0;
+int pw_gd2 = 0;
+
+float a_gxdl = 0;
+float a_gxdr = 0;
+
+int ia_gxdl = 0;
+int ia_gxdr = 0;
+
+int res_gxdl = 0;
+int res_gxdr = 0;
+
+int pw_gxdr = 0;
+int pw_gxdl = 0;
+
+int wg_gxdr = 0 ;
+int wg_gxdl = 0 ;
+
+/* Y-diffusion pulses */
+
+float a_gydl = 0;
+float a_gydr = 0;
+
+int ia_gydl = 0;
+int ia_gydr = 0;
+
+int res_gydl = 0;
+int res_gydr = 0;
+
+int pw_gydr = 0;
+int pw_gydl = 0;
+
+int wg_gydr = 0 ;
+int wg_gydl = 0 ;
+
+/* Z-diffusion pulses */
+
+float a_gzdl = 0;
+float a_gzdr = 0;
+
+int ia_gzdl = 0;
+int ia_gzdr = 0;
+
+int res_gzdl = 0;
+int res_gzdr = 0;
+
+int pw_gzdr = 0;
+int pw_gzdl = 0;
+
+int wg_gzdr = 0 ;
+int wg_gzdl = 0 ;
+
+/* keep support routines happy */
+float a_gxdla = 0;
+float a_gxdld = 0;
+float a_gxdra = 0;
+float a_gxdrd = 0;
+int ia_gxdla = 0;
+int ia_gxdld = 0;
+int ia_gxdra = 0;
+int ia_gxdrd = 0;
+
+int pw_gxdla = 0;
+int pw_gxdld = 0;
+int pw_gxdra = 0;
+int pw_gxdrd = 0;
+
+
+float a_gydla = 0;
+float a_gydld = 0;
+float a_gydra = 0;
+float a_gydrd = 0;
+int ia_gydla = 0;
+int ia_gydld = 0;
+int ia_gydra = 0;
+int ia_gydrd = 0;
+
+int pw_gydla = 0;
+int pw_gydld = 0;
+int pw_gydra = 0;
+int pw_gydrd = 0;
+
+float a_gzdla = 0;
+float a_gzdld = 0;
+float a_gzdra = 0;
+float a_gzdrd = 0;
+int ia_gzdla = 0;
+int ia_gzdld = 0;
+int ia_gzdra = 0;
+int ia_gzdrd = 0;
+
+int pw_gzdla = 0;
+int pw_gzdld = 0;
+int pw_gzdra = 0;
+int pw_gzdrd = 0;
 
 
 /* MRIhc09116 */
@@ -14189,6 +14287,9 @@ float incdifx = 1.0 ;
 float incdify = 1.0 ;
 float incdifz = 1.0 ;
 int ia_incdifx = 0, ia_incdify = 0, ia_incdifz = 0;
+int waveform_type = 0; /*granty unsure specifies whether to play isotropic or linear encoding */
+float ide_max_bval = 2500; /* s/mm^2 b-value of ide waveform at full gradient amplitude */
+float sde_max_bval = 11344; /* b-value of sde waveform at full gradient amplitude */ 
 
 float bincr = 0; /* increment of b-value for each repetition */
 float invthick = 1.0; /* thickness of inversion slice */
@@ -14386,10 +14487,6 @@ int premid_rf90 = 0 ;
 
 float c1_scale = 0, c2_scale = 0;        /* crusher ratio */
 float crusher_cycles = 4.0;
-
-int sar_amp = 0;  /* debug variable for power monitor granty maybe */
-int sar_cycle = 0;
-int sar_width = 0;
 
 /*    min sequence times based on coil heating */
 int   max_seqtime = 0;               /* nax time/slice for max av panel routines */
@@ -14721,8 +14818,6 @@ int ref_in_scan_flag = PSD_OFF ;
 int refless_option = 1 ;
 int ref_dda = 0 ;
 int scan_dda = 0 ;
-
-/* int edr_support = PSD_OFF with {PSD_OFF, PSD_ON, PSD_OFF, VIS, "Flag for EDR support: 1-yes, 0-no",}; */ /* granty maybe */
 
 int pc_enh = PSD_OFF ;
 int ref_volrecvcoil_flag = PSD_OFF ;
@@ -15327,30 +15422,6 @@ int rtp_mode_for_nav_dynaplan = 1 ; /* 0 - RTP_END called every dynaplan phase,1
   int wg_rf2se1  = 0;
 
 
-  float a_gxde = 0;
-  int ia_gxde = 0;
-  int pw_gxdea = 0;
-  int pw_gxded = 0;
-  int pw_gxde = 0;
-  int wg_gxde  = 0;
-
-
-  float a_gxdl = 0;
-  int ia_gxdl = 0;
-  int pw_gxdla = 0;
-  int pw_gxdld = 0;
-  int pw_gxdl = 0;
-  int wg_gxdl  = 0;
-
-
-  float a_gxdr = 0;
-  int ia_gxdr = 0;
-  int pw_gxdra = 0;
-  int pw_gxdrd = 0;
-  int pw_gxdr = 0;
-  int wg_gxdr  = 0;
-
-
   float a_gxdl1 = 0;
   int ia_gxdl1 = 0;
   int pw_gxdl1a = 0;
@@ -15391,30 +15462,6 @@ int rtp_mode_for_nav_dynaplan = 1 ; /* 0 - RTP_END called every dynaplan phase,1
   int wg_gxk  = 0;
 
 
-  float a_gyde = 0;
-  int ia_gyde = 0;
-  int pw_gydea = 0;
-  int pw_gyded = 0;
-  int pw_gyde = 0;
-  int wg_gyde  = 0;
-
-
-  float a_gydl = 0;
-  int ia_gydl = 0;
-  int pw_gydla = 0;
-  int pw_gydld = 0;
-  int pw_gydl = 0;
-  int wg_gydl  = 0;
-
-
-  float a_gydr = 0;
-  int ia_gydr = 0;
-  int pw_gydra = 0;
-  int pw_gydrd = 0;
-  int pw_gydr = 0;
-  int wg_gydr  = 0;
-
-
   float a_gydl1 = 0;
   int ia_gydl1 = 0;
   int pw_gydl1a = 0;
@@ -15453,30 +15500,6 @@ int rtp_mode_for_nav_dynaplan = 1 ; /* 0 - RTP_END called every dynaplan phase,1
   int pw_gykd = 0;
   int pw_gyk = 0;
   int wg_gyk  = 0;
-
-
-  float a_gzde = 0;
-  int ia_gzde = 0;
-  int pw_gzdea = 0;
-  int pw_gzded = 0;
-  int pw_gzde = 0;
-  int wg_gzde  = 0;
-
-
-  float a_gzdl = 0;
-  int ia_gzdl = 0;
-  int pw_gzdla = 0;
-  int pw_gzdld = 0;
-  int pw_gzdl = 0;
-  int wg_gzdl  = 0;
-
-
-  float a_gzdr = 0;
-  int ia_gzdr = 0;
-  int pw_gzdra = 0;
-  int pw_gzdrd = 0;
-  int pw_gzdr = 0;
-  int wg_gzdr  = 0;
 
 
   float a_gzdl1 = 0;

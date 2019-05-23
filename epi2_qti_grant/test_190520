@@ -1,0 +1,13 @@
+cvfile - cvname cvvalue exist_flag fix_flag
+opte 64700 1 1
+optr 400000 1 1
+opdiffuse 1 1 1
+opresearch 1 1 1
+optensor 1 1 1
+opdifnumdirs 6 1 1
+pw_gd1 22376 1 1
+pw_gd2 15240 1 1
+ide_max_bval 2500 1 1
+sde_max_bval 11344 1 1
+max_bval 1000 1 1
+opuser12 60 1 1

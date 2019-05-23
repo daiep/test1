@@ -914,7 +914,6 @@ MR27 05/Oct/2018 GW HCSDM00529102 Added consideration of psd_rf_wait to set pw_w
 @inline Asset.e AssetGlobal
 @inline ARC.e ARCGlobal
 @inline RfovFuncs.e RfovGlobal
-/* @inline MK_GradSpec.e GspecGlobal */ /* granty maybe */
 @inline MultibandFuncs.e MultibandGlobal
 
 /* t1flair_stir */
@@ -1106,6 +1105,105 @@ int opslquant_save = 0 with {,,,VIS,"opslquant in previous cveval",};
 int save_avmintr = 0;
 int save_pitracqval4 = 0;
 
+/* external waveforms for qti granty 9/28/2017 */
+int res_gd1; /* number of points in the diffusion waveform before refocusing pulse */
+int res_gd2; /* number of points in the diffusion waveform after the refocusing pulse */
+
+int pw_gd1;
+int pw_gd2;
+
+float a_gxdl;
+float a_gxdr;
+
+int ia_gxdl;
+int ia_gxdr;
+
+int res_gxdl = 0;
+int res_gxdr = 0;
+
+int pw_gxdr = 0;
+int pw_gxdl = 0;
+
+int wg_gxdr = 0 with {0, WF_MAX_PROCESSORS*2-1, , VIS, , };
+int wg_gxdl = 0 with {0, WF_MAX_PROCESSORS*2-1, , VIS, , };
+
+/* Y-diffusion pulses */
+
+float a_gydl;
+float a_gydr;
+
+int ia_gydl;
+int ia_gydr;
+
+int res_gydl = 0;
+int res_gydr = 0;
+
+int pw_gydr = 0;
+int pw_gydl = 0;
+
+int wg_gydr = 0 with {0, WF_MAX_PROCESSORS*2-1, , VIS, , };
+int wg_gydl = 0 with {0, WF_MAX_PROCESSORS*2-1, , VIS, , };
+
+/* Z-diffusion pulses */
+
+float a_gzdl;
+float a_gzdr;
+
+int ia_gzdl;
+int ia_gzdr;
+
+int res_gzdl = 0;
+int res_gzdr = 0;
+
+int pw_gzdr = 0;
+int pw_gzdl = 0;
+
+int wg_gzdr = 0 with {0, WF_MAX_PROCESSORS*2-1, , VIS, , };
+int wg_gzdl = 0 with {0, WF_MAX_PROCESSORS*2-1, , VIS, , };
+
+/* keep support routines happy */
+float a_gxdla;
+float a_gxdld;
+float a_gxdra;
+float a_gxdrd;
+int ia_gxdla;
+int ia_gxdld;
+int ia_gxdra;
+int ia_gxdrd;
+
+int pw_gxdla;
+int pw_gxdld;
+int pw_gxdra;
+int pw_gxdrd;
+
+
+float a_gydla;
+float a_gydld;
+float a_gydra;
+float a_gydrd;
+int ia_gydla;
+int ia_gydld;
+int ia_gydra;
+int ia_gydrd;
+
+int pw_gydla;
+int pw_gydld;
+int pw_gydra;
+int pw_gydrd;
+
+float a_gzdla;
+float a_gzdld;
+float a_gzdra;
+float a_gzdrd;
+int ia_gzdla;
+int ia_gzdld;
+int ia_gzdra;
+int ia_gzdrd;
+
+int pw_gzdla;
+int pw_gzdld;
+int pw_gzdra;
+int pw_gzdrd;
 
 
 /* MRIhc09116 */
@@ -1302,6 +1400,9 @@ float incdifx = 1.0 with {,,,VIS,"X diffusion grad step size, g/cm.",};
 float incdify = 1.0 with {,,,VIS,"Y diffusion grad step size, g/cm.",};
 float incdifz = 1.0 with {,,,VIS,"Z diffusion grad step size, g/cm.",};
 int ia_incdifx, ia_incdify, ia_incdifz;
+int waveform_type; /*granty unsure specifies whether to play isotropic or linear encoding */
+float ide_max_bval = 2500; /* s/mm^2 b-value of ide waveform at full gradient amplitude */
+float sde_max_bval = 11344; /* b-value of sde waveform at full gradient amplitude */ 
 
 float bincr; /* increment of b-value for each repetition */
 float invthick = 1.0; /* thickness of inversion slice */
@@ -1499,10 +1600,6 @@ int premid_rf90 = 0 with {,,0, INVIS,"Time from beg. of seq. to mid 90", };
 
 float c1_scale, c2_scale;        /* crusher ratio */
 float crusher_cycles = 4.0;
-
-int sar_amp;  /* debug variable for power monitor granty maybe */
-int sar_cycle;
-int sar_width;
 
 /*    min sequence times based on coil heating */
 int   max_seqtime;               /* nax time/slice for max av panel routines */
@@ -1834,8 +1931,6 @@ int ref_in_scan_flag = PSD_OFF with {PSD_OFF, PSD_ON, PSD_OFF, VIS, "0 = ref as 
 int refless_option = 1 with {0, 1, 1, VIS, "0 = with ref, 1 = integrated ref", ""};
 int ref_dda = 0 with {0, , 0, INVIS, "number of disdaqs in ref scan", ""};
 int scan_dda = 0 with {0, , 0, INVIS, "number of disdaqs in scan", ""};
-
-/* int edr_support = PSD_OFF with {PSD_OFF, PSD_ON, PSD_OFF, VIS, "Flag for EDR support: 1-yes, 0-no",}; */ /* granty maybe */
 
 int pc_enh = PSD_OFF with {PSD_OFF, PSD_ON, PSD_OFF, VIS, "Phase Correction Enhancement: 1-yes, 0-no",};
 int ref_volrecvcoil_flag = PSD_OFF with {PSD_OFF, PSD_ON, PSD_OFF, VIS, "Switch to volume receive coil for reference scan: 1-yes, 0-no",};
@@ -2292,7 +2387,16 @@ cvinit( void )
     pwmin_gap     = 2*GRAD_UPDATE_TIME;
     td0           = GRAD_UPDATE_TIME;
     hrdwr_period = GRAD_UPDATE_TIME;
- 
+
+    /* update to include external gradient waveforms for QTI granty edit 9/28/17 */
+    wg_gxdl = XGRAD;
+    wg_gxdr = XGRAD;
+    wg_gydl = YGRAD;
+    wg_gydr = YGRAD;
+    wg_gzdl = ZGRAD;
+    wg_gzdr = ZGRAD; 
+	/* granty end */
+
     /* SXZ::MRIge72411: init the optimization arr */
     taratio_arr[0] = 0.7; 
     taratio_arr[1] = 0.65; 
@@ -2986,6 +3090,58 @@ cvinit( void )
             return FAILURE;
         }
 
+
+	/* granty edit added user cv to specify which IDE diffusion filename to play out */
+        piuset |= use12;
+        cvmod(opuser12,60,120,60, "specifies IDE encoding waveform length",0," ");
+        opuser12 = _opuser12.defval;
+        if (!floatIsInteger(exist(opuser12)))
+        {
+              /* Check user-defined opuser12 is an integer */
+              epic_error( use_ermes, "User CV 12 is out of range (has to be an a rounded float)", EM_PSD_CV_OUT_OF_RANGE, EE_ARGS(1),STRING_ARG, _opuser12.descr);
+              return FAILURE;
+        }
+
+	/* granty edit added user cv to specify which IDE diffusion filename to play out */
+        piuset |= use2;
+        cvmod(opuser2,0,150,0, "specifies ECC time constant x (ms)",0," ");
+        opuser2 = _opuser2.defval;
+        if (!floatIsInteger(exist(opuser2)))
+        {
+              /* Check user-defined opuser2 is an integer */
+              epic_error( use_ermes, "User CV 30 is out of range (has to be an a rounded float)", EM_PSD_CV_OUT_OF_RANGE, EE_ARGS(1),STRING_ARG, _opuser2.descr);
+              return FAILURE;
+        }
+
+	/* granty edit added user cv to specify which IDE diffusion filename to play out */
+        piuset |= use3;
+        cvmod(opuser3,0,150,0, "specifies ECC time constant y (ms)",150," ");
+        opuser3 = _opuser3.defval;
+	opuser3 = 150;
+        if (!floatIsInteger(exist(opuser3)))
+        {
+              /* Check user-defined opuser3 is an integer */
+              epic_error( use_ermes, "User CV 3 is out of range (has to be an a rounded float)", EM_PSD_CV_OUT_OF_RANGE, EE_ARGS(1),STRING_ARG, _opuser3.descr);
+              return FAILURE;
+        }
+
+	/* granty edit added user cv to specify which IDE diffusion filename to play out */
+        piuset |= use4;
+        cvmod(opuser4,0,150,0, "specifies ECC time constant z (ms)",0," ");
+        opuser4 = _opuser4.defval;
+        if (!floatIsInteger(exist(opuser4)))
+        {
+              /* Check user-defined opuser4 is an integer */
+              epic_error( use_ermes, "User CV 32 is out of range (has to be an a rounded float)", EM_PSD_CV_OUT_OF_RANGE, EE_ARGS(1),STRING_ARG, _opuser4.descr);
+              return FAILURE;
+        }
+
+	/* granty edit added user cv to specify which phase encode polarity */
+        piuset |= use13;
+        cvmod(opuser13,0,1,0, "flip phase encode?",0," ");
+        opuser13 = _opuser13.defval;
+	pepolar = opuser13;
+
         /* HCSDM00398133 HCSDM00419770 */
         /* Moved setting CV8 to setUserCVs() */
 
@@ -3004,20 +3160,6 @@ cvinit( void )
                     return FAILURE;
                 }
                 rhtensor_file_number = opuser11;
-
-		/* granty edit for full time diffusion encoding */
-                piuset |= use20;
-                cvmod(opuser20,0,1,0, "full time diffusion encoding",0," ");
-                opuser20 = _opuser20.defval;
-                /* if (ceilf(exist(opuser11)) != exist(opuser11)) */
-                if (!floatIsInteger(exist(opuser11))) /* comment by dai */
-                {
-                    /* Check user-defined opuser11 is an integer */
-                    epic_error( use_ermes, "User CV 20 is out of range (has to 0 or 1)", EM_PSD_CV_OUT_OF_RANGE, EE_ARGS(1),STRING_ARG, _opuser20.descr);
-                    return FAILURE;
-                }
-                ftde_flag = opuser20;
-
             }
             else
             {
@@ -3990,6 +4132,7 @@ cvinit( void )
     /* Reversed Phase Encoding polarity is applied for the following conditions
      * 1) using type-in PSD: epi2alt no matter it is regular DWI or Multiband DWI
      * 2) for Multiband DWI, reversed PE polarity is always used unless it is a type-in PSD: epi2altoff */
+/*
     if( (!strcmp(get_psd_name(), "epi2alt")) || ((PSD_ON == mux_flag) && strcmp(get_psd_name(), "epi2altoff")) )
     {
         pepolar = PSD_ON;
@@ -3997,6 +4140,19 @@ cvinit( void )
     else
     {
         pepolar = PSD_OFF;
+    }
+*/
+
+/* granty edit user controlled phase encode polarity for easier protocol setup */
+    if(PSD_ON == mux_flag)
+    {
+	if( floatsAlmostEqualEpsilons(PSD_ON, opuser13, 2)){
+		pepolar = PSD_OFF;
+	} else {
+		pepolar = PSD_ON;
+	}
+    } else {
+	pepolar = opuser13;
     }
     
     /* HCSDM00453434 reset rhdistcorr_ctrl so that cvcheck later is effective. */
@@ -4073,6 +4229,7 @@ cvinit( void )
 }   /* end cvinit() */
 
 @inline DTI.e DTI_Init
+@inline DTI.e DTI_read_grad_res /* granty edit to read waveform resolution */
 @inline SpSat.e SpSatInit
 @inline SpSat.e SpSatCheck
 @inline ss.e ssInit
@@ -4324,6 +4481,68 @@ cveval( void )
     epi_arc_set_dropdown();
 
     /* DTI */
+    /* granty edit for diffusion timings ide_max_bval and sde_max_bval is updated in predownload for specific waveform */
+
+    /*if(exist(opdiffuse) == PSD_ON | exist(optensor) == PSD_ON)
+    {
+	if(floatsAlmostEqualEpsilons(120, opuser12, 2)){
+		res_gd1 = 12914;
+		res_gd2 = 11300;
+		pw_gd1 = res_gd1*4;
+		pw_gd2 = res_gd2*4;
+		ide_max_bval = 1787.4;
+		sde_max_bval = 32513;
+	}else if(floatsAlmostEqualEpsilons(110, opuser12, 2)){
+		res_gd1 = 11714;
+		res_gd2 = 10250;
+		pw_gd1 = res_gd1*4;
+		pw_gd2 = res_gd2*4;
+		ide_max_bval = 1787.4;
+		sde_max_bval = 24729;
+	}else if(floatsAlmostEqualEpsilons(100, opuser12, 2)){
+		res_gd1 = 10514;
+		res_gd2 = 8762;
+		pw_gd1 = res_gd1*4;
+		pw_gd2 = res_gd2*4;
+		ide_max_bval = 2054.3; 
+		sde_max_bval = 16798;
+	}else if(floatsAlmostEqualEpsilons(90, opuser12, 2)){
+		res_gd1 = 9314;
+		res_gd2 = 7568;
+		pw_gd1 = res_gd1*4;
+		pw_gd2 = res_gd2*4;
+		ide_max_bval = 1787.4;
+		sde_max_bval = 11467;
+		opuser12 = 80;
+	}else if(floatsAlmostEqualEpsilons(80, opuser12, 2)){
+		res_gd1 = 8114;
+		res_gd2 = 6424;
+		pw_gd1 = res_gd1*4;
+		pw_gd2 = res_gd2*4;
+		ide_max_bval = 1787.4;
+		sde_max_bval = 7474.9;
+	}else if(floatsAlmostEqualEpsilons(70, opuser12, 2)){
+		res_gd1 = 6770;
+		res_gd2 = 5042;
+		pw_gd1 = res_gd1*4;
+		pw_gd2 = res_gd2*4;
+		ide_max_bval = 1787.4;
+		sde_max_bval = 4064.2;
+	}else{ *//* opuser12 = 60 */
+		/*opuser12 = 60;
+		res_gd1 = 5594;
+		res_gd2 = 3810;
+		pw_gd1 = res_gd1*4;
+		pw_gd2 = res_gd2*4;
+		ide_max_bval = 1787.4;
+		sde_max_bval = 2039.8;
+	}
+    }*/
+    if(floatsAlmostEqualEpsilons(0, exist(opuser12), 2)) opuser12 = 60;
+    read_grad_res(opuser12, &res_gd1, &res_gd2);
+    pw_gd1 = res_gd1*4;
+    pw_gd2 = res_gd2*4;
+
     if ( (exist(opdiffuse) == PSD_ON) && (tensor_flag == PSD_OFF) )
     {
         /* Load Diffusion Vector Matrix */
@@ -4546,7 +4765,8 @@ cveval( void )
         dpc_flag = PSD_OFF;
     }
 
-    /* granty turn off dpc_flag by default */
+
+   /* granty turn off dpc_flag by default */
     dpc_flag = PSD_OFF;
 
     if(dpc_flag)
@@ -9436,13 +9656,6 @@ cveval1( void )
 
             ia_gzdl = (int)(a_gzdl * (float)max_pg_iamp / loggrd.tz);
             ia_gzdr = (int)(a_gzdr * (float)max_pg_iamp / loggrd.tz);
-	    if(ftde_flag == PSD_ON){/* granty maybe */
-            	ia_gxde = (int)(a_gxde * (float)max_pg_iamp / loggrd.tx);
-
-            	ia_gyde = (int)(a_gyde * (float)max_pg_iamp / loggrd.ty);
-
-            	ia_gzde = (int)(a_gzde * (float)max_pg_iamp / loggrd.tz);
-	    }/* granty maybe end */
         } 
         else 
         {
@@ -13229,6 +13442,14 @@ predownload( void )
       rhpclin = 1;
     }
 
+    /* update for addition of external gradient waveforms for qti - granty */
+    ia_gxdl = a_gxdl*MAX_PG_IAMP;
+    ia_gxdr = a_gxdr*MAX_PG_IAMP;
+    ia_gydl = a_gydl*MAX_PG_IAMP;
+    ia_gydr = a_gydr*MAX_PG_IAMP;
+    ia_gzdl = a_gzdl*MAX_PG_IAMP;
+    ia_gzdr = a_gzdr*MAX_PG_IAMP;
+
     /* Coil Selection */
     cvmax(rhpccoil, (INT)((cfrecvend - cfrecvst)+1));
     cvmin(rhpccoil, (INT)(-1));
@@ -13455,9 +13676,9 @@ predownload( void )
     if(rpg_flag > 0)
     {
         /* Other Distortion Correction  options include:  RH_DIST_CORR_RIGID, RH_DIST_OUTPUT_REVERSET2 */
-        rhdistcorr_ctrl = RH_DIST_CORR_B0 + (rpg_in_scan_flag?RH_DIST_CORR_RPG:0) + RH_DIST_CORR_AFFINE; 
+        rhdistcorr_ctrl = RH_DIST_CORR_B0 + (rpg_in_scan_flag?RH_DIST_CORR_RPG:0) + RH_DIST_CORR_AFFINE;
 	/* granty edit force save of reverse polarity B0 images 7/2/2018 */
-	rhdistcorr_ctrl = 29;
+	rhdistcorr_ctrl = 29; 
     }
     else
     {
@@ -13542,13 +13763,6 @@ predownload( void )
 
             ia_gzdl = (int)(a_gzdl * (float)max_pg_iamp / loggrd.tz);
             ia_gzdr = (int)(a_gzdr * (float)max_pg_iamp / loggrd.tz);
-	    if(ftde_flag == PSD_ON){ /*granty edit for full time diffusion encoding option */
-            	ia_gxde = (int)(a_gxde * (float)max_pg_iamp / loggrd.tx);
-
-            	ia_gyde = (int)(a_gyde * (float)max_pg_iamp / loggrd.ty);
-
-            	ia_gzde = (int)(a_gzde * (float)max_pg_iamp / loggrd.tz);
-	    }
         } 
         else 
         {
@@ -13770,7 +13984,9 @@ predownload( void )
         enforce_minseqseg = 0;
         enable_acoustic_model = 0;
     }
-
+    /* granty edit save p-files by default */ 
+    rhtype1 = rhtype1 | 4096; 
+    autolock = 1;
     return SUCCESS;
 }   /* end predownload() */
 
@@ -14557,9 +14773,24 @@ calcPulseParams( int encode_mode )
             {
                 for( kk=0; kk< (opdifnumdirs + opdifnumt2); kk++) 
                 {
+					/*
                     scale_difx += TENSOR_HOST[0][kk] * TENSOR_HOST[0][kk];
                     scale_dify += TENSOR_HOST[1][kk] * TENSOR_HOST[1][kk];
                     scale_difz += TENSOR_HOST[2][kk] * TENSOR_HOST[2][kk];
+					*/
+					/* original */
+
+			/* granty edit to adjust for different diffusion waveforms 5/15/2018 */
+		    if(floatsAlmostEqualEpsilons(WAVE_HOST[kk], 1, 2)){
+                    	scale_difx += TENSOR_HOST[0][kk] * TENSOR_HOST[0][kk] * max_bval/sde_max_bval;
+                    	scale_dify += TENSOR_HOST[1][kk] * TENSOR_HOST[1][kk] * max_bval/sde_max_bval;
+                    	scale_difz += TENSOR_HOST[2][kk] * TENSOR_HOST[2][kk] * max_bval/sde_max_bval;
+		    } else if (floatsAlmostEqualEpsilons(WAVE_HOST[kk], 3, 2)) {
+                   	scale_difx += TENSOR_HOST[0][kk] * TENSOR_HOST[0][kk] * max_bval/ide_max_bval;
+                    	scale_dify += TENSOR_HOST[1][kk] * TENSOR_HOST[1][kk] * max_bval/ide_max_bval;
+                    	scale_difz += TENSOR_HOST[2][kk] * TENSOR_HOST[2][kk] * max_bval/ide_max_bval;
+		    }
+ 		    /* end edit */
                     if ( weighted_avg_debug == PSD_ON ) 
                     {
                         fprintf(fp_grad,"TENSOR_HOST[0][%d]=%f, TENSOR_HOST[1][%d]=%f, TENSOR_HOST[2][%d]=%f\n",
@@ -14829,13 +15060,6 @@ calcPulseParams( int encode_mode )
             /* z axis scaled - scale_difz = 0*/
             a_gzdl = gradz[GZDL_SLOT].num*a_gzdl*scale_difz;
             a_gzdr = a_gzdl; 
-	    
-	    /* granty edit for full time diffusion encoding */
-	    if(ftde_flag == PSD_ON){
-		a_gxde = -a_gxdr;
-		a_gyde = -a_gydr;
-		a_gzde = -a_gzdr;
-	    }
 
             /* Obl 3in1 opt */
             if (obl_3in1_opt)
@@ -14868,15 +15092,6 @@ calcPulseParams( int encode_mode )
 
             ia_gzdl = (int)(a_gzdl * (float)max_pg_iamp / loggrd.tz);
             ia_gzdr = (int)(a_gzdr * (float)max_pg_iamp / loggrd.tz);
-
-	    if(ftde_flag == PSD_ON){/* granty maybe */
-            	ia_gxde = (int)(a_gxde * (float)max_pg_iamp / loggrd.tx);
-
-            	ia_gyde = (int)(a_gyde * (float)max_pg_iamp / loggrd.ty);
-
-            	ia_gzde = (int)(a_gzde * (float)max_pg_iamp / loggrd.tz);
-	    }
-
         }
         else 
         {
@@ -14969,12 +15184,6 @@ calcPulseParams( int encode_mode )
             /* z axis scaled */
             a_gzdl = agzdif_tmp;
             a_gzdr = a_gzdl;
-
-	    if(ftde_flag == PSD_ON){/* granty maybe */
-		a_gzde = -a_gzdr;
-		a_gyde = -a_gydr;
-		a_gxde = -a_gxdr;
-	    }
         } 
         else 
         {
@@ -15001,7 +15210,11 @@ calcPulseParams( int encode_mode )
     ia_incdifx = (int)(incdifx * (float)max_pg_iamp / loggrd.tx);
     ia_incdify = (int)(incdify * (float)max_pg_iamp / loggrd.ty);
     ia_incdifz = (int)(incdifz * (float)max_pg_iamp / loggrd.tz);
+    /* maybe granty unsure */
 
+	printf("loggrd.tx = %f\n",loggrd.tx);
+    printf("loggrd.tx_xyz = %f\n",loggrd.tx_xyz);
+    fflush(stdout);	
     /*
      * Rio diffusion will generate multi-TR cornerPoints in the MAXIMUM_POWER mode
      */
@@ -15269,7 +15482,40 @@ int *diff_order_pass;
 int *diff_order_nex;
 int *diff_order_dif;
 
+/* update for external gradient waveforms for QTI granty 9/28/2017 */
+/* holds QTI waveforms */
+WF_PULSE gxdlbuff = INITPULSE;
+WF_PULSE gxdrbuff = INITPULSE;
+WF_PULSE gydlbuff = INITPULSE;
+WF_PULSE gydrbuff = INITPULSE;
+WF_PULSE gzdlbuff = INITPULSE;
+WF_PULSE gzdrbuff = INITPULSE;
 
+WF_PULSE gxiso1 = INITPULSE;
+WF_PULSE gxiso2 = INITPULSE;
+WF_PULSE gyiso1 = INITPULSE;
+WF_PULSE gyiso2 = INITPULSE;
+WF_PULSE gziso1 = INITPULSE;
+WF_PULSE gziso2 = INITPULSE;
+
+/* bipolar trapezoidal waveform */
+WF_PULSE gbpbuffx = INITPULSE;
+WF_PULSE gbpbuffy = INITPULSE;
+WF_PULSE gbpbuffz = INITPULSE;
+/* Single trapezoidal waveform */
+WF_PULSE gtrapbuffx = INITPULSE;
+WF_PULSE gtrapbuffy = INITPULSE;
+WF_PULSE gtrapbuffz = INITPULSE;
+/* daiep comment because of error when simulating */
+
+WF_PULSE gxdr = INITPULSE;
+WF_PULSE gxdl = INITPULSE;
+WF_PULSE gydr = INITPULSE;
+WF_PULSE gydl = INITPULSE;
+WF_PULSE gzdr = INITPULSE;
+WF_PULSE gzdl = INITPULSE;
+
+/* daiep end */
 /* declare delta grad and freq arrays */
 @inline HoecCorr.e HoecArrayDefPG
 
@@ -15527,6 +15773,7 @@ STATUS pulsegen( void )
     LONG pulsePos;
     int lpfval = -1;
     float betax;
+    EXTERN_FILENAME test_wave_file; /* granty edit for qti */
 
     tot_etl = etl + iref_etl; /* internref */
 
@@ -16346,38 +16593,114 @@ STATUS pulsegen( void )
       
         if (PSD_OFF == dualspinecho_flag)
         {
-	    if(ftde_flag == PSD_OFF){ /* granty edit to add full time diffusion encoding option */
-            	if(xygradCrusherFlag == PSD_ON ) {
-                	tempx = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&xgradCrusherL,"xgradCrusherLa",0)) - pw_gxdl - pw_gxdld - pw_wgxdl);
-            	} else {
-                	tempx = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gxdl - pw_gxdld - pw_wgxdl);
-            	}
-            }else{
-            	if(xygradCrusherFlag == PSD_ON ) {
-                	tempx = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&xgradCrusherL,"xgradCrusherLa",0)) - pw_gxdl - pw_gxdld - pw_wgxdl - pw_gxde - pw_gxded - pw_gxdea);
-            	} else {
-                	tempx = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gxdl - pw_gxdld - pw_wgxdl - pw_gxde - pw_gxded - pw_gxdea);
-            	}
-		TRAPEZOID(XGRAD, gxde, tempx + pw_gxdla + pw_gxdl + pw_gxdld, 0, TYPNDEF, loggrd);
-#if defined(HOST_TGT)
-            	setiamptiter(xamp_iters, cur_num_iters, &gxde, 0, 1);
-#endif
-	   }
-            	TRAPEZOID(XGRAD, gxdl, tempx, 0, TYPNDEF, loggrd);
+/* maybe granty */
+	    res_gxdl = res_gd1;
+	    pw_gxdl = pw_gd1;
+/* granty end */
+            if(xygradCrusherFlag == PSD_ON ) {
+                tempx = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&xgradCrusherL,"xgradCrusherLa",0)) - pw_gxdl - pw_gxdld - pw_wgxdl);
+            } else {
+                tempx = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gxdl - pw_gxdld - pw_wgxdl);
+            }
+            /* TRAPEZOID(XGRAD, gxdl, tempx, 0, TYPNDEF, loggrd); */ /* maybe grant, daiep */
+
+/* maybe granty */
+    	    pulsename(&gxdl,"gxdl");
+
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"ide%d_x1.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/ide%d_x1.bin",(int)opuser12);
+#endif 
+	    printf("pg 16497 ia_gxdl = %d\n", ia_gxdl);
+	    printf("max_bval = %f\n", max_bval);
+	    printf("ide_max_bval = %f\n", ide_max_bval);
+            fflush( stdout );
+	    
+	    if(waveform_type == 3){ /* used to change which pulsed gets used to calculate the b-mat in dti predownload */
+            	createextwave(&gxdl,(WF_PROCESSOR)XGRAD,
+                           res_gxdl,test_wave_file);
+	    	createinstr( &gxdl,(long)tempx,
+                           pw_gxdl,ia_gxdl);
+	     }
 
 
+
+    	    pulsename(&gxiso1,"gxiso1");
+            createextwave(&gxiso1,(WF_PROCESSOR)wg_gxdl,
+                           res_gxdl,test_wave_file);
+
+
+    	    pulsename(&gxdlbuff,"gxdlbuff");
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"sde%d_1.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/sde%d_1.bin",(int)opuser12);
+#endif 
+            createextwave(&gxdlbuff,(WF_PROCESSOR)wg_gxdl,
+                           res_gxdl,test_wave_file);
+
+	    if(waveform_type != 3){ /* used to change which pulsed gets used to calculate the b-mat in dti predownload */
+            	createextwave(&gxdl,(WF_PROCESSOR)XGRAD,
+                           res_gxdl,test_wave_file);
+	    	createinstr( &gxdl,(long)tempx,
+                           pw_gxdl,ia_gxdl);
+	     }
+/* granty end */
 #if defined(HOST_TGT)
-            setiamptiter(xamp_iters, cur_num_iters, &gxdl, 0, 1);
+            /* setiamptiter(xamp_iters, cur_num_iters, &gxdl, 0, 1);*/ /* maybe granty, daiep*/
+			setiampiter(xamp_iters, cur_num_iters, &gxdl, 0, 1);
 #endif
+/* maybe granty */
+	    res_gxdr = res_gd2;
+	    pw_gxdr = pw_gd2;
+/* granty end */
             if(xygradCrusherFlag == PSD_ON ) {
                 tempx = RUP_GRD(IMax(2,pend(&gzrf2r1,"gzrf2r1d",0),pend(&xgradCrusherR,"xgradCrusherRd",0)) + pw_gxdra + pw_wgxdr);
             } else {
                 tempx = RUP_GRD(pend(&gzrf2r1,"gzrf2r1d",0) + pw_gxdra + pw_wgxdr);
             }
-            TRAPEZOID(XGRAD, gxdr, tempx, 0, TYPNDEF, loggrd);
+            /* TRAPEZOID(XGRAD, gxdr, tempx, 0, TYPNDEF, loggrd); */ /* maybe granty, daiep */
+/* maybe granty */
+    	    pulsename(&gxdr,"gxdr");
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"ide%d_x2.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/ide%d_x2.bin",(int)opuser12);
+#endif 
+
+	    if(waveform_type == 3){
+            	createextwave(&gxdr,(WF_PROCESSOR)XGRAD,
+                           res_gxdr,test_wave_file);
+            	createinstr( &gxdr,(long)tempx,
+                           pw_gxdr,ia_gxdr);
+	    }
+
+    	    pulsename(&gxiso2,"gxiso2");
+            createextwave(&gxiso2,(WF_PROCESSOR)wg_gxdr,
+                           res_gxdr,test_wave_file);
+
+    	    pulsename(&gxdlbuff,"gxdrbuff");
+
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"sde%d_2.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/sde%d_2.bin",(int)opuser12);
+#endif
  
+            createextwave(&gxdrbuff,(WF_PROCESSOR)wg_gxdr,
+                           res_gxdr,test_wave_file);
+
+	    if(waveform_type != 3){
+            	createextwave(&gxdr,(WF_PROCESSOR)XGRAD,
+                           res_gxdr,test_wave_file);
+            	createinstr( &gxdr,(long)tempx,
+                           pw_gxdr,ia_gxdr);
+	    }
+ /* granty end */
 #if defined(HOST_TGT)
-            setiamptiter(xamp_iters, cur_num_iters, &gxdr, 0, 1);
+            /* setiamptiter(xamp_iters, cur_num_iters, &gxdr, 0, 1);*/ /* maybe granty, daiep*/
+			setiampiter(xamp_iters, cur_num_iters, &gxdr, 0, 1);
 #endif
 
         } else {
@@ -16453,40 +16776,106 @@ STATUS pulsegen( void )
     /* DTI */
     if ((oppseq == PSD_SE && opdiffuse == PSD_ON) || tensor_flag == PSD_ON) {
         if (PSD_OFF == dualspinecho_flag)
-        {/* granty maybe */
-	    if(ftde_flag == PSD_OFF){
-            	if(xygradCrusherFlag == PSD_ON ) {
-                	tempy = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&ygradCrusherL,"ygradCrusherLa",0)) - pw_gydl - pw_gydld - pw_wgydl);
-            	} else {
-                	tempy = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gydl - pw_gydld - pw_wgydl);
-            	}
-	    }else{
-            	if(xygradCrusherFlag == PSD_ON ) {
-                	tempy = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&ygradCrusherL,"ygradCrusherLa",0)) - pw_gydl - pw_gydld - pw_wgydl - pw_gyde - pw_gyded - pw_gydea);
-            	} else {
-                	tempy = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gydl - pw_gydld - pw_wgydl - pw_gyde - pw_gyded - pw_gydea);
-            	}
-            	TRAPEZOID(YGRAD, gyde, tempy + pw_gydla + pw_gydl + pw_gydld, 0, TYPNDEF, loggrd);
-         
-#if defined(HOST_TGT)
-            	setiamptiter(yamp_iters, cur_num_iters, &gydl, 0, 1);
+        {
+/* maybe granty */
+	    res_gydl = res_gd1;
+	    pw_gydl = pw_gd1;
+/* granty end */
+            if(xygradCrusherFlag == PSD_ON ) {
+                tempy = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&ygradCrusherL,"ygradCrusherLa",0)) - pw_gydl - pw_gydld - pw_wgydl);
+            } else {
+                tempy = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gydl - pw_gydld - pw_wgydl);
+            }
+            /* TRAPEZOID(YGRAD, gydl, tempy, 0, TYPNDEF, loggrd); */ /* maybe granty, daiep */
+/* maybe granty */
+    	    pulsename(&gydl,"gydl");
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"ide%d_y1.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/ide%d_y1.bin",(int)opuser12);
 #endif
+	    if(waveform_type == 3){
+            	createextwave(&gydl,(WF_PROCESSOR)wg_gydl,
+                           res_gydl,test_wave_file);
+            	createinstr( &gydl,(long)tempy,
+                           pw_gydl,ia_gydl);
 	    }
-            TRAPEZOID(YGRAD, gydl, tempy, 0, TYPNDEF, loggrd);
-         
-#if defined(HOST_TGT)
-            setiamptiter(yamp_iters, cur_num_iters, &gydl, 0, 1);
-#endif
 
+    	    pulsename(&gyiso1,"gyiso1");
+            createextwave(&gyiso1,(WF_PROCESSOR)wg_gydl,
+                           res_gydl,test_wave_file);
+
+    	    pulsename(&gydlbuff,"gydlbuff");
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"sde%d_1.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/sde%d_1.bin",(int)opuser12);
+#endif
+            createextwave(&gydlbuff,(WF_PROCESSOR)wg_gydl,
+                           res_gydl,test_wave_file);
+
+	    if(waveform_type != 3){
+            	createextwave(&gydl,(WF_PROCESSOR)wg_gydl,
+                           res_gydl,test_wave_file);
+            	createinstr( &gydl,(long)tempy,
+                           pw_gydl,ia_gydl);
+	    }
+/* granty end */         
+#if defined(HOST_TGT)
+            /* setiamptiter(yamp_iters, cur_num_iters, &gydl, 0, 1); */ /* maybe granty, daiep */
+			setiampiter(yamp_iters, cur_num_iters, &gydl, 0, 1);
+#endif
+/* maybe granty */
+	    res_gydr = res_gd2;
+	    pw_gydr = pw_gd2;
+/* granty end */
             if(xygradCrusherFlag == PSD_ON ) {
                 tempy = RUP_GRD(IMax(2,pend(&gzrf2r1,"gzrf2r1d",0),pend(&ygradCrusherR,"ygradCrusherRd",0)) + pw_gydra + pw_wgydr);
             } else {
                 tempy = RUP_GRD(pend(&gzrf2r1,"gzrf2r1d",0) + pw_gydra + pw_wgydr);
             }
-            TRAPEZOID(YGRAD, gydr, tempy, 0, TYPNDEF, loggrd);
+            /* TRAPEZOID(YGRAD, gydr, tempy, 0, TYPNDEF, loggrd); */ /* maybe granty, daiep */
+/* granty edit custom pulse */
+
+
+
+    	    pulsename(&gydr,"gydr");
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"ide%d_y2.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/ide%d_y2.bin",(int)opuser12);
+#endif
+
+	    if( waveform_type == 3){
+            	createextwave(&gydr,(WF_PROCESSOR)wg_gydr,
+                           res_gydr,test_wave_file);
+            	createinstr( &gydr,(long)tempy,
+                           pw_gydr,ia_gydr);
+	    }
+
+    	    pulsename(&gyiso2,"gyiso2");
+            createextwave(&gyiso2,(WF_PROCESSOR)wg_gydr,
+                           res_gydr,test_wave_file);
+
+    	    pulsename(&gydrbuff,"gydrbuff");
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"sde%d_2.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/sde%d_2.bin",(int)opuser12);
+#endif 
+            createextwave(&gydrbuff,(WF_PROCESSOR)wg_gydr,
+                           res_gydr,test_wave_file);
+
+	    if( waveform_type != 3){
+            	createextwave(&gydr,(WF_PROCESSOR)wg_gydr,
+                           res_gydr,test_wave_file);
+            	createinstr( &gydr,(long)tempy,
+                           pw_gydr,ia_gydr);
+	    }
 
 #if defined(HOST_TGT)
-            setiamptiter(yamp_iters, cur_num_iters, &gydr, 0, 1);
+            /* setiamptiter(yamp_iters, cur_num_iters, &gydr, 0, 1); */ /* maybe granty, daiep */
+			setiampiter(yamp_iters, cur_num_iters, &gydr, 0, 1);
 #endif
 
         } else {
@@ -16562,39 +16951,112 @@ STATUS pulsegen( void )
     if ((oppseq == PSD_SE && opdiffuse == PSD_ON) || tensor_flag == PSD_ON) {
         if (PSD_OFF == dualspinecho_flag)
         {
-		if(ftde_flag == PSD_OFF){ /* granty maybe This is th original parts */
+/* maybe granty */
+	    res_gzdl = res_gd1;
+	    pw_gzdl = pw_gd1;
+/* granty end */
             if(xygradCrusherFlag == PSD_ON) {
                 tempz = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&xgradCrusherL,"xgradCrusherLa",0)) - pw_gzdl - pw_gzdld - pw_wgzdl);
             } else {
                 tempz = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gzdl - pw_gzdld - pw_wgzdl);
             }
-	    }else{ /* granty maybe */
-            	if(xygradCrusherFlag == PSD_ON) {
-            	    tempz = RUP_GRD(IMin(2,pbeg(&gzrf2l1,"gzrf2l1a",0),pbeg(&xgradCrusherL,"xgradCrusherLa",0)) - pw_gzdl - pw_gzdld - pw_wgzdl - pw_gzde - pw_gzded - pw_gzdea);
-            	} else {
-            	    tempz = RUP_GRD(pbeg(&gzrf2l1,"gzrf2l1a",0) - pw_gzdl - pw_gzdld - pw_wgzdl - pw_gzde - pw_gzded - pw_gzdea);
-            	}
-            	TRAPEZOID(ZGRAD, gzde, tempz + pw_gzdla + pw_gzdl + pw_gzdld, 0, TYPNDEF, loggrd);
+            /* TRAPEZOID(ZGRAD, gzdl, tempz, 0, TYPNDEF, loggrd);*/ /* maybe granty, daiep */
+/* granty edit custom pulse */
+
+    	    pulsename(&gzdl,"gzdl");
+
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"ide%d_z1.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/ide%d_z1.bin",(int)opuser12);
+#endif 
+
+	    if( waveform_type == 3){
+            	createextwave(&gzdl,(WF_PROCESSOR)wg_gzdl,
+                           res_gzdl,test_wave_file);
+
+            	createinstr( &gzdl,(long)tempz,
+                           pw_gzdl,ia_gzdl);
+	    }
+
+    	    pulsename(&gziso1,"gziso1");
+            createextwave(&gziso1,(WF_PROCESSOR)wg_gzdl,
+                           res_gzdl,test_wave_file);
+
+    	    pulsename(&gzdlbuff,"gzdlbuff");
+
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"sde%d_1.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/sde%d_1.bin",(int)opuser12);
+#endif 
+
+            createextwave(&gzdlbuff,(WF_PROCESSOR)wg_gzdl,
+                           res_gzdl,test_wave_file);
+
+	    if( waveform_type != 3){
+            	createextwave(&gzdl,(WF_PROCESSOR)wg_gzdl,
+                           res_gzdl,test_wave_file);
+
+            	createinstr( &gzdl,(long)tempz,
+                           pw_gzdl,ia_gzdl);
+	    }
 
 #if defined(HOST_TGT)
-           	 setiamptiter(zamp_iters, cur_num_iters, &gzde, 0, 1);
+            /* setiamptiter(zamp_iters, cur_num_iters, &gzdl, 0, 1); */ /*maybe granty, daiep */
+			setiampiter(zamp_iters, cur_num_iters, &gzdl, 0, 1);
 #endif
-	    } /* granty maybe end */
-            TRAPEZOID(ZGRAD, gzdl, tempz, 0, TYPNDEF, loggrd);
-
-#if defined(HOST_TGT)
-            setiamptiter(zamp_iters, cur_num_iters, &gzdl, 0, 1);
-#endif
-
+/* maybe granty */
+	    res_gzdr = res_gd2;
+	    pw_gzdr = pw_gd2;
+/* granty end */
             if(xygradCrusherFlag == PSD_ON) {
                 tempz = RUP_GRD(IMax(2,pend(&gzrf2r1,"gzrf2r1d",0),pend(&xgradCrusherR,"xgradCrusherRd",0)) + pw_gzdra + pw_wgzdr);
             } else {
                 tempz = RUP_GRD(pend(&gzrf2r1,"gzrf2r1d",0) + pw_gzdra + pw_wgzdr);
             }
-            TRAPEZOID(ZGRAD, gzdr, tempz, 0, TYPNDEF, loggrd);
+            /* TRAPEZOID(ZGRAD, gzdr, tempz, 0, TYPNDEF, loggrd); */ /* maybe granty, daiep */
+/* maybe granty */
+    	    pulsename(&gzdr,"gzdr");
+
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"ide%d_z2.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/ide%d_z2.bin",(int)opuser12);
+#endif 
+
+	    if( waveform_type == 3){
+	            createextwave(&gzdr,(WF_PROCESSOR)wg_gzdr,
+                           res_gzdr,test_wave_file);
+	            createinstr( &gzdr,(long)tempz,
+                           pw_gzdr,ia_gzdr);
+	    }
+
+    	    pulsename(&gziso2,"gziso2");
+            createextwave(&gziso2,(WF_PROCESSOR)wg_gzdr,
+                           res_gzdr,test_wave_file);
+
+    	    pulsename(&gzdrbuff,"gzdrbuff");
+
+#ifndef PSD_HW
+	    sprintf(test_wave_file,"sde%d_2.bin",(int)opuser12);
+#else
+	    sprintf(test_wave_file,"/usr/g/research/grant/cdiff/WAVES/sde%d_2.bin",(int)opuser12);
+#endif 
+            createextwave(&gzdrbuff,(WF_PROCESSOR)wg_gzdr,
+                           res_gzdr,test_wave_file);
+
+	    if( waveform_type != 3){
+	            createextwave(&gzdr,(WF_PROCESSOR)wg_gzdr,
+                           res_gzdr,test_wave_file);
+	            createinstr( &gzdr,(long)tempz,
+                           pw_gzdr,ia_gzdr);
+	    }
+/* granty end */
 
 #if defined(HOST_TGT)
-            setiamptiter(zamp_iters, cur_num_iters, &gzdr, 0, 1);
+            /* setiamptiter(zamp_iters, cur_num_iters, &gzdr, 0, 1);*/ /*maybe granty, daiep */
+			setiampiter(zamp_iters, cur_num_iters, &gzdr, 0, 1);
 #endif
 
         } else {
@@ -17890,6 +18352,8 @@ STATUS scan( void )
 	cstun =1;
     psdinit();
 
+    NoiseCalrcvn();/* maybe granty */
+
     /*RTB0 correction*/
     rtb0_initialized =0;
 
@@ -18420,17 +18884,22 @@ STATUS scanloop( void )
         /* DTI BJM: (dsp) set the instruction amplitude */
         if (PSD_OFF == dualspinecho_flag)
         {
+			/* original */
+			/*
             setiampt(0, &gxdl, 0);
             setiampt(0, &gxdr, 0);
             setiampt(0, &gydl, 0);
             setiampt(0, &gydr, 0);
             setiampt(0, &gzdl, 0);
             setiampt(0, &gzdr, 0);
-	    if(ftde_flag == PSD_ON){/* granty edit for full time diffusion encoding */
-		setiampt(0, &gxde, 0);
-	        setiampt(0, &gyde, 0);
-	        setiampt(0, &gzde, 0);
-	    }
+			*/
+/* granty changed setiampt to setiamp for custom waveforms */
+            setiamp(0, &gxdl, 0);
+            setiamp(0, &gxdr, 0);
+            setiamp(0, &gydl, 0);
+            setiamp(0, &gydr, 0);
+            setiamp(0, &gzdl, 0);
+            setiamp(0, &gzdr, 0);
         } else {
             setiampt(0, &gxdl1, 0);
             setiampt(0, &gxdr1, 0);
@@ -20706,13 +21175,35 @@ STATUS diffamp( INT dshot )
         /* DTI BJM: do the tensor acq. */
         else if(tensor_flag == PSD_ON)
         {
+			/* original */
+			/*
             ia_incdifx = (int)(incdifx*TENSOR_AGP[0][dshot]*(float)max_pg_iamp/loggrd.tx);
             ia_incdify = (int)(incdify*TENSOR_AGP[1][dshot]*(float)max_pg_iamp/loggrd.ty);
             ia_incdifz = (int)(incdifz*TENSOR_AGP[2][dshot]*(float)max_pg_iamp/loggrd.tz);
+			*/
+		/* maybe granty */
+	    if(ide_max_bval < max_bval){ 
+		max_bval =  ide_max_bval;
+	    }
+	    if(sde_max_bval < max_bval){ 
+		max_bval =  sde_max_bval;
+	    }
+	    waveform_type = (int)WAVE_AGP[dshot];/* granty edit to read in waveform type */
+	    if(waveform_type == 3){ /* isotropic diffusion */
+                 ia_incdifx = (int)(incdifx*TENSOR_AGP[0][dshot]*(float)max_pg_iamp/loggrd.tx*(float)sqrt(max_bval/ide_max_bval));
+                 ia_incdify = (int)(incdify*TENSOR_AGP[1][dshot]*(float)max_pg_iamp/loggrd.ty*(float)sqrt(max_bval/ide_max_bval));
+                 ia_incdifz = (int)(incdifz*TENSOR_AGP[2][dshot]*(float)max_pg_iamp/loggrd.tz*(float)sqrt(max_bval/ide_max_bval));
+	    }else{ /* waveform type == 1 */
+                 ia_incdifx = (int)(incdifx*TENSOR_AGP[0][dshot]*(float)max_pg_iamp/loggrd.tx*(float)sqrt(max_bval/sde_max_bval));
+                 ia_incdify = (int)(incdify*TENSOR_AGP[1][dshot]*(float)max_pg_iamp/loggrd.ty*(float)sqrt(max_bval/sde_max_bval));
+                 ia_incdifz = (int)(incdifz*TENSOR_AGP[2][dshot]*(float)max_pg_iamp/loggrd.tz*(float)sqrt(max_bval/sde_max_bval));
+	    }
+
 
             if (debugTensor == PSD_ON)
             {
                 printf("Shot # = %d\n", dshot);
+				printf("Waveform type: %d \n", waveform_type);/* maybe granty */
                 printf("TENSOR_AGP[0] = %f\n", TENSOR_AGP[0][dshot]);
                 printf("TENSOR_AGP[1] = %f\n", TENSOR_AGP[1][dshot]);
                 printf("TENSOR_AGP[2] = %f\n\n",TENSOR_AGP[2][dshot]);
@@ -20729,7 +21220,8 @@ STATUS diffamp( INT dshot )
 STATUS diffstep( INT dshot )
 {
     int i;
-
+    /* granty edit for swapping waveforms */
+    LONG bufferedwave;
     diffamp(dshot);
 
 #ifdef UNDEF
@@ -20812,17 +21304,22 @@ STATUS diffstep( INT dshot )
         /* DTI */
         if (PSD_OFF == dualspinecho_flag)
         {
+			/* original */
+			/*
             setiampt(0, &gxdl, 0);
             setiampt(0, &gxdr, 0);
             setiampt(0, &gydl, 0);
             setiampt(0, &gydr, 0);
             setiampt(0, &gzdl, 0);
             setiampt(0, &gzdr, 0);
-	    if(ftde_flag == PSD_ON){/* granty edit for full time diffusion encoding */
-		setiampt(0, &gxde, 0);
-	        setiampt(0, &gyde, 0);
-	        setiampt(0, &gzde, 0);
-	    }
+			*/
+/* granty edit from setiampt to setiamp for custom waveforms */
+            setiamp(0, &gxdl, 0);
+            setiamp(0, &gxdr, 0);
+            setiamp(0, &gydl, 0);
+            setiamp(0, &gydr, 0);
+            setiamp(0, &gzdl, 0);
+            setiamp(0, &gzdr, 0);
         } else {
             setiampt(0, &gxdl1, 0);
             setiampt(0, &gxdr1, 0);
@@ -20846,16 +21343,63 @@ STATUS diffstep( INT dshot )
         /* DTI */
         if (PSD_OFF == dualspinecho_flag)
         {
+			/* original */
+			/*
             setiampt(ia_incdifx, &gxdl, 0);
             setiampt(ia_incdifx, &gxdr, 0);
             setiampt(ia_incdify, &gydl, 0);
             setiampt(ia_incdify, &gydr, 0);
             setiampt(ia_incdifz, &gzdl, 0);
             setiampt(ia_incdifz, &gzdr, 0);
-	    if(ftde_flag == PSD_ON){/* granty edit for full time diffusion encoding */
-		setiampt(-ia_incdifx, &gxde, 0);
-	        setiampt(-ia_incdify, &gyde, 0);
-	        setiampt(-ia_incdifz, &gzde, 0);
+			*/
+/* granty edit swap out waveforms between TRs */
+	    if(waveform_type == 3){/*qti*/
+	     	getwave(&bufferedwave, &gxiso1);
+	     	setwave(bufferedwave,&gxdl,0);
+	     	getwave(&bufferedwave, &gxiso2);
+	     	setwave(bufferedwave,&gxdr,0);
+
+	     	getwave(&bufferedwave, &gyiso1);
+	     	setwave(bufferedwave,&gydl,0);
+	     	getwave(&bufferedwave, &gyiso2);
+	     	setwave(bufferedwave,&gydr,0);
+
+	     	getwave(&bufferedwave, &gziso1);
+	     	setwave(bufferedwave,&gzdl,0);
+	     	getwave(&bufferedwave, &gziso2);
+	     	setwave(bufferedwave,&gzdr,0);
+
+
+		/* granty edit setiampt to setiamp for custom waveforms */
+            	setiamp(ia_incdifx, &gxdl, 0);
+            	setiamp(ia_incdifx, &gxdr, 0);
+            	setiamp(ia_incdify, &gydl, 0);
+            	setiamp(ia_incdify, &gydr, 0);
+            	setiamp(ia_incdifz, &gzdl, 0);
+           	setiamp(ia_incdifz, &gzdr, 0);
+	    }else{/*sde*/
+	     	getwave(&bufferedwave, &gxdlbuff);
+	     	setwave(bufferedwave,&gxdl,0);
+	     	getwave(&bufferedwave, &gxdrbuff);
+	     	setwave(bufferedwave,&gxdr,0);
+
+	     	getwave(&bufferedwave, &gydlbuff);
+	     	setwave(bufferedwave,&gydl,0);
+	     	getwave(&bufferedwave, &gydrbuff);
+	     	setwave(bufferedwave,&gydr,0);
+
+	     	getwave(&bufferedwave, &gzdlbuff);
+	     	setwave(bufferedwave,&gzdl,0);
+	     	getwave(&bufferedwave, &gzdrbuff);
+	     	setwave(bufferedwave,&gzdr,0);
+
+		/* granty edit setiampt to setiamp for custom waveforms */
+            	setiamp(ia_incdifx, &gxdl, 0);
+            	setiamp(ia_incdifx, &gxdr, 0);
+            	setiamp(ia_incdify, &gydl, 0);
+            	setiamp(ia_incdify, &gydr, 0);
+            	setiamp(ia_incdifz, &gzdl, 0);
+           	setiamp(ia_incdifz, &gzdr, 0);
 	    }
         } 
         else 

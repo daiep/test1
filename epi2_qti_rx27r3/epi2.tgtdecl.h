@@ -526,18 +526,6 @@ float cf_coeff[4]; /*polyfit coefficient MAX is 3rd order, so 4 coefficient*/
 
   WF_PULSE rf2se1 = INITPULSE;
 
-  WF_PULSE gxdea = INITPULSE;
-  WF_PULSE gxde = INITPULSE;
-  WF_PULSE gxded = INITPULSE;
-
-  WF_PULSE gxdla = INITPULSE;
-  WF_PULSE gxdl = INITPULSE;
-  WF_PULSE gxdld = INITPULSE;
-
-  WF_PULSE gxdra = INITPULSE;
-  WF_PULSE gxdr = INITPULSE;
-  WF_PULSE gxdrd = INITPULSE;
-
   WF_PULSE gxdl1a = INITPULSE;
   WF_PULSE gxdl1 = INITPULSE;
   WF_PULSE gxdl1d = INITPULSE;
@@ -558,18 +546,6 @@ float cf_coeff[4]; /*polyfit coefficient MAX is 3rd order, so 4 coefficient*/
   WF_PULSE gxk = INITPULSE;
   WF_PULSE gxkd = INITPULSE;
 
-  WF_PULSE gydea = INITPULSE;
-  WF_PULSE gyde = INITPULSE;
-  WF_PULSE gyded = INITPULSE;
-
-  WF_PULSE gydla = INITPULSE;
-  WF_PULSE gydl = INITPULSE;
-  WF_PULSE gydld = INITPULSE;
-
-  WF_PULSE gydra = INITPULSE;
-  WF_PULSE gydr = INITPULSE;
-  WF_PULSE gydrd = INITPULSE;
-
   WF_PULSE gydl1a = INITPULSE;
   WF_PULSE gydl1 = INITPULSE;
   WF_PULSE gydl1d = INITPULSE;
@@ -589,18 +565,6 @@ float cf_coeff[4]; /*polyfit coefficient MAX is 3rd order, so 4 coefficient*/
   WF_PULSE gyka = INITPULSE;
   WF_PULSE gyk = INITPULSE;
   WF_PULSE gykd = INITPULSE;
-
-  WF_PULSE gzdea = INITPULSE;
-  WF_PULSE gzde = INITPULSE;
-  WF_PULSE gzded = INITPULSE;
-
-  WF_PULSE gzdla = INITPULSE;
-  WF_PULSE gzdl = INITPULSE;
-  WF_PULSE gzdld = INITPULSE;
-
-  WF_PULSE gzdra = INITPULSE;
-  WF_PULSE gzdr = INITPULSE;
-  WF_PULSE gzdrd = INITPULSE;
 
   WF_PULSE gzdl1a = INITPULSE;
   WF_PULSE gzdl1 = INITPULSE;

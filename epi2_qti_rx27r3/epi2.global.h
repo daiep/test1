@@ -1015,7 +1015,6 @@
 /* Local header files */
 #include "DTI.h"
 #include "pgen_calcbval.h"
-#include "ftde.h" /* granty edit include code for full time diffusion encoding */
 
 #define MAXCHAR 150
 #define MAX_TENSOR_VECTOR_MAG 1.01 /*In the product tensor.dat, the maximum vector is even less than 1.001*/
@@ -1060,7 +1059,6 @@ int gCoilType = PSD_XRMW_COIL;
 #define FOCUS_ONE_ACQ_MIN_TR 4500000
 
 /**********************************************/
-/* @inline MK_GradSpec.e GspecGlobal */ /* granty maybe */
 #include <float.h>
 #include "stddef_ep.h"
 #include "MultibandFuncs.h"

@@ -473,7 +473,7 @@ int isCommentOrBlankLine(char * str)
        check in predownload to make sure the impact on various workflow can be fully 
        captured */
     if ((tensor_flag == PSD_ON) && (hoecc_flag == PSD_OFF) && (dualspinecho_flag == PSD_OFF) 
-        && (rfov_flag == PSD_OFF) && (opresearch == PSD_OFF)) /*daiep begin 190319 */
+        && (rfov_flag == PSD_OFF) && (opresearch == PSD_OFF)) /* add the last condition to make the simulator work, daiep */
     {
         epic_error(use_ermes, 
                    "For the current prescription, either Dual Spin Echo or Real Time Field Adjustment needs to be turned on.", 

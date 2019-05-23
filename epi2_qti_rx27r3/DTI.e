@@ -37,7 +37,6 @@ SV24.0 07/31/2013   WJZ  eco-MPG: initial version of eco-MPG implemented;
 /* Local header files */
 #include "DTI.h"
 #include "pgen_calcbval.h"
-#include "ftde.h" /* granty edit include code for full time diffusion encoding */
 
 #define MAXCHAR 150
 #define MAX_TENSOR_VECTOR_MAG 1.01 /*In the product tensor.dat, the maximum vector is even less than 1.001*/
@@ -53,6 +52,7 @@ SV24.0 07/31/2013   WJZ  eco-MPG: initial version of eco-MPG implemented;
 int gCoilType = PSD_XRMW_COIL;
 
 @host DTI_host_funcs
+static INT read_grad_res(float wave_number, int* res_gd1, int* res_gd2);/* maybe granty */
 static INT get_diffusion_time( void );
 static INT update_sse_diffusion_time( void );
 static FLOAT calc_incdif(float *DELTA, float *delta, int Delta_time, int pw_gdl, int pw_gdld, int pw_gdla, int pw_gdra, float bvaltemp);
@@ -69,7 +69,6 @@ float scale_ramp = 1.0 with {1.0, 100, 1.0, VIS, "scale factor for ramp time for
 
 int debugTensor = 0 with {0,1,0,VIS,"Tensor Debugging Flag",};
 int tensor_flag = 0 with {0,1,0,VIS,"Tensor flag based off option key check",};
-int ftde_flag = 0 with { 0,1,0, VIS, "full time diffusion encoding option",};/* granty edit for full time diffusion encoding */
 int num_tensor = MIN_DTI_DIRECTIONS with {0,MAX_DIRECTIONS,MIN_DTI_DIRECTIONS,VIS,"Number of Diffusion Directions",};
 int validTensorFile = 0; /* HCSDM00476194 */
 int validTensorFileAndEntry = 0; /* HCSDM00476194 */
@@ -105,6 +104,7 @@ int act_numdir_clinical = MAX_DTI_LEGACY with {MIN_DTI_DIRECTIONS, 2000, MAX_DTI
 
 @host DTIarrays
 float TENSOR_HOST[3][MAX_DIRECTIONS + MAX_T2];        /* Tensor Amplitude Array (directions + t2) */
+float WAVE_HOST[MAX_DIRECTIONS + MAX_T2];/* maybe granty */
 float B_MATRIX[6][MAX_DIRECTIONS + MAX_T2];           /* B-Matrix */
 int sort_index[MAX_DIRECTIONS + MAX_T2];
 float mag[MAX_DIRECTIONS + MAX_T2];
@@ -309,6 +309,32 @@ STATUS DTI_Init()
 
     return SUCCESS;
 } /* end DTI_Init */
+
+@host DTI_read_grad_res
+/* granty function for reading in length of custom gradient files */
+STATUS read_grad_res(float wave_number, int* res_gd1, int* res_gd2){
+	char fname[80],junk[80];
+	FILE *fid;
+
+#ifndef PSD_HW
+	    sprintf(fname,"wave%d.dat",(int)wave_number);
+#else
+	    sprintf(fname,"/usr/g/research/daiep/qti/WAVES/wave%d.dat",(int)wave_number);
+#endif 
+
+	fid = fopen(fname,"r");
+	if (fid==NULL) {
+    		fprintf(stderr, "Error opening grad pulse file:  %s!!\n",fname);
+    		fflush (stderr);
+    		return FAILURE;
+	}
+	/* length of first diffusion encoding waveform */
+	fscanf(fid,"%d %s",res_gd1,junk);
+	/* length of second diffusion encoding waveform */
+	fscanf(fid,"%d %s",res_gd2,junk);
+	fclose(fid);
+	return SUCCESS;
+}
 
 @host DTI_Eval
 #ifdef __STDC__ 
@@ -827,6 +853,76 @@ STATUS DTI_Predownload()
             diff_ampz[0] = incdifz;
         }
         else if (b0calmode != 1) {
+	    /* store gradient amplitudes for retrieval later */
+	    int ampx_tmp = a_gxdl;
+	    int ampy_tmp = a_gydl;
+	    int ampz_tmp = a_gzdl;
+
+	    /* set all gradient amplitudes to system max */
+	    a_gxdl = loggrd.tx_xyz;
+	    a_gxdr = a_gxdl;
+	    a_gydl = loggrd.ty_xyz;
+	    a_gydr = a_gydl;
+	    a_gzdl = loggrd.tz_xyz;
+	    a_gzdr = a_gzdl;
+
+	    /* granty edit calculate b-value in pulsegen */
+	    seg_debug = 1;
+	    waveform_type = 3; /* load isotropic waveform into instruction memory in pg */
+            pgen_calc_bval_flag = PSD_ON;
+	    bmat_flag = 1;
+        printf("daiep test1...\n" ); /* daiep test */  
+        fflush(stdout); 
+
+            status =  pgen_calcbvalue( curr_bvalue, rf_excite_location, rf_180_location,
+                                       num_180s, opte, GAM, &loggrd, seq_entry_index, tsamp,
+                                       act_tr, use_ermes, seg_debug, bmat_flag);
+        printf("daiep test2...\n" ); /* daiep test */  
+        fflush(stdout); 
+
+            if(status == FAILURE || status == SKIP) {
+            	epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "pgen_calcbvalue()" );
+            	return FAILURE;
+            }
+
+        printf("daiep test3...\n" ); /* daiep test */  
+        fflush(stdout); 
+
+            pgen_calc_bval_flag = PSD_OFF;
+	    ide_max_bval = curr_bvalue[0] + curr_bvalue[1] + curr_bvalue[2];
+	    if(ide_max_bval < max_bval){ 
+		max_bval =  ide_max_bval;
+	    }
+
+	    printf("current IDE b-value = %f \n", curr_bvalue[0] + curr_bvalue[1] + curr_bvalue[2]);
+	    fflush(stdout);
+
+            /* Calculate bvalue using pulsegen */
+	    waveform_type = 1; /* load sde waveform into instruction memory in pg */
+            pgen_calc_bval_flag = PSD_ON;
+	    bmat_flag = 1;
+            status =  pgen_calcbvalue( curr_bvalue, rf_excite_location, rf_180_location,
+                                       num_180s, opte, GAM, &loggrd, seq_entry_index, tsamp,
+                                       act_tr, use_ermes, seg_debug, bmat_flag);
+            if(status == FAILURE || status == SKIP) {
+            	epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "pgen_calcbvalue()" );
+            	return FAILURE;
+            }
+            pgen_calc_bval_flag = PSD_OFF;
+	    sde_max_bval = (curr_bvalue[0] + curr_bvalue[1] + curr_bvalue[2])/3;
+	    if(ide_max_bval < max_bval) max_bval =  sde_max_bval;
+	    printf("current SDE b-value = %f \n",(curr_bvalue[0] + curr_bvalue[1] + curr_bvalue[2])/3);
+     	    fflush(stdout);
+ 
+ 	    /* set all gradient amplitudes to original values */
+	    a_gxdl = ampx_tmp;
+	    a_gxdr = a_gxdl;
+	    a_gydl = ampy_tmp;
+	    a_gydr = a_gydl;
+	    a_gzdl = ampz_tmp;
+	    a_gzdr = a_gzdl;
+
+	    /* verify b-value */
             status = verify_bvalue(curr_bvalue, rf_excite_location, rf_180_location,
                                    num_180s,seq_entry_index,bmat_flag,seg_debug);
             if(status == FAILURE || status == SKIP) {
@@ -1437,33 +1533,6 @@ get_diffusion_time( void )
         /*     calcs use largest diffusion set if multiple b-value scan       */
         a_gzdl = incdifz;
         a_gzdr = a_gzdl;
-
-    	/* granty temporary edit to to calculate timings for full time diffusion encoding.*/
-    	if(ftde_flag == PSD_ON){
-		/* compute minimum gradient durations */
-		calcpwabc(max_bval, get_sse_waittime(), pw_gzrf2l1_tot + pw_gzrf2 + pw_gzrf2r1_tot,MaxAmpx/100, pw_gxdla, &pw_gxdl, &pw_gxde, &pw_gxdr);
-		pw_gxdr = RUP_GRD(pw_gxdr);
-		pw_gxdl = RUP_GRD((get_sse_waittime() - pw_gxdla + 2*pw_gxdr)/2);
-		pw_gxde = RUP_GRD(pw_gxdl - pw_gxdr - pw_gxdla);
-		pw_gxdea = pw_gxdla;
-		pw_gxded = pw_gxdld;
-
-		pw_gydr = pw_gxdr;
-		pw_gydl = pw_gxdl;
-		pw_gyde = pw_gxde;
-		pw_gydea = pw_gxdea;
-		pw_gyded = pw_gxded;
-
-		pw_gzdr = pw_gxdr;
-		pw_gzdl = pw_gxdl;
-		pw_gzde = pw_gxde;
-		pw_gzdea = pw_gxdea;
-		pw_gzded = pw_gxded;
-
-		pw_wgzdl = 4;
-		pw_wgydl = 4;
-		pw_wgxdl = 4;
-    	}
         
         /* BJM: (dsp) get diffusion lobe timing */
         if (PSD_ON == dualspinecho_flag)
@@ -1571,8 +1640,9 @@ get_diffusion_time( void )
     }
 
     if (PSD_OFF == dualspinecho_flag)
-    {/* granty edit */
-	if(PSD_OFF == ftde_flag){
+    {
+/* original */
+		/* 
         xdiff_time1 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
                        pw_gxdla + pw_gxdl + pw_gxdld + pw_wgxdl : 0);
         xdiff_time2 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
@@ -1585,20 +1655,54 @@ get_diffusion_time( void )
                        pw_gzdla + pw_gzdl + pw_gzdld + pw_wgzdl : 0);
         zdiff_time2 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
                        pw_wgzdr + pw_gzdra + pw_gzdr + pw_gzdrd : 0);
-    }else{
-            xdiff_time1 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
-                    pw_gxdla + pw_gxdl + pw_gxdld + pw_wgxdl + pw_gxde + pw_gxdea + pw_gxded : 0);
-            xdiff_time2 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
-                        pw_wgxdr + pw_gxdra + pw_gxdr + pw_gxdrd : 0);
-            ydiff_time1 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
-                       pw_gydla + pw_gydl + pw_gydld + pw_wgydl + pw_gyde + pw_gydea + pw_gyded : 0);
-            ydiff_time2 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
-                       pw_wgydr + pw_gydra + pw_gydr + pw_gydrd : 0);
-            zdiff_time1 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
-                       pw_gzdla + pw_gzdl + pw_gzdld + pw_wgzdl + pw_gzde + pw_gzdea + pw_gzded : 0);
-            zdiff_time2 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
-                       pw_wgzdr + pw_gzdra + pw_gzdr + pw_gzdrd : 0);
-    }
+		*/
+	/* granty reset diffusion gradient durations ??? */
+	pw_gxdl = 4*res_gd1;
+	pw_gxdr = 4*res_gd2;
+	pw_gydl = 4*res_gd1;
+	pw_gydr = 4*res_gd2;
+	pw_gzdl = 4*res_gd1;
+	pw_gzdr = 4*res_gd2;
+	/* granty reset a_g?dl to max amplitude */
+	a_gxdl = loggrd.tx_xyz;
+	a_gxdr = a_gxdl;
+	a_gydl = loggrd.ty_xyz;
+	a_gydr = a_gydl;
+	a_gzdl = loggrd.tz_xyz;
+	a_gzdr = a_gzdl;
+
+	incdifx = a_gxdl;
+	incdify = a_gydl;
+	incdifz = a_gzdl;
+
+	/* granty set wait pulses to maintain 10 ms between diffusion pulses*/
+	pw_wgxdl = RUP_GRD((10000 - (pw_gzrf2l1_tot + pw_gzrf2 + pw_gzrf2r1_tot))/2);
+	pw_wgxdr = pw_wgxdl;
+	pw_wgydl = pw_wgxdl;
+	pw_wgydr = pw_wgxdl;
+	pw_wgzdl = pw_wgxdl;
+	pw_wgzdr = pw_wgxdl;
+	/* granty edit since we know the length of the custom diffusion pulses */
+	xdiff_time1 = pw_gxdl + pw_wgxdl;
+	xdiff_time2 = pw_gxdr + pw_wgxdr;
+	ydiff_time1 = pw_gydl + pw_wgydl;
+	ydiff_time2 = pw_gydr + pw_wgydr;
+	zdiff_time1 = pw_gzdl + pw_wgzdl;
+	zdiff_time2 = pw_gzdr + pw_wgzdr;
+	/* granty set ramp times to zero... */
+	pw_gxdla = 0;
+	pw_gxdra = 0;
+	pw_gydla = 0;
+	pw_gydra = 0;
+	pw_gzdla = 0;
+	pw_gzdra = 0;
+	pw_gxdld = 0;
+	pw_gxdrd = 0;
+	pw_gydld = 0;
+	pw_gydrd = 0;
+	pw_gzdld = 0;
+	pw_gzdrd = 0;
+
     } 
     else {
         xdiff_time1 = (((opdiffuse==1)|| tensor_flag == PSD_ON) ? 
@@ -1623,8 +1727,6 @@ get_diffusion_time( void )
 
     return SUCCESS;
 } /* end diffusion_timing */
-
-#include "ftde.c" /* granty edit */
 
 /*
  * Update SSE manual TE Diffusion_Timing:
@@ -2093,8 +2195,9 @@ set_tensor_orientations( void )
         int max_chars_per_line = MAXCHAR;   /* lines in tensor.dat header */ 
         int num_tensor_len;
 #ifndef SIM
-        const char *tensor_datapath="/usr/g/bin/";/* path to tensor.dat files - hw  */
-        char tensor_datafile[80]; /* filename of tensor.dat file */
+        /* const char *tensor_datapath="/usr/g/bin/";*/ /* path to tensor.dat files - hw  */
+        const char *tensor_datapath="/usr/g/research/daiep/qti/";/* path to tensor.dat files - hw  */
+		char tensor_datafile[80]; /* filename of tensor.dat file */
         if (rhtensor_file_number == 0)
         {
             sprintf(tensor_datafile, "tensor.dat");
@@ -2369,7 +2472,148 @@ set_tensor_orientations( void )
          */
         calc_orientations();
     }
+/* granty edit for reading from file to specify diffusion waveform to play*/
+    if( (read_from_file == PSD_ON)  && (tensor_flag == PSD_ON )) {
+        FILE *fp;                           /* file pointer */
+        char filestring[MAXCHAR];           /* buffer used to open data file */ 
+        char compstring[MAXCHAR];           /* buffer used to open data file */ 
+        char tempstring[MAXCHAR];           /* buffer to access file */
+        int max_chars_per_line = MAXCHAR;   /* lines in tensor.dat header */ 
+        int num_tensor_len;
+#ifndef SIM
+        const char *tensor_datapath="/usr/g/research/daiep/qti/";/* path to tensor.dat files - hw  */
+        char tensor_datafile[80]; /* filename of tensor.dat file */
+        if (rhtensor_file_number == 0)
+        {
+            sprintf(tensor_datafile, "waveform.dat");
+        }
+        else 
+        {
+            sprintf(tensor_datafile, "waveform%d.dat", rhtensor_file_number);
+        }
+#else /* !SIM */
+        const char *tensor_datapath="./";         /* path to tensor.dat files - sim */
+        char tensor_datafile[80];                    /* filename of tensor.dat file */
 
+        if (rhtensor_file_number == 0)
+        {
+            if(PSD_VRMW_COIL == gCoilType)
+            {
+                sprintf(tensor_datafile, "waveform.dat");
+            }
+            else
+            {
+                sprintf(tensor_datafile, "waveform.dat");
+            }
+        }
+        else 
+        { 
+            sprintf(tensor_datafile, "waveform%d.dat", rhtensor_file_number);
+        }
+#endif /* SIM */
+        
+        /* Check tensor file. Move check here to get the right response to user. */
+        if (PSD_ON == exist(opresearch))
+        {
+            if ( ((0 != rhtensor_file_number) && (rhtensor_file_number < TENSOR_FILE_RSRCH_START))  ||
+                    (rhtensor_file_number > TENSOR_FILE_RSRCH_MAX) )
+            {
+                epic_error( use_ermes, "%s is out of range", EM_PSD_CV_OUT_OF_RANGE, EE_ARGS(1), STRING_ARG, _rhtensor_file_number.descr);
+                return FAILURE;
+            }
+        }
+        else
+        {   /* Not available in Clinical Mode */
+            if ( 0 != rhtensor_file_number )
+            {
+                epic_error( use_ermes, "%s is out of range", EM_PSD_CV_OUT_OF_RANGE, EE_ARGS(1), STRING_ARG, _rhtensor_file_number.descr);
+                return FAILURE;
+            }
+        }
+        
+        
+        /* Setup for file search - set the number of directions requested */
+        sprintf( compstring, "%d", num_tensor );
+        num_tensor_len = strlen( compstring );
+
+        /* Set tensor.dat file path and append filename base and suffix */
+        strcpy( filestring, tensor_datapath );
+        strcat( filestring, tensor_datafile );
+
+        /* Open file */
+        if( (fp = fopen( filestring, "r" )) == NULL ) {
+            char err_string[300];
+            sprintf(err_string, "Can't read %s\n", filestring);
+            epic_error( use_ermes, supfailfmt, EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, err_string );
+            validTensorFile = 0;
+            return ADVISORY_FAILURE;
+        }
+        validTensorFile = 1;
+
+        /*
+         * The tensor.dat file is a concatanation of several files.
+         * We need to skip over all the lines until we reach the location
+         * that stores the "num_tensor" orientations.
+         */
+        {
+            int read_skip = 1;
+
+            while( read_skip ) {
+                if (fgets( tempstring, max_chars_per_line, fp ) == NULL)
+                {   /* Error response to user if the file cannot be read for the user-desired entry */
+                    fclose(fp); /* PWW */
+                    epic_error( use_ermes, supfailfmt, 
+                            EM_PSD_SUPPORT_FAILURE, EE_ARGS(1), STRING_ARG, "Can't find entry in tensor file");
+                    validTensorFileAndEntry = 0;
+                    return ADVISORY_FAILURE;
+                }
+                read_skip = strncmp( compstring, tempstring, num_tensor_len );
+            }
+            validTensorFileAndEntry = 1;
+        }
+ 
+        if(debugTensor == PSD_ON) {
+           printf( "Waveform Read (Host) = %d\n", num_tensor );
+        }
+
+        /*
+         * Next, after reaching the desired point in the file           
+         * iterate over num_tensor & put the data in TENSOR_HOST[i][j] 
+         */
+
+        /* BJM: assign the T2 images first - want multiple B = 0 images */
+        for( j = 0; j < num_B0; ++j ) {
+            WAVE_HOST[j] = 0.0;
+
+            if(debugTensor == PSD_ON) {
+                printf( "T2 #%d, B-tensor rank = %f \n", j, WAVE_HOST[j] );
+                fflush( stdout );
+            }
+
+        }
+		/* maybe granty */
+        /* Now do the rest of the shots */
+        /*  Skip the multiple B = 0 images.  Start at num_B0 plus 1 in
+            the TENSOR_HOST[][] array. */
+        for ( j = num_B0; j < num_tensor + num_B0; ++j ) {          
+            if( fgets( tempstring, MAXCHAR, fp ) == NULL ) { 
+                printf( "ERROR: invalid tensor.dat file format!\n" ); 
+            }          
+            sscanf( tempstring, "%f", &WAVE_HOST[j] );
+
+            if(debugTensor == PSD_ON) {
+                printf( "Shot = %d, B-tensor rank = %f\n", j, WAVE_HOST[j] );
+                fflush( stdout );
+            }
+        }
+
+        fclose(fp); 
+
+
+     } else {
+        /* Assign the T2 image first */
+	WAVE_HOST[0] = 0.0;
+    }
     return SUCCESS;
 
 }   /* end set_tensor_orientations() */
@@ -3331,6 +3575,8 @@ STATUS calc_b_matrix( FLOAT * curr_bvalue,
                 a_gydr = TENSOR_HOST[1][i]*dif_amp[1];
                 a_gzdl = TENSOR_HOST[2][i]*dif_amp[2];
                 a_gzdr = TENSOR_HOST[2][i]*dif_amp[2];
+		/* granty edit for custom waveforms */
+		waveform_type = WAVE_HOST[i];
                 
             } else {
                 a_gxdl1 = TENSOR_HOST[0][i]*dif_amp[0];
@@ -3396,6 +3642,7 @@ STATUS calc_b_matrix( FLOAT * curr_bvalue,
 /* BJM: added 5/20/03 for Linux */
 @rsp rspDTI
 float TENSOR_AGP[3][MAX_DIRECTIONS + MAX_T2];  /* Tensor Dif Amp Array (directions + t2) */
+float WAVE_AGP[MAX_DIRECTIONS + MAX_T2]; /* granty edit for waveform shape */
 float TENSOR_AGP_temp[3][MAX_DIRECTIONS + MAX_T2]; /*MRIhc05854*/
 
 @rsp rspPrototypes 
@@ -3535,6 +3782,123 @@ static INT set_tensor_orientationsAGP( void )
 
         /* Assign the T2 image first */
         TENSOR_AGP[0][0] = TENSOR_AGP[1][0] = TENSOR_AGP[2][0] = 0.0;
+
+    }
+/* granty edit to specify waveform type */
+    if( read_from_file == PSD_ON  && tensor_flag == PSD_ON ) {
+
+        FILE *fp;                           /* file pointer */
+        char filestring[MAXCHAR];           /* buffer used to open data file */ 
+        char compstring[MAXCHAR];           /* buffer used to open data file */ 
+        char tempstring[MAXCHAR];           /* buffer to access file */
+        int max_chars_per_line = MAXCHAR;   /* lines in tensor.dat header */ 
+        int num_tensor_len;
+#ifndef SIM
+        const char *tensor_datapath="/usr/g/research/daiep/qti/";/* path to tensor.dat files - hw  */
+        char tensor_datafile[80]; /* filename of tensor.dat file */
+        if (rhtensor_file_number == 0)
+        {
+            sprintf(tensor_datafile, "waveform.dat");
+        }
+        else
+        {
+            sprintf(tensor_datafile, "waveform%d.dat", rhtensor_file_number);
+        }
+#else /* !SIM */
+        const char *tensor_datapath="./";         /* path to tensor.dat files - sim */
+        char tensor_datafile[80];                    /* filename of tensor.dat file */
+
+        if (rhtensor_file_number == 0)
+        {
+            if(PSD_VRMW_COIL == gCoilType)
+            {
+                sprintf(tensor_datafile, "waveform.dat");
+            }
+            else
+            {
+                sprintf(tensor_datafile, "waveform.dat");
+            }
+        }
+        else 
+        {
+            sprintf(tensor_datafile, "waveform%d.dat", rhtensor_file_number);
+        }
+#endif /* SIM */
+
+        /* Setup for file search - set the number of directions requested */
+        sprintf( compstring, "%d", num_tensor );
+        num_tensor_len = strlen( compstring );
+
+        /* Set tensor.dat file path and append filename base and suffix */
+        strcpy( filestring, tensor_datapath );
+        strcat( filestring, tensor_datafile );
+
+        /* Open file */
+        if( (fp = fopen( filestring, "r" )) == NULL ) { 
+            printf( "Cant read %s", filestring );
+            fflush( stdout );
+            return FAILURE;
+        }
+
+        /*
+         * The tensor.dat file is a concatanation of several files.
+         * We need to skip over all the lines until we reach the location
+         * that stores the "num_tensor" orientations.
+         */
+        {
+            int read_skip = 1;
+
+            while( read_skip ) {
+                fgets( tempstring, max_chars_per_line, fp );
+                read_skip = strncmp( compstring, tempstring, num_tensor_len );
+            }
+        }
+
+        if(debugTensor == PSD_ON) {
+            printf( "Waveform type Read (AGP) = %d\n", num_tensor );
+        }
+
+        /*
+         * Next, after reaching the desired point in the file           
+         * iterate over num_tensor & put the data in TENS[i][j] 
+         */
+
+        /* BJM: assign the T2 images first - want multiple B = 0 images */
+        for( j = 0; j < num_B0; ++j ) {
+
+            WAVE_AGP[0] = 0.0;
+            
+            if(debugTensor == PSD_ON) {
+                printf( "T2 #%d, B-tensor rank = %f\n", j, WAVE_AGP[j] );
+                fflush( stdout );
+            }
+
+        }
+
+        /* Now do the rest of the shots */
+        /*  Skip the multiple B = 0 images.  Start at num_B0 plus 1 in
+            the TENSOR_AGP[][] array. */
+        for ( j = num_B0; j < num_tensor + num_B0; ++j ) {          
+            if( fgets( tempstring, MAXCHAR, fp ) == NULL ) { 
+                printf( "ERROR: invalid tensor.dat file format!\n" ); 
+            }          
+            sscanf( tempstring, "%f", &WAVE_AGP[j] );
+
+            if(debugTensor == PSD_ON)
+            {
+                printf( "Shot = %d, B-tensor rank = %f\n", j, WAVE_AGP[j] );
+                fflush( stdout );
+            }
+
+        }
+
+        fclose(fp); 
+
+    } 
+    else {
+
+        /* Assign the T2 image first */
+        WAVE_AGP[j] = 0.0;
 
     }
 
